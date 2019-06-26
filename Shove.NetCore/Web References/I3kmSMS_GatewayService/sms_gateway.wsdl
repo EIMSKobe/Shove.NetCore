@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
+      <s:element name="SMSReceive">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RegCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TimeStamp" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Sign" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Content" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="To" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SMSReceiveResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SMSReceiveResult">
+              <s:complexType>
+                <s:sequence>
+                  <s:element ref="s:schema" />
+                  <s:any />
+                </s:sequence>
+              </s:complexType>
+            </s:element>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SendSMS_2">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RegCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TimeStamp" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Sign" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Content" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="To" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="SendTime" type="s:dateTime" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SendSMS_2Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SendSMS_2Result">
+              <s:complexType>
+                <s:sequence>
+                  <s:element ref="s:schema" />
+                  <s:any />
+                </s:sequence>
+              </s:complexType>
+            </s:element>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="QueryBalance">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RegCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TimeStamp" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Sign" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="QueryBalanceResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="QueryBalanceResult">
+              <s:complexType>
+                <s:sequence>
+                  <s:element ref="s:schema" />
+                  <s:any />
+                </s:sequence>
+              </s:complexType>
+            </s:element>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="SMSReceiveSoapIn">
+    <wsdl:part name="parameters" element="tns:SMSReceive" />
+  </wsdl:message>
+  <wsdl:message name="SMSReceiveSoapOut">
+    <wsdl:part name="parameters" element="tns:SMSReceiveResponse" />
+  </wsdl:message>
+  <wsdl:message name="SendSMS_2SoapIn">
+    <wsdl:part name="parameters" element="tns:SendSMS_2" />
+  </wsdl:message>
+  <wsdl:message name="SendSMS_2SoapOut">
+    <wsdl:part name="parameters" element="tns:SendSMS_2Response" />
+  </wsdl:message>
+  <wsdl:message name="QueryBalanceSoapIn">
+    <wsdl:part name="parameters" element="tns:QueryBalance" />
+  </wsdl:message>
+  <wsdl:message name="QueryBalanceSoapOut">
+    <wsdl:part name="parameters" element="tns:QueryBalanceResponse" />
+  </wsdl:message>
+  <wsdl:portType name="sms_gatewaySoap">
+    <wsdl:operation name="SMSReceive">
+      <wsdl:input message="tns:SMSReceiveSoapIn" />
+      <wsdl:output message="tns:SMSReceiveSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="SendSMS_2">
+      <wsdl:input message="tns:SendSMS_2SoapIn" />
+      <wsdl:output message="tns:SendSMS_2SoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="QueryBalance">
+      <wsdl:input message="tns:QueryBalanceSoapIn" />
+      <wsdl:output message="tns:QueryBalanceSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="sms_gatewaySoap" type="tns:sms_gatewaySoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="SMSReceive">
+      <soap:operation soapAction="http://tempuri.org/SMSReceive" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SendSMS_2">
+      <soap:operation soapAction="http://tempuri.org/SendSMS_2" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="QueryBalance">
+      <soap:operation soapAction="http://tempuri.org/QueryBalance" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="sms_gatewaySoap12" type="tns:sms_gatewaySoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="SMSReceive">
+      <soap12:operation soapAction="http://tempuri.org/SMSReceive" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SendSMS_2">
+      <soap12:operation soapAction="http://tempuri.org/SendSMS_2" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="QueryBalance">
+      <soap12:operation soapAction="http://tempuri.org/QueryBalance" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="sms_gateway">
+    <wsdl:port name="sms_gatewaySoap" binding="tns:sms_gatewaySoap">
+      <soap:address location="http://sms.gateway.i3km.com/sms_gateway.asmx" />
+    </wsdl:port>
+    <wsdl:port name="sms_gatewaySoap12" binding="tns:sms_gatewaySoap12">
+      <soap12:address location="http://sms.gateway.i3km.com/sms_gateway.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

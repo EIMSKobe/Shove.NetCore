@@ -1,0 +1,128 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Shove.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="Xml2JsonXslt" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:ebl="urn:ebay:apis:eBLBaseComponents" exclude-result-prefixes="ebl"&gt;
+    &lt;!--==================================================================================== 
+    Original version by : Holten Norris ( holtennorris at yahoo.com ) 
+    Current version maintained  by: Alan Lewis (alanlewis at gmail.com) 
+    Thanks to Venu Reddy from eBay XSLT team for help with the array detection code 
+    Protected by CDDL open source license.  
+    Transforms XML into JavaScript objects, using a JSON format. 
+    ===================================================================================== --&gt;
+    &lt;xsl:output method="text" encoding="UTF-8"/&gt;
+    &lt;xsl:template match="*"&gt;
+        &lt;xsl:param name="recursionCnt"&gt;0&lt;/xsl:param&gt;
+        &lt;xsl:param name="isLast"&gt;1&lt;/xsl:param&gt;
+        &lt;xsl:param name="inArray"&gt;0&lt;/xsl:param&gt;
+        &lt;xsl:if test="$recursionCnt=0"&gt;
+            &lt;xsl:text&gt;&lt;/xsl:text&gt;
+        &lt;/xsl:if&gt;
+        &lt;!-- test what type of data to output  --&gt;
+        &lt;xsl:variable name="elementDataType"&gt;
+            &lt;xsl:value-of select="number(text())"/&gt;
+        &lt;/xsl:variable&gt;
+        &lt;xsl:variable name="elementData"&gt;
+            &lt;!-- TEXT ( use quotes ) --&gt;
+            &lt;xsl:if test="string($elementDataType) ='NaN'"&gt;
+                &lt;xsl:if test="boolean(text())"&gt;
+                    &lt;xsl:if test="not(*)"&gt;
+                        "&lt;xsl:value-of select="text()"/&gt;"
+                    &lt;/xsl:if&gt;
+                &lt;/xsl:if&gt;
+            &lt;/xsl:if&gt;
+            &lt;!-- NUMBER (no quotes ) --&gt;
+            &lt;xsl:if test="string($elementDataType) !='NaN'"&gt;
+                &lt;xsl:value-of select="text()"/&gt;
+            &lt;/xsl:if&gt;
+            &lt;!-- NULL --&gt;
+            &lt;xsl:if test="not(*)"&gt;
+                &lt;xsl:if test="not(text())"&gt;
+                    null
+                &lt;/xsl:if&gt;
+            &lt;/xsl:if&gt;
+        &lt;/xsl:variable&gt;
+        &lt;xsl:variable name="hasRepeatElements"&gt;
+            &lt;xsl:for-each select="*"&gt;
+                &lt;xsl:if test="name() = name(preceding-sibling::*) or name() = name(following-sibling::*)"&gt;
+                    true
+                &lt;/xsl:if&gt;
+            &lt;/xsl:for-each&gt;
+        &lt;/xsl:variable&gt;
+        &lt;xsl:if test="not(count(@*) &amp;gt; 0)"&gt;
+            "&lt;xsl:value-of select="local-name()"/&gt;": &lt;xsl:value-of select="$elementData"/&gt;
+        &lt;/xsl:if&gt;
+        &lt;xsl:if test="count(@*) &amp;gt; 0"&gt;
+            "&lt;xsl:value-of select="local-name()"/&gt;": {
+            "content": &lt;xsl:value-of select="$elementData"/&gt;
+            &lt;xsl:for-each select="@*"&gt;
+                &lt;xsl:if test="position()=1"&gt;,&lt;/xsl:if&gt;
+                &lt;!-- test what type of data to output  --&gt;
+                &lt;xsl:variable name="dataType"&gt;
+                    &lt;xsl:value-of select="number(.)"/&gt;
+                &lt;/xsl:variable&gt;
+                &lt;xsl:variable name="data"&gt;
+                    &lt;!-- TEXT ( use quotes ) --&gt;
+                    &lt;xsl:if test="string($dataType) ='NaN'"&gt;
+                        "&lt;xsl:value-of select="current()"/&gt;"
+                    &lt;/xsl:if&gt;
+                    &lt;!-- NUMBER (no quotes ) --&gt;
+                    &lt;xsl:if test="string($dataType) !='NaN'"&gt;
+                        &lt;xsl:value-of select="current()"/&gt;
+                    &lt;/xsl:if&gt;
+                &lt;/xsl:variable&gt;
+                &lt;xsl:value-of select="local-name()"/&gt;:&lt;xsl:value-of select="$data"/&gt;
+                &lt;xsl:if test="position() !=last()"&gt;, &lt;/xsl:if&gt;
+            &lt;/xsl:for-each&gt;
+            }
+        &lt;/xsl:if&gt;
+        &lt;xsl:if test="not($hasRepeatElements = '')"&gt;
+            [{
+        &lt;/xsl:if&gt;
+        &lt;xsl:for-each select="*"&gt;
+            &lt;xsl:if test="position()=1"&gt;
+                &lt;xsl:if test="$hasRepeatElements = ''"&gt;
+                    &lt;xsl:text&gt; { &lt;/xsl:text&gt;
+                &lt;/xsl:if&gt;
+            &lt;/xsl:if&gt;
+            &lt;xsl:apply-templates select="current()"&gt;
+                &lt;xsl:with-param name="recursionCnt" select="$recursionCnt+1"/&gt;
+                &lt;xsl:with-param name="isLast" select="position()=last()"/&gt;
+                &lt;xsl:with-param name="inArray" select="not($hasRepeatElements = '')"/&gt;
+            &lt;/xsl:apply-templates&gt;
+            &lt;xsl:if test="position()=last()"&gt;
+                &lt;xsl:if test="$hasRepeatElements = ''"&gt;
+                    &lt;xsl:text&gt; } &lt;/xsl:text&gt;
+                &lt;/xsl:if&gt;
+            &lt;/xsl:if&gt;
+        &lt;/xsl:for-each&gt;
+        &lt;xsl:if test="not($hasRepeatElements = '')"&gt;
+            }]
+        &lt;/xsl:if&gt;
+        &lt;xsl:if test="not( $isLast )"&gt;
+            &lt;xsl:if test="$inArray = 'true'"&gt;
+                &lt;xsl:text&gt; } &lt;/xsl:text&gt;
+            &lt;/xsl:if&gt;
+            ,
+            &lt;xsl:if test="$inArray = 'true'"&gt;
+                &lt;xsl:text&gt; { &lt;/xsl:text&gt;
+            &lt;/xsl:if&gt;
+        &lt;/xsl:if&gt;
+        &lt;xsl:if test="$recursionCnt=0"&gt;&lt;/xsl:if&gt;
+    &lt;/xsl:template&gt;
+&lt;/xsl:stylesheet&gt;
+</Value>
+    </Setting>
+    <Setting Name="Shove_NewtonServices_Service" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://newton.shovesoft.com/Service.asmx</Value>
+    </Setting>
+    <Setting Name="Shove_I3kmSMS_GatewayService_sms_gateway" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://sms.gateway.i3km.com/sms_gateway.asmx</Value>
+    </Setting>
+    <Setting Name="Shove_com_shovesoft_icp_Gateway" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://icp.shovesoft.com/Gateway.asmx</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
