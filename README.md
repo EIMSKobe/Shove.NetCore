@@ -1,0 +1,1 @@
+Shove.NetCore init.
