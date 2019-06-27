@@ -2,7 +2,7 @@
 
 ### .NET core version:
 
-    .NET core 3.0 preview 6
+    .NET Core 3.0 preview 6
 
 ### Support platforms:
 
