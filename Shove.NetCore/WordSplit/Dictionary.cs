@@ -113,10 +113,10 @@ namespace Shove.WordSplit
         /// <summary>
         /// GetWordsListAll
         /// </summary>
-        /// <param name="WithFlag"></param>
-        /// <param name="ReSort"></param>
+        /// <param name="withFlag"></param>
+        /// <param name="reSort"></param>
         /// <returns></returns>
-        public ArrayList GetWordsListAll(bool WithFlag, bool ReSort)
+        public ArrayList GetWordsListAll(bool withFlag, bool reSort)
         {
             if (!m_isOpen)
                 return null;
@@ -128,14 +128,14 @@ namespace Shove.WordSplit
                 {
                     for (int j = 0; j < m_WordsList[i].m_List.Count; j++)
                     {
-                        if (WithFlag)
+                        if (withFlag)
                             al.Add(((char)(i + 19968)).ToString() + m_WordsList[i].m_List[j].ToString());
                         else
                             al.Add(m_WordsList[i].m_List[j]);
                     }
                 }
             }
-            if (ReSort)
+            if (reSort)
             {
                 CompareToAscii compare = new CompareToAscii();
                 al.Sort(compare);
@@ -146,24 +146,24 @@ namespace Shove.WordSplit
         /// <summary>
         /// AddWord
         /// </summary>
-        /// <param name="Word"></param>
+        /// <param name="word"></param>
         /// <returns></returns>
-        public bool AddWord(string Word)
+        public bool AddWord(string word)
         {
             if (!m_isOpen)
                 return false;
 
-            Word = Word.Trim();
-            if (Word.Length < 2)
+            word = word.Trim();
+            if (word.Length < 2)
                 return false;
 
-            int Unicode = (int)((char)Word[0]) - 19968;
+            int Unicode = (int)((char)word[0]) - 19968;
             if ((Unicode < 0) || (Unicode > 20900))
                 return false;
 
             if (m_WordsList[Unicode].m_List == null)
                 m_WordsList[Unicode].m_List = new ArrayList();
-            m_WordsList[Unicode].m_List.Add(Word.Substring(1, Word.Length - 1));
+            m_WordsList[Unicode].m_List.Add(word.Substring(1, word.Length - 1));
             WordSort(Unicode);
             return true;
         }
@@ -171,18 +171,18 @@ namespace Shove.WordSplit
         /// <summary>
         /// DeleteWord
         /// </summary>
-        /// <param name="Word"></param>
+        /// <param name="word"></param>
         /// <returns></returns>
-        public bool DeleteWord(string Word)
+        public bool DeleteWord(string word)
         {
             if (!m_isOpen)
                 return false;
 
-            Word = Word.Trim();
-            if (Word.Length < 2)
+            word = word.Trim();
+            if (word.Length < 2)
                 return false;
 
-            int Unicode = (int)((char)Word[0]) - 19968;
+            int Unicode = (int)((char)word[0]) - 19968;
             if ((Unicode < 0) || (Unicode > 20900))
                 return false;
 
@@ -190,10 +190,10 @@ namespace Shove.WordSplit
                 return false;
 
             int i;
-            Word = Word.Substring(1, Word.Length - 1);
+            word = word.Substring(1, word.Length - 1);
             for (i = 0; i < m_WordsList[Unicode].m_List.Count; i++)
             {
-                if (m_WordsList[Unicode].m_List[i].ToString() == Word)
+                if (m_WordsList[Unicode].m_List[i].ToString() == word)
                 {
                     m_WordsList[Unicode].m_List.RemoveAt(i);
                     CalcWordMaxLen();
@@ -242,19 +242,19 @@ namespace Shove.WordSplit
         /// <summary>
         /// WordSort
         /// </summary>
-        /// <param name="Unicode"></param>
+        /// <param name="unicode"></param>
         /// <returns></returns>
-        public bool WordSort(int Unicode)
+        public bool WordSort(int unicode)
         {
             if (!m_isOpen)
                 return false;
-            if ((Unicode < 0) || (Unicode > 20900))
+            if ((unicode < 0) || (unicode > 20900))
                 return false;
-            if (m_WordsList[Unicode].m_List == null)
+            if (m_WordsList[unicode].m_List == null)
                 return false;
 
             CompareToLength compare = new CompareToLength();
-            m_WordsList[Unicode].m_List.Sort(compare);
+            m_WordsList[unicode].m_List.Sort(compare);
             return true;
         }
 
@@ -325,9 +325,9 @@ namespace Shove.WordSplit
         /// <summary>
         /// SaveToTxtFile
         /// </summary>
-        /// <param name="TxtFileName"></param>
+        /// <param name="fileName"></param>
         /// <returns></returns>
-        public bool SaveToTxtFile(string TxtFileName)
+        public bool SaveToTxtFile(string fileName)
         {
             ArrayList al = GetWordsListAll(true, true);
             if (al == null)
@@ -336,7 +336,7 @@ namespace Shove.WordSplit
             StreamWriter sw = null;
             try
             {
-                sw = new StreamWriter(TxtFileName);
+                sw = new StreamWriter(fileName);
             }
             catch
             {
@@ -352,14 +352,14 @@ namespace Shove.WordSplit
         /// <summary>
         /// LoadFromTxtFile
         /// </summary>
-        /// <param name="TxtFileName"></param>
+        /// <param name="fileName"></param>
         /// <returns></returns>
-        public bool LoadFromTxtFile(string TxtFileName)
+        public bool LoadFromTxtFile(string fileName)
         {
             StreamReader sr;
             try
             {
-                sr = new StreamReader(TxtFileName);
+                sr = new StreamReader(fileName);
             }
             catch
             {

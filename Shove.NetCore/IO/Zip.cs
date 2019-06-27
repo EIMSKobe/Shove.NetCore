@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using ICSharpCode.SharpZipLib.Zip;
 
@@ -14,11 +12,11 @@ namespace Shove.IO
         /// <summary>
         /// 压缩为 Zip 流
         /// </summary>
-        /// <param name="Source"></param>
+        /// <param name="source"></param>
         /// <returns></returns>
-        public static byte[] Compress(Stream Source)
+        public static byte[] Compress(Stream source)
         {
-            Source.Seek(0, SeekOrigin.Begin);
+            source.Seek(0, SeekOrigin.Begin);
             MemoryStream mMemory = new MemoryStream();
             ZipOutputStream mStream = new ZipOutputStream(mMemory);
 
@@ -29,7 +27,7 @@ namespace Shove.IO
 
             do
             {
-                mSize = Source.Read(mWriteData, 0, BUFFER_SIZE);
+                mSize = source.Read(mWriteData, 0, BUFFER_SIZE);
                 if (mSize > 0)
                 {
                     mStream.Write(mWriteData, 0, mSize);
@@ -51,13 +49,13 @@ namespace Shove.IO
         /// <summary>
         /// 将 Zip 压缩流解压
         /// </summary>
-        /// <param name="Source"></param>
+        /// <param name="source"></param>
         /// <returns></returns>
-        public static byte[] Decompress(Stream Source)
+        public static byte[] Decompress(Stream source)
         {
-            Source.Seek(0, SeekOrigin.Begin);
+            source.Seek(0, SeekOrigin.Begin);
             MemoryStream mMemory = new MemoryStream();
-            ZipInputStream mStream = new ZipInputStream(Source);
+            ZipInputStream mStream = new ZipInputStream(source);
 
             Int32 mSize;
 

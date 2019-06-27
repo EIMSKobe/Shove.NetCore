@@ -23,20 +23,20 @@ namespace Shove.HTML
         /// <summary>
         /// 获取 Url 的相应 html
         /// </summary>
-        /// <param name="Url"></param>
+        /// <param name="url"></param>
         /// <returns></returns>
-        public static string GetHTML(string Url)
+        public static string GetHTML(string url)
         {
-            return GetHTML(Url, 0);
+            return GetHTML(url, 0);
         }
 
         /// <summary>
         /// 获取 Url 的相应 html
         /// </summary>
-        /// <param name="Url"></param>
-        /// <param name="Timeout">超时毫秒</param>
+        /// <param name="url"></param>
+        /// <param name="timeout">超时毫秒</param>
         /// <returns></returns>
-        public static string GetHTML(string Url, int Timeout)
+        public static string GetHTML(string url, int timeout)
         {
             HttpWebRequest request = null;
             HttpWebResponse response = null;
@@ -44,12 +44,12 @@ namespace Shove.HTML
 
             try
             {
-                request = (HttpWebRequest)WebRequest.Create(Url);
+                request = (HttpWebRequest)WebRequest.Create(url);
                 request.UserAgent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; .NET CLR 2.0.50727; .NET CLR 3.0.04506.648; .NET CLR 3.5.21022)";
 
-                if (Timeout > 0)
+                if (timeout > 0)
                 {
-                    request.Timeout = Timeout;
+                    request.Timeout = timeout;
                 }
 
                 request.AllowAutoRedirect = true;
@@ -130,16 +130,16 @@ namespace Shove.HTML
         /// <summary>
         /// 获取 Url 的相应 html
         /// </summary>
-        /// <param name="Url"></param>
-        /// <param name="Type"></param>
-        /// <param name="LastModifiedTime"></param>
-        /// <param name="HostAbsolutePath"></param>
+        /// <param name="url"></param>
+        /// <param name="type"></param>
+        /// <param name="lastModifiedTime"></param>
+        /// <param name="hostAbsolutePath"></param>
         /// <returns></returns>
-        public static string GetHTML(string Url, ref int Type, ref System.DateTime LastModifiedTime, ref string HostAbsolutePath)
+        public static string GetHTML(string url, ref int type, ref System.DateTime lastModifiedTime, ref string hostAbsolutePath)
         {
-            Type = -1;
-            LastModifiedTime = System.DateTime.Now;
-            HostAbsolutePath = "";
+            type = -1;
+            lastModifiedTime = System.DateTime.Now;
+            hostAbsolutePath = "";
 
             HttpWebRequest request;
             HttpWebResponse response = null;
@@ -150,7 +150,7 @@ namespace Shove.HTML
 
             try
             {
-                request = (HttpWebRequest)WebRequest.Create(Url);
+                request = (HttpWebRequest)WebRequest.Create(url);
                 request.UserAgent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; .NET CLR 2.0.50727; .NET CLR 3.0.04506.648; .NET CLR 3.5.21022)";
                 request.Timeout = 30000;
                 request.AllowAutoRedirect = true;
@@ -159,35 +159,35 @@ namespace Shove.HTML
 
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
-                    Type = -1;
+                    type = -1;
                     return "";
                 }
 
-                LastModifiedTime = response.LastModified;
-                HostAbsolutePath = response.ResponseUri.AbsoluteUri;
+                lastModifiedTime = response.LastModified;
+                hostAbsolutePath = response.ResponseUri.AbsoluteUri;
                 string Path = response.ResponseUri.AbsolutePath;
-                int iLocate = Path.LastIndexOf("/");
+                int iLocate = Path.LastIndexOf("/", StringComparison.Ordinal);
                 if (iLocate > 0)
                 {
                     Path = Path.Substring(iLocate, Path.Length - iLocate);
                 }
-                HostAbsolutePath = HostAbsolutePath.Substring(0, HostAbsolutePath.Length - Path.Length).ToLower();
+                hostAbsolutePath = hostAbsolutePath.Substring(0, hostAbsolutePath.Length - Path.Length).ToLower();
 
-                if (response.ContentType.ToLower().StartsWith("image/"))	//是图片
+                if (response.ContentType.ToLower().StartsWith("image/", StringComparison.Ordinal))	//是图片
                 {
-                    Type = 2;
+                    type = 2;
                     return "";
                 }
 
-                if (response.ContentType.ToLower().StartsWith("audio/"))	//是声音
+                if (response.ContentType.ToLower().StartsWith("audio/", StringComparison.Ordinal))	//是声音
                 {
-                    Type = 3;
+                    type = 3;
                     return "";
                 }
 
-                if (!response.ContentType.ToLower().StartsWith("text/"))	//不是文本类型的文档
+                if (!response.ContentType.ToLower().StartsWith("text/", StringComparison.Ordinal))	//不是文本类型的文档
                 {
-                    Type = -1;
+                    type = -1;
                     return "";
                 }
 
@@ -237,7 +237,7 @@ namespace Shove.HTML
             }
             catch
             {
-                Type = -1;
+                type = -1;
                 return "";
             }
             finally
@@ -272,12 +272,12 @@ namespace Shove.HTML
                     if (sLine != null)
                         HTML += sLine;
                 }
-                Type = 1;
+                type = 1;
                 return HTML;
             }
             catch
             {
-                Type = -1;
+                type = -1;
                 return "";
             }
             finally
@@ -302,51 +302,51 @@ namespace Shove.HTML
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="Url"></param>
-        /// <param name="HostAbsolutePath"></param>
+        /// <param name="url"></param>
+        /// <param name="hostAbsolutePath"></param>
         /// <returns></returns>
-        private static string ReBuildUrl(string Url, string HostAbsolutePath)
+        private static string ReBuildUrl(string url, string hostAbsolutePath)
         {
-            Url = Url.Trim().ToLower();
+            url = url.Trim().ToLower();
 
-            if (Url.EndsWith("/"))
-                Url = Url.Substring(0, Url.Length - 1);
+            if (url.EndsWith("/", StringComparison.Ordinal))
+                url = url.Substring(0, url.Length - 1);
 
-            if (Url.StartsWith("http://") || Url.StartsWith("https://"))
-                return Url;
+            if (url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal))
+                return url;
 
-            if (Url.StartsWith("../") || Url.StartsWith("..\\"))
-                //return HostAbsolutePath + "/" + Url.Substring(3, Url.Length - 3);
-                Url = Url.Substring(3, Url.Length - 3);
+            if (url.StartsWith("../", StringComparison.Ordinal) || url.StartsWith("..\\", StringComparison.Ordinal))
+                //return hostAbsolutePath + "/" + Url.Substring(3, Url.Length - 3);
+                url = url.Substring(3, url.Length - 3);
 
-            if (Url.Length > 0)
+            if (url.Length > 0)
             {
-                if (Url.StartsWith("/") || Url.StartsWith("\\"))
-                    Url = HostAbsolutePath + Url;
+                if (url.StartsWith("/", StringComparison.Ordinal) || url.StartsWith("\\", StringComparison.Ordinal))
+                    url = hostAbsolutePath + url;
                 else
-                    Url = HostAbsolutePath + "/" + Url;
+                    url = hostAbsolutePath + "/" + url;
             }
             else
-                Url = HostAbsolutePath;
+                url = hostAbsolutePath;
 
-            return Url;
+            return url;
         }
 
         /// <summary>
         /// 获取 html 包含的所有的链接地址
         /// </summary>
-        /// <param name="Page"></param>
-        /// <param name="HostAbsolutePath"></param>
-        /// <param name="MaxLen"></param>
-        /// <param name="FindUrlLevel"></param>
+        /// <param name="page"></param>
+        /// <param name="hostAbsolutePath"></param>
+        /// <param name="maxLen"></param>
+        /// <param name="findUrlLevel"></param>
         /// <returns></returns>
-        public static string[] GetHTMLUrls(string Page, string HostAbsolutePath, int MaxLen, int FindUrlLevel)
+        public static string[] GetHTMLUrls(string page, string hostAbsolutePath, int maxLen, int findUrlLevel)
         {
             ArrayList m_Url = new ArrayList();
             HtmlParse.ParseHTML parse = new HtmlParse.ParseHTML();
             HtmlParse.Attribute a;
 
-            parse.Source = Page;
+            parse.Source = page;
             while (!parse.Eof())
             {
                 char ch = parse.Parse();
@@ -356,12 +356,12 @@ namespace Shove.HTML
                     if (a != null)
                     {
                         string str = a.Value.Trim().ToLower();
-                        if ((str != "") && (!str.StartsWith("mailto")) && (!str.StartsWith("#")))
+                        if ((str != "") && (!str.StartsWith("mailto", StringComparison.Ordinal)) && (!str.StartsWith("#", StringComparison.Ordinal)))
                         {
-                            if ((FindUrlLevel == 2) || str.StartsWith("http://") || str.StartsWith("https://"))
+                            if ((findUrlLevel == 2) || str.StartsWith("http://", StringComparison.Ordinal) || str.StartsWith("https://", StringComparison.Ordinal))
                             {
-                                str = ReBuildUrl(str, HostAbsolutePath);
-                                if ((MaxLen < 1) || (str.Length <= MaxLen))
+                                str = ReBuildUrl(str, hostAbsolutePath);
+                                if ((maxLen < 1) || (str.Length <= maxLen))
                                     m_Url.Add(str);
                             }
                         }
@@ -373,10 +373,10 @@ namespace Shove.HTML
                         string str = a.Value.Trim().ToLower();
                         if (str != "")
                         {
-                            if ((FindUrlLevel == 2) || str.StartsWith("http://") || str.StartsWith("https://"))
+                            if ((findUrlLevel == 2) || str.StartsWith("http://", StringComparison.Ordinal) || str.StartsWith("https://", StringComparison.Ordinal))
                             {
-                                str = ReBuildUrl(str, HostAbsolutePath);
-                                if ((MaxLen < 1) || (str.Length <= MaxLen))
+                                str = ReBuildUrl(str, hostAbsolutePath);
+                                if ((maxLen < 1) || (str.Length <= maxLen))
                                     m_Url.Add(str);
                             }
                         }
@@ -397,50 +397,50 @@ namespace Shove.HTML
         /// <summary>
         /// 获取 html 包含的所有的链接地址以及链接的 Title
         /// </summary>
-        /// <param name="Page"></param>
-        /// <param name="HostAbsolutePath"></param>
-        /// <param name="HrefMaxLen"></param>
-        /// <param name="DescriptionMaxLen"></param>
-        /// <param name="FindUrlLevel"></param>
+        /// <param name="page"></param>
+        /// <param name="hostAbsolutePath"></param>
+        /// <param name="hrefMaxLen"></param>
+        /// <param name="descriptionMaxLen"></param>
+        /// <param name="findUrlLevel"></param>
         /// <returns></returns>
-        public static string[,] GetHTMLUrlsWithDescription(string Page, string HostAbsolutePath, int HrefMaxLen, int DescriptionMaxLen, int FindUrlLevel)
+        public static string[,] GetHTMLUrlsWithDescription(string page, string hostAbsolutePath, int hrefMaxLen, int descriptionMaxLen, int findUrlLevel)
         {
-            string Title = GetTitle(Page, DescriptionMaxLen);
+            string Title = GetTitle(page, descriptionMaxLen);
 
             ArrayList m_Url = new ArrayList();
             ArrayList m_UrlDescription = new ArrayList();
 
             //找普通链接
             Regex regex = new Regex(@"<a[\s\t\r\n]+[\S\s]*?href[\s\t\r\n]*=[\s\t\r\n]*(?:""(?<href>[^""]*)""|'(?<href>[^']*)'|(?<href>[^\s\t\r\n>]*))[^>]*>(?<title>[\S\s]*?)</a[\s\t\r\n]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            MatchCollection mc = regex.Matches(Page);
+            MatchCollection mc = regex.Matches(page);
             int i;
             for (i = 0; i < mc.Count; i++)
             {
                 string Href = mc[i].Groups["href"].Value.Trim().ToLower();
                 string Description = ClearReplace(mc[i].Groups["title"].Value);
-                if (Href.StartsWith("mailto") || Href.StartsWith("#")) Href = "";
+                if (Href.StartsWith("mailto", StringComparison.Ordinal) || Href.StartsWith("#", StringComparison.Ordinal)) Href = "";
                 bool isUseTitleAsDescription = false;
                 if (Description == "")
                 {
                     Description = Title;
                     isUseTitleAsDescription = true;
                 }
-                else if ((DescriptionMaxLen > 0) && (Description.Length > DescriptionMaxLen))
-                    Description = Description.Substring(0, DescriptionMaxLen);
+                else if ((descriptionMaxLen > 0) && (Description.Length > descriptionMaxLen))
+                    Description = Description.Substring(0, descriptionMaxLen);
 
                 if (Href != "")
                 {
-                    if ((FindUrlLevel == 2) || Href.StartsWith("http://") || Href.StartsWith("https://"))
-                        Href = ReBuildUrl(Href, HostAbsolutePath);
+                    if ((findUrlLevel == 2) || Href.StartsWith("http://", StringComparison.Ordinal) || Href.StartsWith("https://", StringComparison.Ordinal))
+                        Href = ReBuildUrl(Href, hostAbsolutePath);
                     else
                         continue;
-                    if ((HrefMaxLen > 0) && (Href.Length > HrefMaxLen))
+                    if ((hrefMaxLen > 0) && (Href.Length > hrefMaxLen))
                         Href = "";
                 }
                 if (Href == "")
                     continue;
 
-                if ((Description == "") || isUseTitleAsDescription || ((Description.IndexOf("<") < 0) && (Description.IndexOf(">") < 0)))
+                if ((Description == "") || isUseTitleAsDescription || ((Description.IndexOf("<", StringComparison.Ordinal) < 0) && (Description.IndexOf(">", StringComparison.Ordinal) < 0)))
                 {
                     m_Url.Add(Href);
                     m_UrlDescription.Add(Description);
@@ -489,8 +489,8 @@ namespace Shove.HTML
 
                 if (Description.Trim() == "")
                     Description = Title;
-                else if ((DescriptionMaxLen > 0) && (Description.Length > DescriptionMaxLen))
-                    Description = Description.Substring(0, DescriptionMaxLen);
+                else if ((descriptionMaxLen > 0) && (Description.Length > descriptionMaxLen))
+                    Description = Description.Substring(0, descriptionMaxLen);
 
                 m_Url.Add(Href);
                 m_UrlDescription.Add(Description.Trim());
@@ -498,7 +498,7 @@ namespace Shove.HTML
 
             //找图片链接
             regex = new Regex(@"<img[\s\t\r\n]+([^>]*?alt[\s\t\r\n]*=[\s\t\r\n]*(?:""(?<alt>[^""]*)""|'(?<alt>[^']*)'|(?<alt>[^\s\t\r\n>]*)))?[^>]*?src[\s\t\r\n]*=[\s\t\r\n]*(?:""(?<src>[^""]*)""|'(?<src>[^']*)'|(?<src>[^\s\t\r\n>]*))([^>]*?alt[\s\t\r\n]*=[\s\t\r\n]*(?:""(?<alt>[^""]*)""|'(?<alt>[^']*)'|(?<alt>[^\s\t\r\n>]*)))?[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            mc = regex.Matches(Page);
+            mc = regex.Matches(page);
             for (i = 0; i < mc.Count; i++)
             {
                 string Href = mc[i].Groups["src"].Value.Trim().ToLower();
@@ -506,14 +506,14 @@ namespace Shove.HTML
 
                 if (Description == "")
                     Description = Title;
-                else if ((DescriptionMaxLen > 0) && (Description.Length > DescriptionMaxLen))
-                    Description = Description.Substring(0, DescriptionMaxLen);
+                else if ((descriptionMaxLen > 0) && (Description.Length > descriptionMaxLen))
+                    Description = Description.Substring(0, descriptionMaxLen);
 
                 if (Href != "")
                 {
-                    if ((FindUrlLevel == 2) || Href.StartsWith("http://") || Href.StartsWith("https://"))
-                        Href = ReBuildUrl(Href, HostAbsolutePath);
-                    if ((HrefMaxLen > 0) && (Href.Length > HrefMaxLen))
+                    if ((findUrlLevel == 2) || Href.StartsWith("http://", StringComparison.Ordinal) || Href.StartsWith("https://", StringComparison.Ordinal))
+                        Href = ReBuildUrl(Href, hostAbsolutePath);
+                    if ((hrefMaxLen > 0) && (Href.Length > hrefMaxLen))
                         Href = "";
                 }
                 if (Href != "")
@@ -563,18 +563,18 @@ namespace Shove.HTML
             {
                 string s = html.ToUpper();
 
-                if (!s.StartsWith("<HTML"))
+                if (!s.StartsWith("<HTML", StringComparison.Ordinal))
                 {
-                    int l = s.IndexOf("<HTML");
+                    int l = s.IndexOf("<HTML", StringComparison.Ordinal);
                     if (l > 0)
                         html = html.Substring(l, s.Length - l);
                     else
                         html = "<HTML>" + html;
                 }
                 s = html.ToUpper();
-                if (!s.EndsWith("</HTML>"))
+                if (!s.EndsWith("</HTML>", StringComparison.Ordinal))
                 {
-                    int l = s.LastIndexOf("</HTML>");
+                    int l = s.LastIndexOf("</HTML>", StringComparison.Ordinal);
                     if (l > 0)
                         html = html.Substring(0, l) + "</HTML>";
                     else
@@ -621,9 +621,9 @@ namespace Shove.HTML
         /// 获取 Html 文档的 Title 部分
         /// </summary>
         /// <param name="html"></param>
-        /// <param name="MaxLen"></param>
+        /// <param name="maxLen"></param>
         /// <returns></returns>
-        public static string GetTitle(string html, int MaxLen)
+        public static string GetTitle(string html, int maxLen)
         {
             html = html.Trim();
             if (html == "")
@@ -635,19 +635,19 @@ namespace Shove.HTML
             for (int i = 0; i < mc.Count; i++)
                 Result.Append(ClearReplace(mc[i].Groups["title"].Value) + " ");
 
-            if ((MaxLen < 1) || (Result.Length <= MaxLen))
+            if ((maxLen < 1) || (Result.Length <= maxLen))
                 return Result.ToString().Trim();
             else
-                return Result.ToString().Substring(0, MaxLen);
+                return Result.ToString().Substring(0, maxLen);
         }
 
         /// <summary>
         /// 获取 Html 文档的 Keyword 部分
         /// </summary>
         /// <param name="html"></param>
-        /// <param name="MaxLen"></param>
+        /// <param name="maxLen"></param>
         /// <returns></returns>
-        public static string GetKeywords(string html, int MaxLen)
+        public static string GetKeywords(string html, int maxLen)
         {
             if (html.Trim() == "")
                 return "";
@@ -658,19 +658,19 @@ namespace Shove.HTML
             for (int i = 0; i < mc.Count; i++)
                 Result.Append(ClearReplace(mc[i].Groups["content"].Value) + " ");
 
-            if ((MaxLen < 1) || (Result.Length <= MaxLen))
+            if ((maxLen < 1) || (Result.Length <= maxLen))
                 return Result.ToString().Trim();
             else
-                return Result.ToString().Substring(0, MaxLen);
+                return Result.ToString().Substring(0, maxLen);
         }
 
         /// <summary>
         /// 获取 Html 文档的 Description 部分
         /// </summary>
         /// <param name="html"></param>
-        /// <param name="MaxLen"></param>
+        /// <param name="maxLen"></param>
         /// <returns></returns>
-        public static string GetDescription(string html, int MaxLen)
+        public static string GetDescription(string html, int maxLen)
         {
             if (html.Trim() == "")
                 return "";
@@ -681,34 +681,34 @@ namespace Shove.HTML
             for (int i = 0; i < mc.Count; i++)
                 Result.Append(ClearReplace(mc[i].Groups["content"].Value) + " ");
 
-            if ((MaxLen < 1) || (Result.Length <= MaxLen))
+            if ((maxLen < 1) || (Result.Length <= maxLen))
                 return Result.ToString().Trim();
             else
-                return Result.ToString().Substring(0, MaxLen);
+                return Result.ToString().Substring(0, maxLen);
         }
 
         /// <summary>
         /// 获取 Html 文档的纯文字部分，使用前需要用 StandardizationHTML 规范化
         /// </summary>
         /// <param name="html"></param>
-        /// <param name="MaxLen"></param>
+        /// <param name="maxLen"></param>
         /// <returns></returns>
-        public static string GetText(string html, int MaxLen)
+        public static string GetText(string html, int maxLen)
         {
             string Result = GetFromXPath(html, "HTML/BODY");
 
             if (Result != "")
             {
-                if ((MaxLen > 0) && (Result.Length > MaxLen))
-                    return Result.Substring(0, MaxLen);
+                if ((maxLen > 0) && (Result.Length > maxLen))
+                    return Result.Substring(0, maxLen);
                 else
                     return Result;
             }
 
-            int iStart = html.IndexOf("<BODY");
+            int iStart = html.IndexOf("<BODY", StringComparison.Ordinal);
             if (iStart < 0)
                 return "";
-            int iEnd = html.LastIndexOf("</BODY");
+            int iEnd = html.LastIndexOf("</BODY", StringComparison.Ordinal);
             if (iEnd < 0)
                 iEnd = html.Length;
             if (iEnd <= iStart)
@@ -716,8 +716,8 @@ namespace Shove.HTML
 
             html = "<HTML>" + html.Substring(iStart, iEnd - iStart) + "</BODY></HTML>";
             Result = GetFromXPath(html, "HTML/BODY");
-            if ((MaxLen > 0) && (Result.Length > MaxLen))
-                return Result.Substring(0, MaxLen);
+            if ((maxLen > 0) && (Result.Length > maxLen))
+                return Result.Substring(0, maxLen);
             else
                 return Result;
         }
@@ -726,12 +726,12 @@ namespace Shove.HTML
         /// 获取 Html 文档的 Body 部分，使用前需要用 StandardizationHTML 规范化
         /// </summary>
         /// <param name="html"></param>
-        /// <param name="WithBodyTag"></param>
+        /// <param name="withBodyTag"></param>
         /// <returns></returns>
-        public static string GetBody(string html, bool WithBodyTag)
+        public static string GetBody(string html, bool withBodyTag)
         {
             Regex regex;
-            if (WithBodyTag)
+            if (withBodyTag)
                 regex = new Regex(@"(?<body><Body[\S\s]*?>[\S\s]*?</Body>)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
             else
                 regex = new Regex(@"<Body[\S\s]*?>[\s\t\r\n]*(?<body>[\S\s]*?)[\s\t\r\n]*</Body>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -808,40 +808,40 @@ namespace Shove.HTML
         /// <summary>
         /// 将 Html 文档中的关键词用 Color 进行高亮
         /// </summary>
-        /// <param name="Text"></param>
-        /// <param name="Keywords"></param>
-        /// <param name="Color"></param>
+        /// <param name="text"></param>
+        /// <param name="keywords"></param>
+        /// <param name="color"></param>
         /// <returns></returns>
-        public static string SetTextKeywordsHighLight(string Text, string[] Keywords, string Color)
+        public static string SetTextKeywordsHighLight(string text, string[] keywords, string color)
         {
-            if (Text.Trim() == "")
+            if (text.Trim() == "")
                 return "";
 
-            int Len = Keywords.Length;
-            if (Len == 0) return Text;
+            int Len = keywords.Length;
+            if (Len == 0) return text;
 
-            switch (Color.Trim().ToLower())
+            switch (color.Trim().ToLower())
             {
                 case "red":
-                    Color = "FF0000";
+                    color = "FF0000";
                     break;
                 case "green":
-                    Color = "00FF00";
+                    color = "00FF00";
                     break;
                 case "blue":
-                    Color = "0000FF";
+                    color = "0000FF";
                     break;
             }
 
             string RegexStr = "(?:";
             for (int i = 0; i < Len; i++)
             {
-                RegexStr += "(?<Keywords>" + Keywords[i] + ")";
+                RegexStr += "(?<Keywords>" + keywords[i] + ")";
                 if (i < Len - 1) RegexStr += "|";
             }
             RegexStr += ")";
 
-            return Regex.Replace(Text, RegexStr, "<FONT COLOR = \"#" + Color + "\">${Keywords}</FONT>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            return Regex.Replace(text, RegexStr, "<FONT COLOR = \"#" + color + "\">${Keywords}</FONT>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }
     }
 }

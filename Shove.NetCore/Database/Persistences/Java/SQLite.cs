@@ -13,7 +13,7 @@ namespace Shove.Database.Persistences.Java
     {
         private string ConnStr = "";
 
-        string m_DatabaseName;
+        string m_Database;
         string m_Password;
         string m_NamespaceName;
         bool m_isUseConnectionStringConfig;
@@ -26,18 +26,18 @@ namespace Shove.Database.Persistences.Java
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="DatabaseName"></param>
-        /// <param name="Password"></param>
-        /// <param name="NamespaceName"></param>
+        /// <param name="database"></param>
+        /// <param name="password"></param>
+        /// <param name="namespaceName"></param>
         /// <param name="isUseConnectionStringConfig"></param>
         /// <param name="isUseConnectionString"></param>
         /// <param name="isWithTables"></param>
         /// <param name="isWithViews"></param>
-        public SQLite(string DatabaseName, string Password, string NamespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews)
+        public SQLite(string database, string password, string namespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews)
         {
-            m_DatabaseName = DatabaseName;
-            m_Password = Password;
-            m_NamespaceName = NamespaceName.Trim();
+            m_Database = database;
+            m_Password = password;
+            m_NamespaceName = namespaceName.Trim();
             m_isUseConnectionStringConfig = isUseConnectionStringConfig;
             m_isUseConnectionString = isUseConnectionString;
             m_isWithTables = isWithTables;
@@ -57,9 +57,9 @@ namespace Shove.Database.Persistences.Java
                 return "Request a Compent from table or view.";
             }
 
-            ConnStr = Shove.Database.SQLite.BuildConnectString(m_DatabaseName);
+            ConnStr = Database.SQLite.BuildConnectString(m_Database);
 
-            SQLiteConnection conn = Shove.Database.SQLite.CreateDataConnection<SQLiteConnection>(ConnStr);
+            SQLiteConnection conn = DatabaseAccess.CreateDataConnection<SQLiteConnection>(ConnStr);
 
             if (conn == null)
             {
@@ -158,7 +158,7 @@ namespace Shove.Database.Persistences.Java
 
         private void Tables(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.SQLite.Select(ConnStr, "select name, sql from sqlite_master where type = 'table' order by name;");
+            DataTable dt = Database.SQLite.Select(ConnStr, "select name, sql from sqlite_master where type = 'table' order by name;");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -168,14 +168,14 @@ namespace Shove.Database.Persistences.Java
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string TableName = dr["name"].ToString();
+                string tableName = dr["name"].ToString();
 
-                if ((TableName.ToLower() == "sqlite_master") || (TableName.ToLower() == "sqlite_temp_master") || (TableName.ToLower() == "sqlite_sequence"))
+                if ((tableName.ToLower() == "sqlite_master") || (tableName.ToLower() == "sqlite_temp_master") || (tableName.ToLower() == "sqlite_sequence"))
                 {
                     continue;
                 }
 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(TableName) + " extends Table {");
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(tableName) + " extends Table {");
 
                 IList<string[]> cols = SplitParameters(dr["sql"].ToString());
 
@@ -193,14 +193,14 @@ namespace Shove.Database.Persistences.Java
                 for (int j = 0; j < cols.Count; j++)
                 {
                     string[] t_strs = cols[j];
-                    string ColName = t_strs[0];
+                    string colName = t_strs[0];
 
-                    sb.AppendLine("\t\t\tpublic Field " + GetCanonicalIdentifier(ColName) + " = new Field(this, \"" + GetBracketsedObjectName(ColName) + "\", Types." + GetSQLDataType(t_strs[1]) + ", " + ((t_strs[3] == "1") ? "true" : "false") + ");");
+                    sb.AppendLine("\t\t\tpublic Field " + GetCanonicalIdentifier(colName) + " = new Field(this, \"" + GetBracketsedObjectName(colName) + "\", Types." + GetSQLDataType(t_strs[1]) + ", " + ((t_strs[3] == "1") ? "true" : "false") + ");");
                 }
                 sb.AppendLine("");
 
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(TableName) + "() {");
-                sb.AppendLine("\t\t\t\tname = \"" + GetBracketsedObjectName(TableName) + "\";");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(tableName) + "() {");
+                sb.AppendLine("\t\t\t\tname = \"" + GetBracketsedObjectName(tableName) + "\";");
                 sb.AppendLine("\t\t\t}");
                 sb.AppendLine("\t\t}");
 
@@ -213,7 +213,7 @@ namespace Shove.Database.Persistences.Java
 
         private void Views(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.SQLite.Select(ConnStr, "select name from sqlite_master where type = 'view' order by name;");
+            DataTable dt = Database.SQLite.Select(ConnStr, "select name from sqlite_master where type = 'view' order by name;");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -223,11 +223,11 @@ namespace Shove.Database.Persistences.Java
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string ViewName = dr["name"].ToString();
+                string viewName = dr["name"].ToString();
 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(ViewName) + " extends View {");
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(ViewName) + "() {");
-                sb.AppendLine("\t\t\t\tname = \"" + GetBracketsedObjectName(ViewName) + "\";");
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(viewName) + " extends View {");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(viewName) + "() {");
+                sb.AppendLine("\t\t\t\tname = \"" + GetBracketsedObjectName(viewName) + "\";");
                 sb.AppendLine("\t\t\t}");
                 sb.AppendLine("\t\t}");
 
@@ -254,91 +254,91 @@ namespace Shove.Database.Persistences.Java
         private string GetSQLDataType(string SQLType)
         {
             SQLType = SQLType.Trim().ToLower();
-            string Result = "VARCHAR";
+            string result = "VARCHAR";
 
             switch (SQLType)
             {
                 case "smallint":
-                    Result = "SMALLINT";
+                    result = "SMALLINT";
                     break;
                 case "integer":
-                    Result = "INTEGER";
+                    result = "INTEGER";
                     break;
                 case "int":
-                    Result = "INTEGER";
+                    result = "INTEGER";
                     break;
                 case "bigint":
-                    Result = "BIGINT";
+                    result = "BIGINT";
                     break;
                 case "real":
-                    Result = "FLOAT";
+                    result = "FLOAT";
                     break;
                 case "float":
-                    Result = "FLOAT";
+                    result = "FLOAT";
                     break;
                 case "double":
-                    Result = "DOUBLE";
+                    result = "DOUBLE";
                     break;
                 case "decimal":
-                    Result = "DECIMAL";
+                    result = "DECIMAL";
                     break;
                 case "datetime":
-                    Result = "TIMESTAMP";
+                    result = "TIMESTAMP";
                     break;
                 case "timestamp":
-                    Result = "TIMESTAMP";
+                    result = "TIMESTAMP";
                     break;
                 case "char":
-                    Result = "CHAR";
+                    result = "CHAR";
                     break;
                 case "varchar":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "graphic":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "vargraphic":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "text":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "blob":
-                    Result = "BLOB";
+                    result = "BLOB";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
-        private string GetCanonicalIdentifier(string IdentifierName)
+        private string GetCanonicalIdentifier(string identifierName)
         {
-            IdentifierName = IdentifierName.Replace(" ", "_").Replace("[", "_").Replace("]", "_").Replace("\"", "_").Replace("\'", "_").Replace("\t", "");
+            identifierName = identifierName.Replace(" ", "_").Replace("[", "_").Replace("]", "_").Replace("\"", "_").Replace("\'", "_").Replace("\t", "");
 
-            if (IdentifierName.Length > 0)
+            if (identifierName.Length > 0)
             {
-                if ("0123456789".IndexOf(IdentifierName[0]) >= 0)
+                if ("0123456789".IndexOf(identifierName[0]) >= 0)
                 {
-                    IdentifierName = "_" + IdentifierName;
+                    identifierName = "_" + identifierName;
                 }
             }
 
-            if (IdentifierName.StartsWith("\"") && IdentifierName.EndsWith("\""))
+            if (identifierName.StartsWith("\"", System.StringComparison.Ordinal) && identifierName.EndsWith("\"", System.StringComparison.Ordinal))
             {
-                IdentifierName = IdentifierName.Substring(1, IdentifierName.Length - 2);
+                identifierName = identifierName.Substring(1, identifierName.Length - 2);
             }
 
-            if (IdentifierName.StartsWith("[") && IdentifierName.EndsWith("]"))
+            if (identifierName.StartsWith("[", System.StringComparison.Ordinal) && identifierName.EndsWith("]", System.StringComparison.Ordinal))
             {
-                IdentifierName = IdentifierName.Substring(1, IdentifierName.Length - 2);
+                identifierName = identifierName.Substring(1, identifierName.Length - 2);
             }
 
-            if ((IdentifierName == "name") || (IdentifierName == "fields") || (IdentifierName == "this") || (IdentifierName == "super"))
+            if ((identifierName == "name") || (identifierName == "fields") || (identifierName == "this") || (identifierName == "super"))
             {
-                IdentifierName = "_" + IdentifierName;
+                identifierName = "_" + identifierName;
             }
 
-            return IdentifierName;
+            return identifierName;
         }
 
         /// <summary>
@@ -350,12 +350,12 @@ namespace Shove.Database.Persistences.Java
         {
             input = input.Replace("\t", "");
 
-            if (input.StartsWith("\"") && input.EndsWith("\""))
+            if (input.StartsWith("\"", System.StringComparison.Ordinal) && input.EndsWith("\"", System.StringComparison.Ordinal))
             {
                 input = input.Substring(1, input.Length - 2);
             }
 
-            if (!input.StartsWith("[") && !input.EndsWith("]"))
+            if (!input.StartsWith("[", System.StringComparison.Ordinal) && !input.EndsWith("]", System.StringComparison.Ordinal))
                 return "[" + input + "]";
             else
                 return input;
@@ -369,13 +369,13 @@ namespace Shove.Database.Persistences.Java
             string fieldName = "";
             string fieldType = "";
 
-            if (input.StartsWith("["))
+            if (input.StartsWith("[", System.StringComparison.Ordinal))
             {
                 int end = input.LastIndexOf(']');
                 fieldName = input.Substring(1, end - 1);
                 fieldType = input.Substring(end + 1).TrimStart(' ').Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries)[0];
             }
-            else if (input.StartsWith("\""))
+            else if (input.StartsWith("\"", System.StringComparison.Ordinal))
             {
                 int end = input.LastIndexOf('\"');
                 fieldName = input.Substring(1, end - 1);
@@ -392,12 +392,12 @@ namespace Shove.Database.Persistences.Java
 
             if (fieldType.Contains("("))
             {
-                string t = fieldType.Substring(fieldType.IndexOf("("));
+                string t = fieldType.Substring(fieldType.IndexOf("(", System.StringComparison.Ordinal));
                 t = t.Substring(1, t.Length - 2);
 
                 Len = int.Parse(t);
 
-                fieldType = fieldType.Substring(0, fieldType.IndexOf("("));
+                fieldType = fieldType.Substring(0, fieldType.IndexOf("(", System.StringComparison.Ordinal));
             }
 
             return new string[] { fieldName, fieldType, Len.ToString(), (AutoIncrement ? "1" : "0") };
@@ -405,8 +405,8 @@ namespace Shove.Database.Persistences.Java
 
         private IList<string[]> SplitParameters(string input)
         {
-            input = input.Substring(input.IndexOf("(") + 1);
-            input = input.Substring(0, input.LastIndexOf(")"));
+            input = input.Substring(input.IndexOf("(", System.StringComparison.Ordinal) + 1);
+            input = input.Substring(0, input.LastIndexOf(")", System.StringComparison.Ordinal));
 
             string[] strs = input.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 

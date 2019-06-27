@@ -16,9 +16,9 @@ namespace Shove.Database
         /// 参数列表中是否包含了 OracleType.Cursor 类型
         /// </summary>
         /// <returns></returns>
-        private static bool isContainOracleTypeCursor(OracleCommand Cmd)
+        private static bool IsContainOracleTypeCursor(OracleCommand cmd)
         {
-            foreach (OracleParameter p in Cmd.Parameters)
+            foreach (OracleParameter p in cmd.Parameters)
             {
                 if (p.OracleType == OracleType.Cursor)
                 {
@@ -34,23 +34,23 @@ namespace Shove.Database
         /// <summary>
         /// 构建连接串
         /// </summary>
-        /// <param name="ServerName"></param>
+        /// <param name="server"></param>
         /// <returns></returns>
-        public static string BuildConnectString(string ServerName)
+        public static string BuildConnectString(string server)
         {
-            return string.Format("Data Source={0};Integrated Security=yes", ServerName);
+            return string.Format("Data Source={0};Integrated Security=yes", server);
         }
 
         /// <summary>
         /// 构建连接串
         /// </summary>
-        /// <param name="ServerName"></param>
-        /// <param name="UserId"></param>
-        /// <param name="Password"></param>
+        /// <param name="server"></param>
+        /// <param name="uid"></param>
+        /// <param name="password"></param>
         /// <returns></returns>
-        public static string BuildConnectString(string ServerName, string UserId, string Password)
+        public static string BuildConnectString(string server, string uid, string password)
         {
-            return string.Format("Data Source={0};User Id={1};Password={2};Integrated Security=no", ServerName, UserId, Password);
+            return string.Format("Data Source={0};User Id={1};Password={2};Integrated Security=no", server, uid, password);
         }
 
         #endregion
@@ -125,7 +125,7 @@ namespace Shove.Database
             /// <param name="Value"></param>
             public void Add(string Name, object Value)
             {
-                ParametersName.Add(Name.StartsWith(":") ? Name.Substring(1) : Name);
+                ParametersName.Add(Name.StartsWith(":", StringComparison.Ordinal) ? Name.Substring(1) : Name);
                 ParametersValue.Add(Value);
             }
 
@@ -157,9 +157,9 @@ namespace Shove.Database
             /// <summary>
             /// 
             /// </summary>
-            /// <param name="Index"></param>
+            /// <param name="index"></param>
             /// <returns></returns>
-            public object this[int Index]
+            public object this[int index]
             {
                 get
                 {
@@ -173,21 +173,21 @@ namespace Shove.Database
                         return null;
                     }
 
-                    if (Index > ParametersValue.Count - 1)
+                    if (index > ParametersValue.Count - 1)
                     {
                         return null;
                     }
 
-                    return ParametersValue[Index];
+                    return ParametersValue[index];
                 }
             }
 
             /// <summary>
             /// 
             /// </summary>
-            /// <param name="Name"></param>
+            /// <param name="name"></param>
             /// <returns></returns>
-            public object this[string Name]
+            public object this[string name]
             {
                 get
                 {
@@ -198,7 +198,7 @@ namespace Shove.Database
 
                     for (int i = 0; i < ParametersName.Count; i++)
                     {
-                        if (ParametersName[i] == Name)
+                        if (ParametersName[i] == name)
                         {
                             return ParametersValue[i];
                         }
@@ -209,57 +209,57 @@ namespace Shove.Database
             }
         }
 
-        private static void AddParameter(ref OracleCommand Cmd, params Parameter[] Params)
+        private static void AddParameter(ref OracleCommand cmd, params Parameter[] _params)
         {
-            if ((Params == null) || (Cmd == null))
+            if ((_params == null) || (cmd == null))
             {
                 return;
             }
 
-            for (int i = 0; i < Params.Length; i++)
+            for (int i = 0; i < _params.Length; i++)
             {
-                if (Params[i] == null)
+                if (_params[i] == null)
                 {
                     continue;
                 }
 
                 OracleParameter param = new OracleParameter();
-                param.ParameterName = Params[i].Name.StartsWith(":") ? Params[i].Name.Substring(1) : Params[i].Name;
-                param.OracleType = Params[i].Type;
+                param.ParameterName = _params[i].Name.StartsWith(":", StringComparison.Ordinal) ? _params[i].Name.Substring(1) : _params[i].Name;
+                param.OracleType = _params[i].Type;
 
-                if (Params[i].Size > 0)
+                if (_params[i].Size > 0)
                 {
-                    param.Size = Params[i].Size;
+                    param.Size = _params[i].Size;
                 }
 
-                param.Direction = Params[i].Direction;
+                param.Direction = _params[i].Direction;
 
-                if (((Params[i].Direction == ParameterDirection.InputOutput) ||
-                    (Params[i].Direction == ParameterDirection.Input)) &&
-                    (Params[i].Value != null))
+                if (((_params[i].Direction == ParameterDirection.InputOutput) ||
+                    (_params[i].Direction == ParameterDirection.Input)) &&
+                    (_params[i].Value != null))
                 {
-                    param.Value = Params[i].Value;
+                    param.Value = _params[i].Value;
                 }
 
-                Cmd.Parameters.Add(param);
+                cmd.Parameters.Add(param);
             }
         }
 
-        private static void AddOutputParameter(OracleCommand Cmd, ref OutputParameter Outputs)
+        private static void AddOutputParameter(OracleCommand cmd, ref OutputParameter outputs)
         {
-            if (Cmd == null)
+            if (cmd == null)
             {
                 return;
             }
 
-            if (Cmd.Parameters.Count == 0)
+            if (cmd.Parameters.Count == 0)
             {
                 return;
             }
 
-            for (int i = 0; i < Cmd.Parameters.Count; i++)
+            for (int i = 0; i < cmd.Parameters.Count; i++)
             {
-                OracleParameter param = Cmd.Parameters[i];
+                OracleParameter param = cmd.Parameters[i];
 
                 if ((param.Direction != ParameterDirection.InputOutput) &&
                     (param.Direction != ParameterDirection.Output))
@@ -267,25 +267,25 @@ namespace Shove.Database
                     continue;
                 }
 
-                Outputs.Add(param.ParameterName, param.Value);
+                outputs.Add(param.ParameterName, param.Value);
             }
         }
 
-        private static OracleParameter GetReturnParameter(OracleCommand Cmd)
+        private static OracleParameter GetReturnParameter(OracleCommand cmd)
         {
-            if (Cmd == null)
+            if (cmd == null)
             {
                 return null;
             }
 
-            if (Cmd.Parameters.Count == 0)
+            if (cmd.Parameters.Count == 0)
             {
                 return null;
             }
 
-            for (int i = 0; i < Cmd.Parameters.Count; i++)
+            for (int i = 0; i < cmd.Parameters.Count; i++)
             {
-                OracleParameter param = Cmd.Parameters[i];
+                OracleParameter param = cmd.Parameters[i];
 
                 if (param.Direction == ParameterDirection.ReturnValue)
                 {
@@ -303,33 +303,33 @@ namespace Shove.Database
         /// <summary>
         /// 执行数据库命令
         /// </summary>
-        /// <param name="CommandText"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static long ExecuteNonQuery(string CommandText, ref OutputParameter Outputs, params Parameter[] Params)
+        public static long ExecuteNonQuery(string commandText, ref OutputParameter outputs, params Parameter[] _params)
         {
-            return ExecuteNonQuery(GetConnectionStringFromConfig(), CommandText, ref Outputs, Params);
+            return ExecuteNonQuery(GetConnectionStringFromConfig(), commandText, ref outputs, _params);
         }
 
         /// <summary>
         /// 执行数据库命令
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="commandText"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static long ExecuteNonQuery(string ConnectionString, string CommandText, ref OutputParameter Outputs, params Parameter[] Params)
+        public static long ExecuteNonQuery(string connectionString, string commandText, ref OutputParameter outputs, params Parameter[] _params)
         {
-            OracleConnection conn = CreateDataConnection<OracleConnection>(ConnectionString);
+            OracleConnection conn = CreateDataConnection<OracleConnection>(connectionString);
 
             if (conn == null)
             {
                 return -1001;
             }
 
-            long Result = ExecuteNonQuery(conn, CommandText, ref Outputs, Params);
+            long result = ExecuteNonQuery(conn, commandText, ref outputs, _params);
 
             try
             {
@@ -337,29 +337,29 @@ namespace Shove.Database
             }
             catch { }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// 执行数据库命令
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static long ExecuteNonQuery(OracleConnection conn, string CommandText, ref OutputParameter Outputs, params Parameter[] Params)
+        public static long ExecuteNonQuery(OracleConnection conn, string commandText, ref OutputParameter outputs, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return -1001;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -371,8 +371,8 @@ namespace Shove.Database
                 }
             }
 
-            OracleCommand Cmd = new OracleCommand(CommandText, conn);
-            AddParameter(ref Cmd, Params);
+            OracleCommand cmd = new OracleCommand(commandText, conn);
+            AddParameter(ref cmd, _params);
 
             OracleTransaction trans;
             try
@@ -384,12 +384,12 @@ namespace Shove.Database
                 return -1001;
             }
 
-            Cmd.Transaction = trans;
-            long Result = -1002;
+            cmd.Transaction = trans;
+            long result = -1002;
 
             try
             {
-                Result = Cmd.ExecuteNonQuery();
+                result = cmd.ExecuteNonQuery();
                 trans.Commit();
             }
             catch
@@ -400,10 +400,10 @@ namespace Shove.Database
                 }
                 catch { }
 
-                Result = -1002;
+                result = -1002;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -412,35 +412,35 @@ namespace Shove.Database
                 catch { }
             }
 
-            if (Result >= 0)
+            if (result >= 0)
             {
                 // 填写返回参数
-                AddOutputParameter(Cmd, ref Outputs);
+                AddOutputParameter(cmd, ref outputs);
             }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// 执行数据库命令(不用事务)
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static long ExecuteNonQueryNoTranscation(OracleConnection conn, string CommandText, ref OutputParameter Outputs, params Parameter[] Params)
+        public static long ExecuteNonQueryNoTranscation(OracleConnection conn, string commandText, ref OutputParameter outputs, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return -1001;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -452,21 +452,21 @@ namespace Shove.Database
                 }
             }
 
-            OracleCommand Cmd = new OracleCommand(CommandText, conn);
-            AddParameter(ref Cmd, Params);
+            OracleCommand cmd = new OracleCommand(commandText, conn);
+            AddParameter(ref cmd, _params);
 
-            long Result = -1002;
+            long result = -1002;
 
             try
             {
-                Result = Cmd.ExecuteNonQuery();
+                result = cmd.ExecuteNonQuery();
             }
             catch
             {
-                Result = -1002;
+                result = -1002;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -475,13 +475,13 @@ namespace Shove.Database
                 catch { }
             }
 
-            if (Result >= 0)
+            if (result >= 0)
             {
                 // 填写返回参数
-                AddOutputParameter(Cmd, ref Outputs);
+                AddOutputParameter(cmd, ref outputs);
             }
 
-            return Result;
+            return result;
         }
 
         #endregion
@@ -491,31 +491,31 @@ namespace Shove.Database
         /// <summary>
         /// 打开数据集
         /// </summary>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static DataTable Select(string CommandText, params Parameter[] Params)
+        public static DataTable Select(string commandText, params Parameter[] _params)
         {
-            return Select(GetConnectionStringFromConfig(), CommandText, Params);
+            return Select(GetConnectionStringFromConfig(), commandText, _params);
         }
 
         /// <summary>
         /// 打开数据集
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static DataTable Select(string ConnectionString, string CommandText, params Parameter[] Params)
+        public static DataTable Select(string connectionString, string commandText, params Parameter[] _params)
         {
-            OracleConnection conn = CreateDataConnection<OracleConnection>(ConnectionString);
+            OracleConnection conn = CreateDataConnection<OracleConnection>(connectionString);
 
             if (conn == null)
             {
                 return null;
             }
 
-            DataTable dt = Select(conn, CommandText, Params);
+            DataTable dt = Select(conn, commandText, _params);
 
             try
             {
@@ -530,21 +530,21 @@ namespace Shove.Database
         /// 打开数据集
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static DataTable Select(OracleConnection conn, string CommandText, params Parameter[] Params)
+        public static DataTable Select(OracleConnection conn, string commandText, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return null;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -557,26 +557,26 @@ namespace Shove.Database
             }
 
             OracleDataAdapter da = new OracleDataAdapter("", conn);
-            OracleCommand Cmd = new OracleCommand(CommandText, conn);
+            OracleCommand cmd = new OracleCommand(commandText, conn);
 
-            AddParameter(ref Cmd, Params);
-            da.SelectCommand = Cmd;
+            AddParameter(ref cmd, _params);
+            da.SelectCommand = cmd;
 
             DataTable dt = new DataTable();
-            bool Result = false;
+            bool result;
 
             try
             {
                 da.Fill(dt);
 
-                Result = true;
+                result = true;
             }
             catch
             {
-                Result = false;
+                result = false;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -585,7 +585,7 @@ namespace Shove.Database
                 catch { }
             }
 
-            return Result ? dt : null;
+            return result ? dt : null;
         }
 
         #endregion
@@ -595,31 +595,31 @@ namespace Shove.Database
         /// <summary>
         /// 读取第一行第一列
         /// </summary>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteScalar(string CommandText, params Parameter[] Params)
+        public static object ExecuteScalar(string commandText, params Parameter[] _params)
         {
-            return ExecuteScalar(GetConnectionStringFromConfig(), CommandText, Params);
+            return ExecuteScalar(GetConnectionStringFromConfig(), commandText, _params);
         }
 
         /// <summary>
         /// 读取第一行第一列
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteScalar(string ConnectionString, string CommandText, params Parameter[] Params)
+        public static object ExecuteScalar(string connectionString, string commandText, params Parameter[] _params)
         {
-            OracleConnection conn = CreateDataConnection<OracleConnection>(ConnectionString);
+            OracleConnection conn = CreateDataConnection<OracleConnection>(connectionString);
 
             if (conn == null)
             {
                 return null;
             }
 
-            object obj = ExecuteScalar(conn, CommandText, Params);
+            object obj = ExecuteScalar(conn, commandText, _params);
 
             try
             {
@@ -634,21 +634,21 @@ namespace Shove.Database
         /// 读取第一行第一列
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteScalar(OracleConnection conn, string CommandText, params Parameter[] Params)
+        public static object ExecuteScalar(OracleConnection conn, string commandText, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return null;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -660,21 +660,21 @@ namespace Shove.Database
                 }
             }
 
-            OracleCommand Cmd = new OracleCommand(CommandText, conn);
-            AddParameter(ref Cmd, Params);
+            OracleCommand cmd = new OracleCommand(commandText, conn);
+            AddParameter(ref cmd, _params);
 
-            object Result = null;
+            object result;
 
             try
             {
-                Result = Cmd.ExecuteScalar();
+                result = cmd.ExecuteScalar();
             }
             catch
             {
-                Result = null;
+                result = null;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -683,7 +683,7 @@ namespace Shove.Database
                 catch { }
             }
 
-            return Result;
+            return result;
         }
 
         #endregion
@@ -693,37 +693,37 @@ namespace Shove.Database
         /// <summary>
         /// 执行函数
         /// </summary>
-        /// <param name="FunctionName"></param>
-        /// <param name="ReturnDbType"></param>
-        /// <param name="ReturnSize"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="functionName"></param>
+        /// <param name="returnDbType"></param>
+        /// <param name="returnSize"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteFunction(string FunctionName, OracleType ReturnDbType, int ReturnSize, ref OutputParameter Outputs, params Parameter[] Params)
+        public static object ExecuteFunction(string functionName, OracleType returnDbType, int returnSize, ref OutputParameter outputs, params Parameter[] _params)
         {
-            return ExecuteFunction(GetConnectionStringFromConfig(), FunctionName, ReturnDbType, ReturnSize, ref Outputs, Params);
+            return ExecuteFunction(GetConnectionStringFromConfig(), functionName, returnDbType, returnSize, ref outputs, _params);
         }
 
         /// <summary>
         /// 执行函数
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="FunctionName"></param>
-        /// <param name="ReturnDbType"></param>
-        /// <param name="ReturnSize"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="functionName"></param>
+        /// <param name="returnDbType"></param>
+        /// <param name="returnSize"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteFunction(string ConnectionString, string FunctionName, OracleType ReturnDbType, int ReturnSize, ref OutputParameter Outputs, params Parameter[] Params)
+        public static object ExecuteFunction(string connectionString, string functionName, OracleType returnDbType, int returnSize, ref OutputParameter outputs, params Parameter[] _params)
         {
-            OracleConnection conn = CreateDataConnection<OracleConnection>(ConnectionString);
+            OracleConnection conn = CreateDataConnection<OracleConnection>(connectionString);
 
             if (conn == null)
             {
                 return null;
             }
 
-            object obj = ExecuteFunction(conn, FunctionName, ReturnDbType, ReturnSize, ref Outputs, Params);
+            object obj = ExecuteFunction(conn, functionName, returnDbType, returnSize, ref outputs, _params);
 
             try
             {
@@ -738,24 +738,24 @@ namespace Shove.Database
         /// 执行函数
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="FunctionName"></param>
-        /// <param name="ReturnDbType"></param>
-        /// <param name="ReturnSize"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="functionName"></param>
+        /// <param name="returnDbType"></param>
+        /// <param name="returnSize"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteFunction(OracleConnection conn, string FunctionName, OracleType ReturnDbType, int ReturnSize, ref OutputParameter Outputs, params Parameter[] Params)
+        public static object ExecuteFunction(OracleConnection conn, string functionName, OracleType returnDbType, int returnSize, ref OutputParameter outputs, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return null;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -767,15 +767,15 @@ namespace Shove.Database
                 }
             }
 
-            string ObjectNamePreFix = System.Configuration.ConfigurationManager.AppSettings["ObjectNamePreFix_Function"];
+            string objectNamePreFix = System.Configuration.ConfigurationManager.AppSettings["ObjectNamePreFix_Function"];
 
-            OracleCommand Cmd = new OracleCommand((string.IsNullOrEmpty(ObjectNamePreFix) ? "" : ObjectNamePreFix) + FunctionName, conn);
-            Cmd.CommandType = CommandType.StoredProcedure;
-            AddParameter(ref Cmd, Params);
+            OracleCommand cmd = new OracleCommand((string.IsNullOrEmpty(objectNamePreFix) ? "" : objectNamePreFix) + functionName, conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            AddParameter(ref cmd, _params);
 
-            Cmd.Parameters.Add("ReturnValue", ReturnDbType, ReturnSize).Direction = ParameterDirection.ReturnValue;
+            cmd.Parameters.Add("ReturnValue", returnDbType, returnSize).Direction = ParameterDirection.ReturnValue;
 
-            if (isContainOracleTypeCursor(Cmd))
+            if (IsContainOracleTypeCursor(cmd))
             {
                 throw new Exception("Shove.Database.Oracle.ExecuteFunction 方法的参数、返回参数都不能包含 OracleType.Cursor 类型，包含了此类型时，必须通过 Shove.Database.Oracle.ExecuteFunctionWithQuery 方法执行。");
             }
@@ -790,15 +790,15 @@ namespace Shove.Database
                 return null;
             }
 
-            Cmd.Transaction = trans;
-            bool Result = false;
+            cmd.Transaction = trans;
+            bool result;
 
             try
             {
-                Cmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
                 trans.Commit();
 
-                Result = true;
+                result = true;
             }
             catch
             {
@@ -808,10 +808,10 @@ namespace Shove.Database
                 }
                 catch { }
 
-                Result = false;
+                result = false;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -820,13 +820,13 @@ namespace Shove.Database
                 catch { }
             }
 
-            if (Result)
+            if (result)
             {
                 // 填写返回参数
-                AddOutputParameter(Cmd, ref Outputs);
+                AddOutputParameter(cmd, ref outputs);
             }
 
-            return Result ? Cmd.Parameters["ReturnValue"].Value : null;
+            return result ? cmd.Parameters["ReturnValue"].Value : null;
         }
 
         #endregion
@@ -836,39 +836,39 @@ namespace Shove.Database
         /// <summary>
         /// 执行函数，返回结果集
         /// </summary>
-        /// <param name="FunctionName"></param>
-        /// <param name="ReturnDbType"></param>
-        /// <param name="ReturnSize"></param>
-        /// <param name="ReturnDataSet"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="functionName"></param>
+        /// <param name="returnDbType"></param>
+        /// <param name="returnSize"></param>
+        /// <param name="returnDataSet"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteFunctionWithQuery(string FunctionName, OracleType ReturnDbType, int ReturnSize, ref DataSet ReturnDataSet, ref OutputParameter Outputs, params Parameter[] Params)
+        public static object ExecuteFunctionWithQuery(string functionName, OracleType returnDbType, int returnSize, ref DataSet returnDataSet, ref OutputParameter outputs, params Parameter[] _params)
         {
-            return ExecuteFunctionWithQuery(GetConnectionStringFromConfig(), FunctionName, ReturnDbType, ReturnSize, ref ReturnDataSet, ref Outputs, Params);
+            return ExecuteFunctionWithQuery(GetConnectionStringFromConfig(), functionName, returnDbType, returnSize, ref returnDataSet, ref outputs, _params);
         }
 
         /// <summary>
         /// 执行函数，返回结果集
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="FunctionName"></param>
-        /// <param name="ReturnDbType"></param>
-        /// <param name="ReturnSize"></param>
-        /// <param name="ReturnDataSet"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="functionName"></param>
+        /// <param name="returnDbType"></param>
+        /// <param name="returnSize"></param>
+        /// <param name="returnDataSet"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteFunctionWithQuery(string ConnectionString, string FunctionName, OracleType ReturnDbType, int ReturnSize, ref DataSet ReturnDataSet, ref OutputParameter Outputs, params Parameter[] Params)
+        public static object ExecuteFunctionWithQuery(string connectionString, string functionName, OracleType returnDbType, int returnSize, ref DataSet returnDataSet, ref OutputParameter outputs, params Parameter[] _params)
         {
-            OracleConnection conn = CreateDataConnection<OracleConnection>(ConnectionString);
+            OracleConnection conn = CreateDataConnection<OracleConnection>(connectionString);
 
             if (conn == null)
             {
                 return null;
             }
 
-            object obj = ExecuteFunctionWithQuery(conn, FunctionName, ReturnDbType, ReturnSize, ref ReturnDataSet, ref Outputs, Params);
+            object obj = ExecuteFunctionWithQuery(conn, functionName, returnDbType, returnSize, ref returnDataSet, ref outputs, _params);
 
             try
             {
@@ -883,25 +883,25 @@ namespace Shove.Database
         /// 执行函数，返回结果集
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="FunctionName"></param>
-        /// <param name="ReturnDbType"></param>
-        /// <param name="ReturnSize"></param>
-        /// <param name="ReturnDataSet"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="functionName"></param>
+        /// <param name="returnDbType"></param>
+        /// <param name="returnSize"></param>
+        /// <param name="returnDataSet"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteFunctionWithQuery(OracleConnection conn, string FunctionName, OracleType ReturnDbType, int ReturnSize, ref DataSet ReturnDataSet, ref OutputParameter Outputs, params Parameter[] Params)
+        public static object ExecuteFunctionWithQuery(OracleConnection conn, string functionName, OracleType returnDbType, int returnSize, ref DataSet returnDataSet, ref OutputParameter outputs, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return null;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -913,14 +913,14 @@ namespace Shove.Database
                 }
             }
 
-            string ObjectNamePreFix = System.Configuration.ConfigurationManager.AppSettings["ObjectNamePreFix_Function"];
+            string objectNamePreFix = System.Configuration.ConfigurationManager.AppSettings["ObjectNamePreFix_Function"];
 
-            OracleDataAdapter da = new OracleDataAdapter((string.IsNullOrEmpty(ObjectNamePreFix) ? "" : ObjectNamePreFix) + FunctionName, conn);
-            OracleCommand Cmd = da.SelectCommand;
-            Cmd.CommandType = CommandType.StoredProcedure;
-            AddParameter(ref Cmd, Params);
+            OracleDataAdapter da = new OracleDataAdapter((string.IsNullOrEmpty(objectNamePreFix) ? "" : objectNamePreFix) + functionName, conn);
+            OracleCommand cmd = da.SelectCommand;
+            cmd.CommandType = CommandType.StoredProcedure;
+            AddParameter(ref cmd, _params);
 
-            Cmd.Parameters.Add("ReturnValue", ReturnDbType, ReturnSize).Direction = ParameterDirection.ReturnValue;
+            cmd.Parameters.Add("ReturnValue", returnDbType, returnSize).Direction = ParameterDirection.ReturnValue;
 
             OracleTransaction trans;
             try
@@ -932,20 +932,20 @@ namespace Shove.Database
                 return null;
             }
 
-            if (ReturnDataSet == null)
+            if (returnDataSet == null)
             {
-                ReturnDataSet = new DataSet();
+                returnDataSet = new DataSet();
             }
 
-            Cmd.Transaction = trans;
-            bool Result = false;
+            cmd.Transaction = trans;
+            bool result;
 
             try
             {
-                da.Fill(ReturnDataSet);
+                da.Fill(returnDataSet);
                 trans.Commit();
 
-                Result = true;
+                result = true;
             }
             catch
             {
@@ -955,10 +955,10 @@ namespace Shove.Database
                 }
                 catch { }
 
-                Result = false;
+                result = false;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -967,13 +967,13 @@ namespace Shove.Database
                 catch { }
             }
 
-            if (Result)
+            if (result)
             {
                 // 填写返回参数
-                AddOutputParameter(Cmd, ref Outputs);
+                AddOutputParameter(cmd, ref outputs);
             }
 
-            return Result ? Cmd.Parameters["ReturnValue"].Value : null;
+            return result ? cmd.Parameters["ReturnValue"].Value : null;
         }
 
         #endregion
@@ -983,33 +983,33 @@ namespace Shove.Database
         /// <summary>
         /// 执行存储过程
         /// </summary>
-        /// <param name="ProcedureName"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="procedureName"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteProcedure(string ProcedureName, ref OutputParameter Outputs, params Parameter[] Params)
+        public static int ExecuteProcedure(string procedureName, ref OutputParameter outputs, params Parameter[] _params)
         {
-            return ExecuteProcedure(GetConnectionStringFromConfig(), ProcedureName, ref Outputs, Params);
+            return ExecuteProcedure(GetConnectionStringFromConfig(), procedureName, ref outputs, _params);
         }
 
         /// <summary>
         /// 执行存储过程
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="ProcedureName"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="procedureName"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteProcedure(string ConnectionString, string ProcedureName, ref OutputParameter Outputs, params Parameter[] Params)
+        public static int ExecuteProcedure(string connectionString, string procedureName, ref OutputParameter outputs, params Parameter[] _params)
         {
-            OracleConnection conn = CreateDataConnection<OracleConnection>(ConnectionString);
+            OracleConnection conn = CreateDataConnection<OracleConnection>(connectionString);
 
             if (conn == null)
             {
                 return -1001;
             }
 
-            int Result = ExecuteProcedure(conn, ProcedureName, ref Outputs, Params);
+            int result = ExecuteProcedure(conn, procedureName, ref outputs, _params);
 
             try
             {
@@ -1017,29 +1017,29 @@ namespace Shove.Database
             }
             catch { }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// 执行存储过程
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="ProcedureName"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="procedureName"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteProcedure(OracleConnection conn, string ProcedureName, ref OutputParameter Outputs, params Parameter[] Params)
+        public static int ExecuteProcedure(OracleConnection conn, string procedureName, ref OutputParameter outputs, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return -1001;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -1051,13 +1051,13 @@ namespace Shove.Database
                 }
             }
 
-            string ObjectNamePreFix = System.Configuration.ConfigurationManager.AppSettings["ObjectNamePreFix_Procedure"];
+            string objectNamePreFix = System.Configuration.ConfigurationManager.AppSettings["ObjectNamePreFix_Procedure"];
 
-            OracleCommand Cmd = new OracleCommand((string.IsNullOrEmpty(ObjectNamePreFix) ? "" : ObjectNamePreFix) + ProcedureName, conn);
-            Cmd.CommandType = CommandType.StoredProcedure;
-            AddParameter(ref Cmd, Params);
+            OracleCommand cmd = new OracleCommand((string.IsNullOrEmpty(objectNamePreFix) ? "" : objectNamePreFix) + procedureName, conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            AddParameter(ref cmd, _params);
 
-            if (isContainOracleTypeCursor(Cmd))
+            if (IsContainOracleTypeCursor(cmd))
             {
                 throw new Exception("Shove.Database.Oracle.ExecuteProcedure 方法的参数不能包含 OracleType.Cursor 类型，包含了此类型时，必须通过 Shove.Database.Oracle.ExecuteProcedureWithQuery 方法执行。");
             }
@@ -1072,15 +1072,15 @@ namespace Shove.Database
                 return -1003;
             }
 
-            Cmd.Transaction = trans;
-            bool Result = false;
+            cmd.Transaction = trans;
+            bool result;
 
             try
             {
-                Cmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
                 trans.Commit();
 
-                Result = true;
+                result = true;
             }
             catch
             {
@@ -1090,10 +1090,10 @@ namespace Shove.Database
                 }
                 catch { }
 
-                Result = false;
+                result = false;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -1102,13 +1102,13 @@ namespace Shove.Database
                 catch { }
             }
 
-            if (Result)
+            if (result)
             {
                 // 填写返回参数
-                AddOutputParameter(Cmd, ref Outputs);
+                AddOutputParameter(cmd, ref outputs);
             }
 
-            return Result ? 0 : -1004;
+            return result ? 0 : -1004;
         }
 
         #endregion
@@ -1118,35 +1118,35 @@ namespace Shove.Database
         /// <summary>
         /// 执行存储过程，返回结果集
         /// </summary>
-        /// <param name="ProcedureName"></param>
-        /// <param name="ReturnDataSet"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="procedureName"></param>
+        /// <param name="returnDataSet"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteProcedureWithQuery(string ProcedureName, ref DataSet ReturnDataSet, ref OutputParameter Outputs, params Parameter[] Params)
+        public static int ExecuteProcedureWithQuery(string procedureName, ref DataSet returnDataSet, ref OutputParameter outputs, params Parameter[] _params)
         {
-            return ExecuteProcedureWithQuery(GetConnectionStringFromConfig(), ProcedureName, ref ReturnDataSet, ref Outputs, Params);
+            return ExecuteProcedureWithQuery(GetConnectionStringFromConfig(), procedureName, ref returnDataSet, ref outputs, _params);
         }
 
         /// <summary>
         /// 执行存储过程，返回结果集
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="ProcedureName"></param>
-        /// <param name="ReturnDataSet"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="procedureName"></param>
+        /// <param name="returnDataSet"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteProcedureWithQuery(string ConnectionString, string ProcedureName, ref DataSet ReturnDataSet, ref OutputParameter Outputs, params Parameter[] Params)
+        public static int ExecuteProcedureWithQuery(string connectionString, string procedureName, ref DataSet returnDataSet, ref OutputParameter outputs, params Parameter[] _params)
         {
-            OracleConnection conn = CreateDataConnection<OracleConnection>(ConnectionString);
+            OracleConnection conn = CreateDataConnection<OracleConnection>(connectionString);
 
             if (conn == null)
             {
                 return -1001;
             }
 
-            int Result = ExecuteProcedureWithQuery(conn, ProcedureName, ref ReturnDataSet, ref Outputs, Params);
+            int result = ExecuteProcedureWithQuery(conn, procedureName, ref returnDataSet, ref outputs, _params);
 
             try
             {
@@ -1154,30 +1154,30 @@ namespace Shove.Database
             }
             catch { }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// 执行存储过程，返回结果集
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="ProcedureName"></param>
-        /// <param name="ReturnDataSet"></param>
-        /// <param name="Outputs"></param>
-        /// <param name="Params"></param>
+        /// <param name="procedureName"></param>
+        /// <param name="returnDataSet"></param>
+        /// <param name="outputs"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteProcedureWithQuery(OracleConnection conn, string ProcedureName, ref DataSet ReturnDataSet, ref OutputParameter Outputs, params Parameter[] Params)
+        public static int ExecuteProcedureWithQuery(OracleConnection conn, string procedureName, ref DataSet returnDataSet, ref OutputParameter outputs, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return -1001;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -1189,12 +1189,12 @@ namespace Shove.Database
                 }
             }
 
-            string ObjectNamePreFix = System.Configuration.ConfigurationManager.AppSettings["ObjectNamePreFix_Procedure"];
+            string objectNamePreFix = System.Configuration.ConfigurationManager.AppSettings["ObjectNamePreFix_Procedure"];
 
-            OracleDataAdapter da = new OracleDataAdapter((string.IsNullOrEmpty(ObjectNamePreFix) ? "" : ObjectNamePreFix) + ProcedureName, conn);
-            OracleCommand Cmd = da.SelectCommand;
-            Cmd.CommandType = CommandType.StoredProcedure;
-            AddParameter(ref Cmd, Params);
+            OracleDataAdapter da = new OracleDataAdapter((string.IsNullOrEmpty(objectNamePreFix) ? "" : objectNamePreFix) + procedureName, conn);
+            OracleCommand cmd = da.SelectCommand;
+            cmd.CommandType = CommandType.StoredProcedure;
+            AddParameter(ref cmd, _params);
 
             OracleTransaction trans;
             try
@@ -1206,20 +1206,20 @@ namespace Shove.Database
                 return -1003;
             }
 
-            if (ReturnDataSet == null)
+            if (returnDataSet == null)
             {
-                ReturnDataSet = new DataSet();
+                returnDataSet = new DataSet();
             }
 
-            Cmd.Transaction = trans;
-            bool Result = false;
+            cmd.Transaction = trans;
+            bool result;
 
             try
             {
-                da.Fill(ReturnDataSet);
+                da.Fill(returnDataSet);
                 trans.Commit();
 
-                Result = true;
+                result = true;
             }
             catch
             {
@@ -1229,10 +1229,10 @@ namespace Shove.Database
                 }
                 catch { }
 
-                Result = false;
+                result = false;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -1241,13 +1241,13 @@ namespace Shove.Database
                 catch { }
             }
 
-            if (Result)
+            if (result)
             {
                 // 填写返回参数
-                AddOutputParameter(Cmd, ref Outputs);
+                AddOutputParameter(cmd, ref outputs);
             }
 
-            return Result ? 0 : -1004;
+            return result ? 0 : -1004;
         }
 
         #endregion
@@ -1266,18 +1266,18 @@ namespace Shove.Database
         /// <summary>
         /// 备份数据库(表数据库 XML 描述，压缩为二进制流)
         /// </summary>
-        /// <param name="ConnectionString"></param>
+        /// <param name="connectionString"></param>
         /// <returns></returns>
-        public static byte[] BackupDataToZipStream(string ConnectionString)
+        public static byte[] BackupDataToZipStream(string connectionString)
         {
-            OracleConnection conn = CreateDataConnection<OracleConnection>(ConnectionString);
+            OracleConnection conn = CreateDataConnection<OracleConnection>(connectionString);
 
             if (conn == null)
             {
                 return null;
             }
 
-            byte[] Result = BackupDataToZipStream(conn);
+            byte[] result = BackupDataToZipStream(conn);
 
             try
             {
@@ -1285,7 +1285,7 @@ namespace Shove.Database
             }
             catch { }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
@@ -1300,11 +1300,11 @@ namespace Shove.Database
                 return null;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -1320,7 +1320,7 @@ namespace Shove.Database
 
             if (dt == null)
             {
-                if (!InitOpenState)
+                if (!initOpenState)
                 {
                     try
                     {
@@ -1342,7 +1342,7 @@ namespace Shove.Database
 
                 if (Table == null)
                 {
-                    if (!InitOpenState)
+                    if (!initOpenState)
                     {
                         try
                         {
@@ -1358,7 +1358,7 @@ namespace Shove.Database
                 ds.Tables.Add(Table);
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -1377,29 +1377,29 @@ namespace Shove.Database
         /// <summary>
         /// 恢复数据库(从二进制压缩流中提取表数据库的 XML 进行恢复)
         /// </summary>
-        /// <param name="DataBuffer"></param>
+        /// <param name="dataBuffer"></param>
         /// <returns></returns>
-        public static int RestoreDataFromZipStream(byte[] DataBuffer)
+        public static int RestoreDataFromZipStream(byte[] dataBuffer)
         {
-            return RestoreDataFromZipStream(GetConnectionStringFromConfig(), DataBuffer);
+            return RestoreDataFromZipStream(GetConnectionStringFromConfig(), dataBuffer);
         }
 
         /// <summary>
         /// 恢复数据库(从二进制压缩流中提取表数据库的 XML 进行恢复)
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="DataBuffer"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="dataBuffer"></param>
         /// <returns></returns>
-        public static int RestoreDataFromZipStream(string ConnectionString, byte[] DataBuffer)
+        public static int RestoreDataFromZipStream(string connectionString, byte[] dataBuffer)
         {
-            OracleConnection conn = CreateDataConnection<OracleConnection>(ConnectionString);
+            OracleConnection conn = CreateDataConnection<OracleConnection>(connectionString);
 
             if (conn == null)
             {
                 return -1001;
             }
 
-            int Result = RestoreDataFromZipStream(conn, DataBuffer);
+            int result = RestoreDataFromZipStream(conn, dataBuffer);
 
             try
             {
@@ -1407,27 +1407,27 @@ namespace Shove.Database
             }
             catch { }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// 恢复数据库(从二进制压缩流中提取表数据库的 XML 进行恢复)
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="DataBuffer"></param>
+        /// <param name="dataBuffer"></param>
         /// <returns></returns>
-        public static int RestoreDataFromZipStream(OracleConnection conn, byte[] DataBuffer)
+        public static int RestoreDataFromZipStream(OracleConnection conn, byte[] dataBuffer)
         {
             if (conn == null)
             {
                 return -1001;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -1439,10 +1439,10 @@ namespace Shove.Database
                 }
             }
 
-            string XmlData = String.Decompress(DataBuffer);
+            string XmlData = String.Decompress(dataBuffer);
             if (string.IsNullOrEmpty(XmlData))
             {
-                if (!InitOpenState)
+                if (!initOpenState)
                 {
                     try
                     {
@@ -1463,7 +1463,7 @@ namespace Shove.Database
             }
             catch
             {
-                if (!InitOpenState)
+                if (!initOpenState)
                 {
                     try
                     {
@@ -1477,7 +1477,7 @@ namespace Shove.Database
 
             if ((ds == null) || (ds.Tables.Count < 1))
             {
-                if (!InitOpenState)
+                if (!initOpenState)
                 {
                     try
                     {
@@ -1500,15 +1500,15 @@ namespace Shove.Database
                 return -1001;
             }
 
-            bool Result = false;
+            bool result;
 
             try
             {
                 foreach (DataTable dt in ds.Tables)
                 {
-                    OracleCommand Cmd = new OracleCommand("delete from " + dt.TableName, conn);
-                    Cmd.Transaction = trans;
-                    Cmd.ExecuteNonQuery();
+                    OracleCommand cmd = new OracleCommand("delete from " + dt.TableName, conn);
+                    cmd.Transaction = trans;
+                    cmd.ExecuteNonQuery();
 
                     OracleDataAdapter da = new OracleDataAdapter("select * from " + dt.TableName, conn);
                     System.Data.DataTable dtUpdate = new System.Data.DataTable();
@@ -1533,17 +1533,17 @@ namespace Shove.Database
                 }
 
                 trans.Commit();
-                Result = true;
+                result = true;
             }
             catch//(Exception ee)
             {
                 trans.Rollback();
-                Result = false;
+                result = false;
 
                 //System.Web.HttpContext.Current.Response.Write(ee.Message);
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -1552,7 +1552,7 @@ namespace Shove.Database
                 catch { }
             }
 
-            return Result ? 0 : -1005;
+            return result ? 0 : -1005;
         }
 
         #endregion
@@ -1643,13 +1643,13 @@ namespace Shove.Database
             /// </summary>
             /// <param name="parent"></param>
             /// <param name="name"></param>
-            /// <param name="canonicalidentifiername"></param>
+            /// <param name="canonicalIdentifierName"></param>
             /// <param name="dbtype"></param>
-            public Field(object parent, string name, string canonicalidentifiername, OracleType dbtype)
+            public Field(object parent, string name, string canonicalIdentifierName, OracleType dbtype)
             {
                 Parent = parent;
                 Name = name;
-                CanonicalIdentifierName = canonicalidentifiername;
+                CanonicalIdentifierName = canonicalIdentifierName;
                 DbType = dbtype;
             }
         }
@@ -1692,18 +1692,18 @@ namespace Shove.Database
             /// <summary>
             /// 
             /// </summary>
-            /// <param name="Index"></param>
+            /// <param name="index"></param>
             /// <returns></returns>
-            public Field this[int Index]
+            public Field this[int index]
             {
                 get
                 {
-                    if ((Count < 1) || (Index < 0) || (Index > Count))
+                    if ((Count < 1) || (index < 0) || (index > Count))
                     {
                         return null;
                     }
 
-                    return fields[Index];
+                    return fields[index];
                 }
             }
         }
@@ -1727,51 +1727,51 @@ namespace Shove.Database
             /// <summary>
             /// 打开表
             /// </summary>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(string FieldList, string Condition, string Order)
+            public DataTable Open(string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select("select " + (FieldList == "" ? "*" : FieldList) + " from " + TableName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select("select " + (fieldList == "" ? "*" : fieldList) + " from " + TableName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             /// <summary>
             /// 打开表
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(string ConnectionString, string FieldList, string Condition, string Order)
+            public DataTable Open(string connectionString, string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select(ConnectionString, "select " + (FieldList == "" ? "*" : FieldList) + " from " + TableName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select(connectionString, "select " + (fieldList == "" ? "*" : fieldList) + " from " + TableName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             /// <summary>
             /// 打开表
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(OracleConnection conn, string FieldList, string Condition, string Order)
+            public DataTable Open(OracleConnection conn, string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select(conn, "select " + (FieldList == "" ? "*" : FieldList) + " from " + TableName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select(conn, "select " + (fieldList == "" ? "*" : fieldList) + " from " + TableName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             #endregion
@@ -1781,60 +1781,60 @@ namespace Shove.Database
             /// <summary>
             /// 获取表记录数
             /// </summary>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(string Condition)
+            public long GetCount(string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar("select count(*) from " + TableName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar("select count(*) from " + TableName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             /// <summary>
             /// 获取表记录数
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="Condition"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(string ConnectionString, string Condition)
+            public long GetCount(string connectionString, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar(ConnectionString, "select count(*) from " + TableName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar(connectionString, "select count(*) from " + TableName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             /// <summary>
             /// 获取表记录数
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(OracleConnection conn, string Condition)
+            public long GetCount(OracleConnection conn, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar(conn, "select count(*) from " + TableName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar(conn, "select count(*) from " + TableName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             #endregion
@@ -1884,26 +1884,26 @@ namespace Shove.Database
                     }
                 }
 
-                string CommandText = "begin insert into " + TableName + " (" + InsertFieldsList + ") values (" + InsertValuesList + "); select " + (string.IsNullOrEmpty(FirstSequenceName) ? "0" : FirstSequenceName + ".currval") + " into :ShoveOracleReturnSequenceId from dual;end;";
+                string commandText = "begin insert into " + TableName + " (" + InsertFieldsList + ") values (" + InsertValuesList + "); select " + (string.IsNullOrEmpty(FirstSequenceName) ? "0" : FirstSequenceName + ".currval") + " into :ShoveOracleReturnSequenceId from dual;end;";
 
                 Parameters.Add(new Parameter("ShoveOracleReturnSequenceId", OracleType.Int32, 0, ParameterDirection.Output, 0));
                 Parameter[] t_Parameters = new Parameter[Parameters.Count];
                 Parameters.CopyTo(t_Parameters, 0);
 
-                OutputParameter Outputs = new OutputParameter();
-                long Result = ExecuteNonQuery(CommandText, ref Outputs, t_Parameters);
+                OutputParameter outputs = new OutputParameter();
+                long result = ExecuteNonQuery(commandText, ref outputs, t_Parameters);
 
                 Fields.Clear();
 
-                return (Result < 0) ? Result : System.Convert.ToInt64(Outputs["ShoveOracleReturnSequenceId"]);
+                return (result < 0) ? result : System.Convert.ToInt64(outputs["ShoveOracleReturnSequenceId"]);
             }
 
             /// <summary>
             /// 增加记录
             /// </summary>
-            /// <param name="ConnectionString"></param>
+            /// <param name="connectionString"></param>
             /// <returns>小于0表示失败，0表示成功，无自增值，大于0表示自增值(赋值时赋值的第一个自增字段)</returns>
-            public long Insert(string ConnectionString)
+            public long Insert(string connectionString)
             {
                 if (Fields.Count < 1)
                 {
@@ -1942,18 +1942,18 @@ namespace Shove.Database
                     }
                 }
 
-                string CommandText = "begin insert into " + TableName + " (" + InsertFieldsList + ") values (" + InsertValuesList + "); select " + (string.IsNullOrEmpty(FirstSequenceName) ? "0" : FirstSequenceName + ".currval") + " into :ShoveOracleReturnSequenceId from dual;end;";
+                string commandText = "begin insert into " + TableName + " (" + InsertFieldsList + ") values (" + InsertValuesList + "); select " + (string.IsNullOrEmpty(FirstSequenceName) ? "0" : FirstSequenceName + ".currval") + " into :ShoveOracleReturnSequenceId from dual;end;";
 
                 Parameters.Add(new Parameter("ShoveOracleReturnSequenceId", OracleType.Int32, 0, ParameterDirection.Output, 0));
                 Parameter[] t_Parameters = new Parameter[Parameters.Count];
                 Parameters.CopyTo(t_Parameters, 0);
 
-                OutputParameter Outputs = new OutputParameter();
-                long Result = ExecuteNonQuery(ConnectionString, CommandText, ref Outputs, t_Parameters);
+                OutputParameter outputs = new OutputParameter();
+                long result = ExecuteNonQuery(connectionString, commandText, ref outputs, t_Parameters);
 
                 Fields.Clear();
 
-                return (Result < 0) ? Result : System.Convert.ToInt64(Outputs["ShoveOracleReturnSequenceId"]);
+                return (result < 0) ? result : System.Convert.ToInt64(outputs["ShoveOracleReturnSequenceId"]);
             }
 
             /// <summary>
@@ -2000,18 +2000,18 @@ namespace Shove.Database
                     }
                 }
 
-                string CommandText = "begin insert into " + TableName + " (" + InsertFieldsList + ") values (" + InsertValuesList + "); select " + (string.IsNullOrEmpty(FirstSequenceName) ? "0" : FirstSequenceName + ".currval") + " into :ShoveOracleReturnSequenceId from dual;end;";
+                string commandText = "begin insert into " + TableName + " (" + InsertFieldsList + ") values (" + InsertValuesList + "); select " + (string.IsNullOrEmpty(FirstSequenceName) ? "0" : FirstSequenceName + ".currval") + " into :ShoveOracleReturnSequenceId from dual;end;";
 
                 Parameters.Add(new Parameter("ShoveOracleReturnSequenceId", OracleType.Int32, 0, ParameterDirection.Output, 0));
                 Parameter[] t_Parameters = new Parameter[Parameters.Count];
                 Parameters.CopyTo(t_Parameters, 0);
 
-                OutputParameter Outputs = new OutputParameter();
-                long Result = ExecuteNonQuery(conn, CommandText, ref Outputs, t_Parameters);
+                OutputParameter outputs = new OutputParameter();
+                long result = ExecuteNonQuery(conn, commandText, ref outputs, t_Parameters);
 
                 Fields.Clear();
 
-                return (Result < 0) ? Result : System.Convert.ToInt64(Outputs["ShoveOracleReturnSequenceId"]);
+                return (result < 0) ? result : System.Convert.ToInt64(outputs["ShoveOracleReturnSequenceId"]);
             }
 
             #endregion
@@ -2021,54 +2021,54 @@ namespace Shove.Database
             /// <summary>
             /// 删除表记录
             /// </summary>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Delete(string Condition)
+            public long Delete(string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                OutputParameter Outputs = new OutputParameter();
-                long Result = ExecuteNonQuery("delete from " + TableName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)), ref Outputs);
+                OutputParameter outputs = new OutputParameter();
+                long result = ExecuteNonQuery("delete from " + TableName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)), ref outputs);
 
                 Fields.Clear();
 
-                return Result;
+                return result;
             }
 
             /// <summary>
             /// 删除表记录
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="Condition"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Delete(string ConnectionString, string Condition)
+            public long Delete(string connectionString, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                OutputParameter Outputs = new OutputParameter();
-                long Result = ExecuteNonQuery(ConnectionString, "delete from " + TableName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)), ref Outputs);
+                OutputParameter outputs = new OutputParameter();
+                long result = ExecuteNonQuery(connectionString, "delete from " + TableName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)), ref outputs);
 
                 Fields.Clear();
 
-                return Result;
+                return result;
             }
 
             /// <summary>
             /// 删除表记录
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Delete(OracleConnection conn, string Condition)
+            public long Delete(OracleConnection conn, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                OutputParameter Outputs = new OutputParameter();
-                long Result = ExecuteNonQuery(conn, "delete from " + TableName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)), ref Outputs);
+                OutputParameter outputs = new OutputParameter();
+                long result = ExecuteNonQuery(conn, "delete from " + TableName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)), ref outputs);
 
                 Fields.Clear();
 
-                return Result;
+                return result;
             }
 
             #endregion
@@ -2078,162 +2078,162 @@ namespace Shove.Database
             /// <summary>
             /// 更新表
             /// </summary>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Update(string Condition)
+            public long Update(string condition)
             {
                 if (Fields.Count < 1)
                 {
                     return -101;
                 }
 
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                string CommandText = "update " + TableName + " set ";
+                string commandText = "update " + TableName + " set ";
                 IList<Parameter> Parameters = new List<Parameter>();
 
                 for (int i = 0; i < Fields.Count; i++)
                 {
                     if (i > 0)
                     {
-                        CommandText += ", ";
+                        commandText += ", ";
                     }
 
-                    CommandText += Fields[i].Name + " = ";
+                    commandText += Fields[i].Name + " = ";
 
                     if (!string.IsNullOrEmpty(Fields[i].SequenceName))
                     {
-                        CommandText += Fields[i].SequenceName + ".nextval";
+                        commandText += Fields[i].SequenceName + ".nextval";
                     }
                     else
                     {
-                        CommandText += ":" + Fields[i].CanonicalIdentifierName;
+                        commandText += ":" + Fields[i].CanonicalIdentifierName;
                         Parameters.Add(new Parameter(Fields[i].CanonicalIdentifierName, Fields[i].DbType, 0, ParameterDirection.Input, Fields[i].Value));
                     }
                 }
 
-                if (!string.IsNullOrEmpty(Condition))
+                if (!string.IsNullOrEmpty(condition))
                 {
-                    CommandText += " where " + FilteSqlInfusionForCondition(Condition);
+                    commandText += " where " + FilteSqlInfusionForCondition(condition);
                 }
 
                 Parameter[] t_Parameters = new Parameter[Parameters.Count];
                 Parameters.CopyTo(t_Parameters, 0);
 
-                OutputParameter Outputs = new OutputParameter();
-                long Result = ExecuteNonQuery(CommandText, ref Outputs, t_Parameters);
+                OutputParameter outputs = new OutputParameter();
+                long result = ExecuteNonQuery(commandText, ref outputs, t_Parameters);
 
                 Fields.Clear();
 
-                return Result;
+                return result;
             }
 
             /// <summary>
             /// 更新表
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="Condition"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Update(string ConnectionString, string Condition)
+            public long Update(string connectionString, string condition)
             {
                 if (Fields.Count < 1)
                 {
                     return -101;
                 }
 
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                string CommandText = "update " + TableName + " set ";
+                string commandText = "update " + TableName + " set ";
                 IList<Parameter> Parameters = new List<Parameter>();
 
                 for (int i = 0; i < Fields.Count; i++)
                 {
                     if (i > 0)
                     {
-                        CommandText += ", ";
+                        commandText += ", ";
                     }
 
-                    CommandText += Fields[i].Name + " = ";
+                    commandText += Fields[i].Name + " = ";
 
                     if (!string.IsNullOrEmpty(Fields[i].SequenceName))
                     {
-                        CommandText += Fields[i].SequenceName + ".nextval";
+                        commandText += Fields[i].SequenceName + ".nextval";
                     }
                     else
                     {
-                        CommandText += ":" + Fields[i].CanonicalIdentifierName;
+                        commandText += ":" + Fields[i].CanonicalIdentifierName;
                         Parameters.Add(new Parameter(Fields[i].CanonicalIdentifierName, Fields[i].DbType, 0, ParameterDirection.Input, Fields[i].Value));
                     }
                 }
 
-                if (!string.IsNullOrEmpty(Condition))
+                if (!string.IsNullOrEmpty(condition))
                 {
-                    CommandText += " where " + FilteSqlInfusionForCondition(Condition);
+                    commandText += " where " + FilteSqlInfusionForCondition(condition);
                 }
 
                 Parameter[] t_Parameters = new Parameter[Parameters.Count];
                 Parameters.CopyTo(t_Parameters, 0);
 
-                OutputParameter Outputs = new OutputParameter();
-                long Result = ExecuteNonQuery(ConnectionString, CommandText, ref Outputs, t_Parameters);
+                OutputParameter outputs = new OutputParameter();
+                long result = ExecuteNonQuery(connectionString, commandText, ref outputs, t_Parameters);
 
                 Fields.Clear();
 
-                return Result;
+                return result;
             }
 
             /// <summary>
             /// 更新表
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Update(OracleConnection conn, string Condition)
+            public long Update(OracleConnection conn, string condition)
             {
                 if (Fields.Count < 1)
                 {
                     return -101;
                 }
 
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                string CommandText = "update " + TableName + " set ";
+                string commandText = "update " + TableName + " set ";
                 IList<Parameter> Parameters = new List<Parameter>();
 
                 for (int i = 0; i < Fields.Count; i++)
                 {
                     if (i > 0)
                     {
-                        CommandText += ", ";
+                        commandText += ", ";
                     }
 
-                    CommandText += Fields[i].Name + " = ";
+                    commandText += Fields[i].Name + " = ";
 
                     if (!string.IsNullOrEmpty(Fields[i].SequenceName))
                     {
-                        CommandText += Fields[i].SequenceName + ".nextval";
+                        commandText += Fields[i].SequenceName + ".nextval";
                     }
                     else
                     {
-                        CommandText += ":" + Fields[i].CanonicalIdentifierName;
+                        commandText += ":" + Fields[i].CanonicalIdentifierName;
                         Parameters.Add(new Parameter(Fields[i].CanonicalIdentifierName, Fields[i].DbType, 0, ParameterDirection.Input, Fields[i].Value));
                     }
                 }
 
-                if (!string.IsNullOrEmpty(Condition))
+                if (!string.IsNullOrEmpty(condition))
                 {
-                    CommandText += " where " + FilteSqlInfusionForCondition(Condition);
+                    commandText += " where " + FilteSqlInfusionForCondition(condition);
                 }
 
                 Parameter[] t_Parameters = new Parameter[Parameters.Count];
                 Parameters.CopyTo(t_Parameters, 0);
 
-                OutputParameter Outputs = new OutputParameter();
-                long Result = ExecuteNonQuery(conn, CommandText, ref Outputs, t_Parameters);
+                OutputParameter outputs = new OutputParameter();
+                long result = ExecuteNonQuery(conn, commandText, ref outputs, t_Parameters);
 
                 Fields.Clear();
 
-                return Result;
+                return result;
             }
 
             #endregion
@@ -2248,7 +2248,7 @@ namespace Shove.Database
             /// 视图名称
             /// </summary>
             public string ViewName = "";
-            string ObjectNamePreFix
+            string objectNamePreFix
             {
                 get
                 {
@@ -2260,110 +2260,110 @@ namespace Shove.Database
             /// <summary>
             /// 打开视图
             /// </summary>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(string FieldList, string Condition, string Order)
+            public DataTable Open(string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select("select " + (FieldList == "" ? "*" : FieldList) + " from " + ObjectNamePreFix + ViewName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select("select " + (fieldList == "" ? "*" : fieldList) + " from " + objectNamePreFix + ViewName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             /// <summary>
             /// 打开视图
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(string ConnectionString, string FieldList, string Condition, string Order)
+            public DataTable Open(string connectionString, string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select(ConnectionString, "select " + (FieldList == "" ? "*" : FieldList) + " from " + ObjectNamePreFix + ViewName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select(connectionString, "select " + (fieldList == "" ? "*" : fieldList) + " from " + objectNamePreFix + ViewName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             /// <summary>
             /// 打开视图
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(OracleConnection conn, string FieldList, string Condition, string Order)
+            public DataTable Open(OracleConnection conn, string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select(conn, "select " + (FieldList == "" ? "*" : FieldList) + " from " + ObjectNamePreFix + ViewName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select(conn, "select " + (fieldList == "" ? "*" : fieldList) + " from " + objectNamePreFix + ViewName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             /// <summary>
             /// 获取视图记录数
             /// </summary>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(string Condition)
+            public long GetCount(string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar("select count(*) from " + ObjectNamePreFix + ViewName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar("select count(*) from " + objectNamePreFix + ViewName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             /// <summary>
             /// 获取视图记录数
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="Condition"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(string ConnectionString, string Condition)
+            public long GetCount(string connectionString, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar(ConnectionString, "select count(*) from " + ObjectNamePreFix + ViewName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar(connectionString, "select count(*) from " + objectNamePreFix + ViewName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             /// <summary>
             /// 获取视图记录数
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(OracleConnection conn, string Condition)
+            public long GetCount(OracleConnection conn, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar(conn, "select count(*) from " + ObjectNamePreFix + ViewName + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar(conn, "select count(*) from " + objectNamePreFix + ViewName + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
         }
 

@@ -13,7 +13,7 @@ namespace Shove.Database.Persistences
     {
         private string ConnStr = "";
 
-        string m_DatabaseName;
+        string m_Database;
         string m_Password;
         string m_NamespaceName;
         bool m_isUseConnectionStringConfig;
@@ -26,18 +26,18 @@ namespace Shove.Database.Persistences
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="DatabaseName"></param>
-        /// <param name="Password"></param>
-        /// <param name="NamespaceName"></param>
+        /// <param name="database"></param>
+        /// <param name="password"></param>
+        /// <param name="namespaceName"></param>
         /// <param name="isUseConnectionStringConfig"></param>
         /// <param name="isUseConnectionString"></param>
         /// <param name="isWithTables"></param>
         /// <param name="isWithViews"></param>
-        public SQLite(string DatabaseName, string Password, string NamespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews)
+        public SQLite(string database, string password, string namespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews)
         {
-            m_DatabaseName = DatabaseName;
-            m_Password = Password;
-            m_NamespaceName = NamespaceName.Trim();
+            m_Database = database;
+            m_Password = password;
+            m_NamespaceName = namespaceName.Trim();
             m_isUseConnectionStringConfig = isUseConnectionStringConfig;
             m_isUseConnectionString = isUseConnectionString;
             m_isWithTables = isWithTables;
@@ -57,9 +57,9 @@ namespace Shove.Database.Persistences
                 return "Request a Compent from table or view.";
             }
 
-            ConnStr = Shove.Database.SQLite.BuildConnectString(m_DatabaseName);
+            ConnStr = Database.SQLite.BuildConnectString(m_Database);
 
-            SQLiteConnection conn = Shove.Database.SQLite.CreateDataConnection<SQLiteConnection>(ConnStr);
+            SQLiteConnection conn = DatabaseAccess.CreateDataConnection<SQLiteConnection>(ConnStr);
 
             if (conn == null)
             {
@@ -156,7 +156,7 @@ namespace Shove.Database.Persistences
 
         private void Tables(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.SQLite.Select(ConnStr, "select name, sql from sqlite_master where type = 'table' order by name;");
+            DataTable dt = Database.SQLite.Select(ConnStr, "select name, sql from sqlite_master where type = 'table' order by name;");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -166,14 +166,14 @@ namespace Shove.Database.Persistences
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string TableName = dr["name"].ToString();
+                string tableName = dr["name"].ToString();
 
-                if ((TableName.ToLower() == "sqlite_master") || (TableName.ToLower() == "sqlite_temp_master") || (TableName.ToLower() == "sqlite_sequence"))
+                if ((tableName.ToLower() == "sqlite_master") || (tableName.ToLower() == "sqlite_temp_master") || (tableName.ToLower() == "sqlite_sequence"))
                 {
                     continue;
                 }
 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(TableName) + " : SQLite.TableBase");
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(tableName) + " : SQLite.TableBase");
                 sb.AppendLine("\t\t{");
 
                 IList<string[]> cols = SplitParameters(dr["sql"].ToString());
@@ -192,23 +192,23 @@ namespace Shove.Database.Persistences
                 for (int j = 0; j < cols.Count; j++)
                 {
                     string[] t_strs = cols[j];
-                    string ColName = t_strs[0];
+                    string colName = t_strs[0];
 
-                    sb.AppendLine("\t\t\tpublic SQLite.Field " + GetCanonicalIdentifier(ColName) + ";");
+                    sb.AppendLine("\t\t\tpublic SQLite.Field " + GetCanonicalIdentifier(colName) + ";");
                 }
                 sb.AppendLine("");
 
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(TableName) + "()");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(tableName) + "()");
                 sb.AppendLine("\t\t\t{");
-                sb.AppendLine("\t\t\t\tTableName = \"" + GetBracketsedObjectName(TableName) + "\";");
+                sb.AppendLine("\t\t\t\tTableName = \"" + GetBracketsedObjectName(tableName) + "\";");
                 sb.AppendLine("");
 
                 for (int j = 0; j < cols.Count; j++)
                 {
                     string[] t_strs = cols[j];
-                    string ColName = t_strs[0];
+                    string colName = t_strs[0];
 
-                    sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(ColName) + " = new SQLite.Field(this, \"" + GetBracketsedObjectName(ColName) + "\", \"" + GetCanonicalIdentifier(ColName) + "\", DbType." + GetSQLDataType(t_strs[1]) + ", " + ((t_strs[3] == "1") ? "true" : "false") + ");");
+                    sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(colName) + " = new SQLite.Field(this, \"" + GetBracketsedObjectName(colName) + "\", \"" + GetCanonicalIdentifier(colName) + "\", DbType." + GetSQLDataType(t_strs[1]) + ", " + ((t_strs[3] == "1") ? "true" : "false") + ");");
                 }
 
                 sb.AppendLine("\t\t\t}");
@@ -223,7 +223,7 @@ namespace Shove.Database.Persistences
 
         private void Views(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.SQLite.Select(ConnStr, "select name from sqlite_master where type = 'view' order by name;");
+            DataTable dt = Database.SQLite.Select(ConnStr, "select name from sqlite_master where type = 'view' order by name;");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -233,13 +233,13 @@ namespace Shove.Database.Persistences
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string ViewName = dr["name"].ToString();
+                string viewName = dr["name"].ToString();
 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(ViewName) + " : SQLite.ViewBase");
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(viewName) + " : SQLite.ViewBase");
                 sb.AppendLine("\t\t{");
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(ViewName) + "()");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(viewName) + "()");
                 sb.AppendLine("\t\t\t{");
-                sb.AppendLine("\t\t\t\tViewName = \"" + GetBracketsedObjectName(ViewName) + "\";");
+                sb.AppendLine("\t\t\t\tViewName = \"" + GetBracketsedObjectName(viewName) + "\";");
                 sb.AppendLine("\t\t\t}");
                 sb.AppendLine("\t\t}");
 
@@ -261,182 +261,182 @@ namespace Shove.Database.Persistences
         private string GetDataType(string SQLType)
         {
             SQLType = SQLType.Trim().ToLower();
-            string Result = "string";
+            string result = "string";
 
             switch (SQLType)
             {
                 case "smallint":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "integer":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "int":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "bigint":
-                    Result = "long";
+                    result = "long";
                     break;
                 case "real":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "float":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "double":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "decimal":
-                    Result = "Decimal";
+                    result = "Decimal";
                     break;
                 case "datetime":
-                    Result = "DateTime";
+                    result = "DateTime";
                     break;
                 case "timestamp":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "char":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "varchar":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "graphic":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "vargraphic":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "text":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "blob":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
         private DbType GetSQLDataType(string SQLType)
         {
             SQLType = SQLType.Trim().ToLower();
-            DbType Result = DbType.String;
+            DbType result = DbType.String;
 
             switch (SQLType)
             {
                 case "smallint":
-                    Result = DbType.Int32;
+                    result = DbType.Int32;
                     break;
                 case "integer":
-                    Result = DbType.Int32;
+                    result = DbType.Int32;
                     break;
                 case "int":
-                    Result = DbType.Int32;
+                    result = DbType.Int32;
                     break;
                 case "bigint":
-                    Result = DbType.Int64;
+                    result = DbType.Int64;
                     break;
                 case "real":
-                    Result = DbType.Double;
+                    result = DbType.Double;
                     break;
                 case "float":
-                    Result = DbType.Double;
+                    result = DbType.Double;
                     break;
                 case "double":
-                    Result = DbType.Double;
+                    result = DbType.Double;
                     break;
                 case "decimal":
-                    Result = DbType.Decimal;
+                    result = DbType.Decimal;
                     break;
                 case "datetime":
-                    Result = DbType.DateTime;
+                    result = DbType.DateTime;
                     break;
                 case "timestamp":
-                    Result = DbType.String;
+                    result = DbType.String;
                     break;
                 case "char":
-                    Result = DbType.String;
+                    result = DbType.String;
                     break;
                 case "varchar":
-                    Result = DbType.String;
+                    result = DbType.String;
                     break;
                 case "graphic":
-                    Result = DbType.String;
+                    result = DbType.String;
                     break;
                 case "vargraphic":
-                    Result = DbType.String;
+                    result = DbType.String;
                     break;
                 case "text":
-                    Result = DbType.String;
+                    result = DbType.String;
                     break;
                 case "blob":
-                    Result = DbType.Binary;
+                    result = DbType.Binary;
                     break;
             }
 
-            return Result;
+            return result;
         }
 
-        private string GetDataTypeForConvert(string Type)
+        private string GetDataTypeForConvert(string type)
         {
-            Type = Type.Trim().ToLower();
-            string Result = "System.Convert.ToString";
+            type = type.Trim().ToLower();
+            string result = "System.Convert.ToString";
 
-            switch (Type)
+            switch (type)
             {
                 case "long":
-                    Result = "System.Convert.ToInt64";
+                    result = "System.Convert.ToInt64";
                     break;
                 case "bool":
-                    Result = "System.Convert.ToBoolean";
+                    result = "System.Convert.ToBoolean";
                     break;
                 case "string":
-                    Result = "System.Convert.ToString";
+                    result = "System.Convert.ToString";
                     break;
                 case "datetime":
-                    Result = "System.Convert.ToDateTime";
+                    result = "System.Convert.ToDateTime";
                     break;
                 case "double":
-                    Result = "System.Convert.ToDouble";
+                    result = "System.Convert.ToDouble";
                     break;
                 case "int":
-                    Result = "System.Convert.ToInt32";
+                    result = "System.Convert.ToInt32";
                     break;
                 case "short":
-                    Result = "System.Convert.ToInt16";
+                    result = "System.Convert.ToInt16";
                     break;
                 case "byte[]":
-                    Result = "(byte[])";
+                    result = "(byte[])";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
-        private string GetCanonicalIdentifier(string IdentifierName)
+        private string GetCanonicalIdentifier(string identifierName)
         {
-            IdentifierName = IdentifierName.Replace(" ", "_").Replace("[", "_").Replace("]", "_").Replace("\"", "_").Replace("\'", "_").Replace("\t", "");
+            identifierName = identifierName.Replace(" ", "_").Replace("[", "_").Replace("]", "_").Replace("\"", "_").Replace("\'", "_").Replace("\t", "");
 
-            if (IdentifierName.Length > 0)
+            if (identifierName.Length > 0)
             {
-                if ("0123456789".IndexOf(IdentifierName[0]) >= 0)
+                if ("0123456789".IndexOf(identifierName[0]) >= 0)
                 {
-                    IdentifierName = "_" + IdentifierName;
+                    identifierName = "_" + identifierName;
                 }
             }
 
-            if (IdentifierName.StartsWith("\"") && IdentifierName.EndsWith("\""))
+            if (identifierName.StartsWith("\"", StringComparison.Ordinal) && identifierName.EndsWith("\"", StringComparison.Ordinal))
             {
-                IdentifierName = IdentifierName.Substring(1, IdentifierName.Length - 2);
+                identifierName = identifierName.Substring(1, identifierName.Length - 2);
             }
 
-            if (IdentifierName.StartsWith("[") && IdentifierName.EndsWith("]"))
+            if (identifierName.StartsWith("[", StringComparison.Ordinal) && identifierName.EndsWith("]", StringComparison.Ordinal))
             {
-                IdentifierName = IdentifierName.Substring(1, IdentifierName.Length - 2);
+                identifierName = identifierName.Substring(1, identifierName.Length - 2);
             }
 
-            return IdentifierName;
+            return identifierName;
         }
 
         /// <summary>
@@ -448,12 +448,12 @@ namespace Shove.Database.Persistences
         {
             input = input.Replace("\t", "");
 
-            if (input.StartsWith("\"") && input.EndsWith("\""))
+            if (input.StartsWith("\"", StringComparison.Ordinal) && input.EndsWith("\"", StringComparison.Ordinal))
             {
                 input = input.Substring(1, input.Length - 2);
             }
 
-            if (input.StartsWith("[") && input.EndsWith("]"))
+            if (input.StartsWith("[", StringComparison.Ordinal) && input.EndsWith("]", StringComparison.Ordinal))
             {
                 input = input.Substring(1, input.Length - 2);
             }
@@ -469,13 +469,13 @@ namespace Shove.Database.Persistences
             string fieldName = "";
             string fieldType = "";
 
-            if (input.StartsWith("["))
+            if (input.StartsWith("[", StringComparison.Ordinal))
             {
                 int end = input.LastIndexOf(']');
                 fieldName = input.Substring(1, end - 1);
                 fieldType = input.Substring(end + 1).TrimStart(' ').Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries)[0];
             }
-            else if (input.StartsWith("\""))
+            else if (input.StartsWith("\"", StringComparison.Ordinal))
             {
                 int end = input.LastIndexOf('\"');
                 fieldName = input.Substring(1, end - 1);
@@ -492,12 +492,12 @@ namespace Shove.Database.Persistences
 
             if (fieldType.Contains("("))
             {
-                string t = fieldType.Substring(fieldType.IndexOf("("));
+                string t = fieldType.Substring(fieldType.IndexOf("(", StringComparison.Ordinal));
                 t = t.Substring(1, t.Length - 2);
 
                 Len = int.Parse(t);
 
-                fieldType = fieldType.Substring(0, fieldType.IndexOf("("));
+                fieldType = fieldType.Substring(0, fieldType.IndexOf("(", StringComparison.Ordinal));
             }
 
             return new string[] { fieldName, fieldType, Len.ToString(), (AutoIncrement ? "1" : "0") };
@@ -505,8 +505,8 @@ namespace Shove.Database.Persistences
 
         private IList<string[]> SplitParameters(string input)
         {
-            input = input.Substring(input.IndexOf("(") + 1);
-            input = input.Substring(0, input.LastIndexOf(")"));
+            input = input.Substring(input.IndexOf("(", StringComparison.Ordinal) + 1);
+            input = input.Substring(0, input.LastIndexOf(")", StringComparison.Ordinal));
 
             string[] strs = input.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 

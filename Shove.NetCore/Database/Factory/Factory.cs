@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
-using MySql.Data.MySqlClient;
-using System.Data.SQLite;
-using System.Text.RegularExpressions;
 using System.IO;
 
 
@@ -54,7 +49,7 @@ namespace Shove.DatabaseFactory
         /// <returns></returns>
         public static string FilteSqlInfusionForCondition(string input)
         {
-            if (true)//[shove] (Shove.Web.Security.InjectionInterceptor.__SYS_SHOVE_FLAG_IsUsed_InjectionInterceptor)
+            if (true)//[shove] (Web.Security.InjectionInterceptor.__SYS_SHOVE_FLAG_IsUsed_InjectionInterceptor)
             {
                 return input;
             }
@@ -101,19 +96,19 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 初始化，打开数据库连接。(直接给定连接串，而不是从配置文件读取)
         /// </summary>
-        /// <param name="InitConnectionString"></param>
-        public Factory(string InitConnectionString)
+        /// <param name="initConnectionString"></param>
+        public Factory(string initConnectionString)
         {
-            InitConnectionString = InitConnectionString.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' });
+            initConnectionString = initConnectionString.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' });
 
-            if (string.IsNullOrEmpty(InitConnectionString))
+            if (string.IsNullOrEmpty(initConnectionString))
             {
                 ConnectionString = System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
                 ConnectionString = ConnectionString.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' });
             }
             else
             {
-                ConnectionString = InitConnectionString;
+                ConnectionString = initConnectionString;
             }
 
             if (this is SQLite)
@@ -143,30 +138,30 @@ namespace Shove.DatabaseFactory
             string _DatabaseReadOnly = System.Configuration.ConfigurationManager.AppSettings["DatabaseReadOnly"];
             string _DatabaseStateLastModifyDateTime = System.Configuration.ConfigurationManager.AppSettings["DatabaseStateLastModifyDateTime"];
             string _DatabaseReadOnlyTimeout = System.Configuration.ConfigurationManager.AppSettings["DatabaseReadOnlyTimeout"];
-            bool DatabaseReadOnly = false;
-            DateTime DatabaseStateLastModifyDateTime = DateTime.Now;
-            int DatabaseReadOnlyTimeout = 120;
+            bool databaseReadOnly = false;
+            DateTime databaseStateLastModifyDateTime = DateTime.Now;
+            int databaseReadOnlyTimeout = 120;
             
-            if (!bool.TryParse(_DatabaseReadOnly, out DatabaseReadOnly))
+            if (!bool.TryParse(_DatabaseReadOnly, out databaseReadOnly))
             {
-                DatabaseReadOnly = false;
+                databaseReadOnly = false;
             }
 
-            if (!DateTime.TryParse(_DatabaseStateLastModifyDateTime, out DatabaseStateLastModifyDateTime))
+            if (!DateTime.TryParse(_DatabaseStateLastModifyDateTime, out databaseStateLastModifyDateTime))
             {
-                DatabaseStateLastModifyDateTime = DateTime.Now;
+                databaseStateLastModifyDateTime = DateTime.Now;
             }
 
-            if (!int.TryParse(_DatabaseReadOnlyTimeout, out DatabaseReadOnlyTimeout))
+            if (!int.TryParse(_DatabaseReadOnlyTimeout, out databaseReadOnlyTimeout))
             {
-                DatabaseReadOnlyTimeout = 120;
+                databaseReadOnlyTimeout = 120;
             }
 
-            if (DatabaseReadOnly)
+            if (databaseReadOnly)
             {
-                TimeSpan ts = DateTime.Now - DatabaseStateLastModifyDateTime;
+                TimeSpan ts = DateTime.Now - databaseStateLastModifyDateTime;
 
-                if (ts.TotalMinutes < DatabaseReadOnlyTimeout)
+                if (ts.TotalMinutes < databaseReadOnlyTimeout)
                 {
                     DatabaseReadOnlyState = true;
                 }
@@ -323,18 +318,18 @@ namespace Shove.DatabaseFactory
             /// <summary>
             /// 字段索引
             /// </summary>
-            /// <param name="Index"></param>
+            /// <param name="index"></param>
             /// <returns></returns>
-            public string this[int Index]
+            public string this[int index]
             {
                 get
                 {
-                    if ((Index < 0) || (Index >= Count))
+                    if ((index < 0) || (index >= Count))
                     {
                         return null;
                     }
 
-                    return Fields[Index];
+                    return Fields[index];
                 }
             }
         }
@@ -393,29 +388,29 @@ namespace Shove.DatabaseFactory
             /// <summary>
             /// 字段值索引
             /// </summary>
-            /// <param name="Index"></param>
+            /// <param name="index"></param>
             /// <returns></returns>
-            public object this[int Index]
+            public object this[int index]
             {
                 get
                 {
-                    if ((Index < 0) || (Index >= Count))
+                    if ((index < 0) || (index >= Count))
                     {
                         return null;
                     }
 
-                    object value = Values[Index];
+                    object value = Values[index];
                     
                     return value;
                 }
                 set
                 {
-                    if ((Index < 0) || (Index >= Count))
+                    if ((index < 0) || (index >= Count))
                     {
                         throw new IndexOutOfRangeException();
                     }
 
-                    Values[Index] = value;
+                    Values[index] = value;
                 }
             }
         }
@@ -462,14 +457,14 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 打开表或视图
         /// </summary>
-        /// <param name="TableOrViewName"></param>
+        /// <param name="tableOrViewName"></param>
         /// <param name="fieldCollent"></param>
-        /// <param name="Condition"></param>
-        /// <param name="OrderBy"></param>
-        /// <param name="LimitStart"></param>
-        /// <param name="LimitCount"></param>
+        /// <param name="condition"></param>
+        /// <param name="orderBy"></param>
+        /// <param name="limitStart"></param>
+        /// <param name="limitCount"></param>
         /// <returns></returns>
-        protected virtual DataTable __Open(string TableOrViewName, FieldCollect fieldCollent, string Condition, string OrderBy, int LimitStart, int LimitCount)
+        protected virtual DataTable __Open(string tableOrViewName, FieldCollect fieldCollent, string condition, string orderBy, int limitStart, int limitCount)
         {
             return null;
         }
@@ -477,16 +472,16 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 打开表或视图
         /// </summary>
-        /// <param name="TableOrViewName"></param>
+        /// <param name="tableOrViewName"></param>
         /// <param name="fieldCollent"></param>
-        /// <param name="Condition"></param>
-        /// <param name="OrderBy"></param>
-        /// <param name="LimitStart"></param>
-        /// <param name="LimitCount"></param>
+        /// <param name="condition"></param>
+        /// <param name="orderBy"></param>
+        /// <param name="limitStart"></param>
+        /// <param name="limitCount"></param>
         /// <returns></returns>
-        public DataTable Open(string TableOrViewName, FieldCollect fieldCollent, string Condition, string OrderBy, int LimitStart, int LimitCount)
+        public DataTable Open(string tableOrViewName, FieldCollect fieldCollent, string condition, string orderBy, int limitStart, int limitCount)
         {
-            return this.__Open(TableOrViewName, fieldCollent, Condition, OrderBy, LimitStart, LimitCount);
+            return this.__Open(tableOrViewName, fieldCollent, condition, orderBy, limitStart, limitCount);
         }
 
         #endregion
@@ -496,10 +491,10 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 获取符合条件的记录数
         /// </summary>
-        /// <param name="TableOrViewName"></param>
-        /// <param name="Condition"></param>
+        /// <param name="tableOrViewName"></param>
+        /// <param name="condition"></param>
         /// <returns></returns>
-        protected virtual long __GetRowCount(string TableOrViewName, string Condition)
+        protected virtual long __GetRowCount(string tableOrViewName, string condition)
         {
             return 0;
         }
@@ -507,12 +502,12 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 获取符合条件的记录数
         /// </summary>
-        /// <param name="TableOrViewName"></param>
-        /// <param name="Condition"></param>
+        /// <param name="tableOrViewName"></param>
+        /// <param name="condition"></param>
         /// <returns></returns>
-        public long GetRowCount(string TableOrViewName, string Condition)
+        public long GetRowCount(string tableOrViewName, string condition)
         {
-            return this.__GetRowCount(TableOrViewName, Condition);
+            return this.__GetRowCount(tableOrViewName, condition);
         }
 
         #endregion
@@ -522,11 +517,11 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 插入记录
         /// </summary>
-        /// <param name="TableName"></param>
+        /// <param name="tableName"></param>
         /// <param name="fieldCollent"></param>
         /// <param name="fieldValueCollect"></param>
         /// <returns></returns>
-        protected virtual long __Insert(string TableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect)
+        protected virtual long __Insert(string tableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect)
         {
             return 0;
         }
@@ -534,13 +529,13 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 插入记录
         /// </summary>
-        /// <param name="TableName"></param>
+        /// <param name="tableName"></param>
         /// <param name="fieldCollent"></param>
         /// <param name="fieldValueCollect"></param>
         /// <returns></returns>
-        public long Insert(string TableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect)
+        public long Insert(string tableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect)
         {
-            return this.__Insert(TableName, fieldCollent, fieldValueCollect);
+            return this.__Insert(tableName, fieldCollent, fieldValueCollect);
         }
 
         #endregion
@@ -550,12 +545,12 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 更新记录
         /// </summary>
-        /// <param name="TableName"></param>
+        /// <param name="tableName"></param>
         /// <param name="fieldCollent"></param>
         /// <param name="fieldValueCollect"></param>
-        /// <param name="Condition"></param>
+        /// <param name="condition"></param>
         /// <returns></returns>
-        protected virtual long __Update(string TableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect, string Condition)
+        protected virtual long __Update(string tableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect, string condition)
         {
             return 0;
         }
@@ -563,14 +558,14 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 更新记录
         /// </summary>
-        /// <param name="TableName"></param>
+        /// <param name="tableName"></param>
         /// <param name="fieldCollent"></param>
         /// <param name="fieldValueCollect"></param>
-        /// <param name="Condition"></param>
+        /// <param name="condition"></param>
         /// <returns></returns>
-        public long Update(string TableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect, string Condition)
+        public long Update(string tableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect, string condition)
         {
-            return this.__Update(TableName, fieldCollent, fieldValueCollect, Condition);
+            return this.__Update(tableName, fieldCollent, fieldValueCollect, condition);
         }
 
         #endregion
@@ -580,10 +575,10 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 删除记录
         /// </summary>
-        /// <param name="TableName"></param>
-        /// <param name="Condition"></param>
+        /// <param name="tableName"></param>
+        /// <param name="condition"></param>
         /// <returns></returns>
-        protected virtual long __Delete(string TableName, string Condition)
+        protected virtual long __Delete(string tableName, string condition)
         {
             return 0;
         }
@@ -591,12 +586,12 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 删除记录
         /// </summary>
-        /// <param name="TableName"></param>
-        /// <param name="Condition"></param>
+        /// <param name="tableName"></param>
+        /// <param name="condition"></param>
         /// <returns></returns>
-        public long Delete(string TableName, string Condition)
+        public long Delete(string tableName, string condition)
         {
-            return this.__Delete(TableName, Condition);
+            return this.__Delete(tableName, condition);
         }
 
         #endregion
@@ -606,12 +601,12 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// Create Index
         /// </summary>
-        /// <param name="TableName"></param>
-        /// <param name="IndexName"></param>
+        /// <param name="tableName"></param>
+        /// <param name="indexName"></param>
         /// <param name="isUnique"></param>
-        /// <param name="Body"></param>
+        /// <param name="body"></param>
         /// <returns></returns>
-        protected virtual int __CreateIndex(string TableName, string IndexName, bool isUnique, string Body)
+        protected virtual int __CreateIndex(string tableName, string indexName, bool isUnique, string body)
         {
             return 0;
         }
@@ -619,23 +614,23 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// Create Index
         /// </summary>
-        /// <param name="TableName"></param>
-        /// <param name="IndexName"></param>
+        /// <param name="tableName"></param>
+        /// <param name="indexName"></param>
         /// <param name="isUnique"></param>
-        /// <param name="Body"></param>
+        /// <param name="body"></param>
         /// <returns></returns>
-        public int CreateIndex(string TableName, string IndexName, bool isUnique, string Body)
+        public int CreateIndex(string tableName, string indexName, bool isUnique, string body)
         {
-            return this.__CreateIndex(TableName, IndexName, isUnique, Body);
+            return this.__CreateIndex(tableName, indexName, isUnique, body);
         }
 
         /// <summary>
         /// Drop Index
         /// </summary>
-        /// <param name="TableName"></param>
-        /// <param name="IndexName"></param>
+        /// <param name="tableName"></param>
+        /// <param name="indexName"></param>
         /// <returns></returns>
-        protected virtual int __DropIndex(string TableName, string IndexName)
+        protected virtual int __DropIndex(string tableName, string indexName)
         {
             return 0;
         }
@@ -643,12 +638,12 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// Drop Index
         /// </summary>
-        /// <param name="TableName"></param>
-        /// <param name="IndexName"></param>
+        /// <param name="tableName"></param>
+        /// <param name="indexName"></param>
         /// <returns></returns>
-        public int DropIndex(string TableName, string IndexName)
+        public int DropIndex(string tableName, string indexName)
         {
-            return this.__DropIndex(TableName, IndexName);
+            return this.__DropIndex(tableName, indexName);
         }
 
         #endregion
@@ -660,9 +655,9 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 执行命令
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        protected virtual int __ExecuteNonQuery(string CommandString)
+        protected virtual int __ExecuteNonQuery(string commandString)
         {
             return 0;
         }
@@ -670,11 +665,11 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 执行命令
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        public int ExecuteNonQuery(string CommandString)
+        public int ExecuteNonQuery(string commandString)
         {
-            return this.__ExecuteNonQuery(CommandString);
+            return this.__ExecuteNonQuery(commandString);
         }
 
         #endregion
@@ -684,9 +679,9 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 执行读取一行一列
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        protected virtual object __ExecuteScalar(string CommandString)
+        protected virtual object __ExecuteScalar(string commandString)
         {
             return null;
         }
@@ -694,11 +689,11 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 执行命令
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        public object ExecuteScalar(string CommandString)
+        public object ExecuteScalar(string commandString)
         {
-            return this.__ExecuteScalar(CommandString);
+            return this.__ExecuteScalar(commandString);
         }
 
         #endregion
@@ -708,9 +703,9 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// Reader
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        protected virtual DbDataReader __ExecuteReader(string CommandString)
+        protected virtual DbDataReader __ExecuteReader(string commandString)
         {
             return null;
         }
@@ -718,11 +713,11 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// Reader
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        public DbDataReader ExecuteReader(string CommandString)
+        public DbDataReader ExecuteReader(string commandString)
         {
-            return this.__ExecuteReader(CommandString);
+            return this.__ExecuteReader(commandString);
         }
 
         #endregion
@@ -732,9 +727,9 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 执行命令返回结果集
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        protected virtual DataTable __ExecuteQuery(string CommandString)
+        protected virtual DataTable __ExecuteQuery(string commandString)
         {
             return null;
         }
@@ -742,11 +737,11 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 执行命令返回结果集
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        public DataTable ExecuteQuery(string CommandString)
+        public DataTable ExecuteQuery(string commandString)
         {
-            return this.__ExecuteQuery(CommandString);
+            return this.__ExecuteQuery(commandString);
         }
 
         #endregion

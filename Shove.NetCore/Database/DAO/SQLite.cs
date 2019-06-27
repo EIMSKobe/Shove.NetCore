@@ -17,22 +17,22 @@ namespace Shove.Database
         /// <summary>
         /// 构建连接串
         /// </summary>
-        /// <param name="DatabaseFileName"></param>
+        /// <param name="database"></param>
         /// <returns></returns>
-        public static string BuildConnectString(string DatabaseFileName)
+        public static string BuildConnectString(string database)
         {
-            return string.Format("data source={0}", DatabaseFileName);
+            return string.Format("data source={0}", database);
         }
 
         /// <summary>
         /// 构建连接串
         /// </summary>
-        /// <param name="DatabaseFileName"></param>
-        /// <param name="Version"></param>
+        /// <param name="database"></param>
+        /// <param name="version"></param>
         /// <returns></returns>
-        public static string BuildConnectString(string DatabaseFileName, string Version)
+        public static string BuildConnectString(string database, string version)
         {
-            return string.Format("data source={0};version={1}", DatabaseFileName, Version);
+            return string.Format("data source={0};version={1}", database, version);
         }
 
         #endregion
@@ -107,7 +107,7 @@ namespace Shove.Database
             /// <param name="Value"></param>
             public void Add(string Name, object Value)
             {
-                ParametersName.Add(Name.StartsWith("@") ? Name.Substring(1) : Name);
+                ParametersName.Add(Name.StartsWith("@", StringComparison.Ordinal) ? Name.Substring(1) : Name);
                 ParametersValue.Add(Value);
             }
 
@@ -139,9 +139,9 @@ namespace Shove.Database
             /// <summary>
             /// 
             /// </summary>
-            /// <param name="Index"></param>
+            /// <param name="index"></param>
             /// <returns></returns>
-            public object this[int Index]
+            public object this[int index]
             {
                 get
                 {
@@ -155,21 +155,21 @@ namespace Shove.Database
                         return null;
                     }
 
-                    if (Index > ParametersValue.Count - 1)
+                    if (index > ParametersValue.Count - 1)
                     {
                         return null;
                     }
 
-                    return ParametersValue[Index];
+                    return ParametersValue[index];
                 }
             }
 
             /// <summary>
             /// 
             /// </summary>
-            /// <param name="Name"></param>
+            /// <param name="name"></param>
             /// <returns></returns>
-            public object this[string Name]
+            public object this[string name]
             {
                 get
                 {
@@ -180,7 +180,7 @@ namespace Shove.Database
 
                     for (int i = 0; i < ParametersName.Count; i++)
                     {
-                        if (ParametersName[i] == Name)
+                        if (ParametersName[i] == name)
                         {
                             return ParametersValue[i];
                         }
@@ -191,57 +191,57 @@ namespace Shove.Database
             }
         }
 
-        private static void AddParameter(ref SQLiteCommand Cmd, params Parameter[] Params)
+        private static void AddParameter(ref SQLiteCommand cmd, params Parameter[] _params)
         {
-            if ((Params == null) || (Cmd == null))
+            if ((_params == null) || (cmd == null))
             {
                 return;
             }
 
-            for (int i = 0; i < Params.Length; i++)
+            for (int i = 0; i < _params.Length; i++)
             {
-                if (Params[i] == null)
+                if (_params[i] == null)
                 {
                     continue;
                 }
 
                 SQLiteParameter param = new SQLiteParameter();
-                param.ParameterName = Params[i].Name.StartsWith("@") ? Params[i].Name : ("@" + Params[i].Name);
-                param.DbType = Params[i].Type;
+                param.ParameterName = _params[i].Name.StartsWith("@", StringComparison.Ordinal) ? _params[i].Name : ("@" + _params[i].Name);
+                param.DbType = _params[i].Type;
 
-                if (Params[i].Size > 0)
+                if (_params[i].Size > 0)
                 {
-                    param.Size = Params[i].Size;
+                    param.Size = _params[i].Size;
                 }
 
-                param.Direction = Params[i].Direction;
+                param.Direction = _params[i].Direction;
 
-                if (((Params[i].Direction == ParameterDirection.InputOutput) ||
-                    (Params[i].Direction == ParameterDirection.Input)) &&
-                    (Params[i].Value != null))
+                if (((_params[i].Direction == ParameterDirection.InputOutput) ||
+                    (_params[i].Direction == ParameterDirection.Input)) &&
+                    (_params[i].Value != null))
                 {
-                    param.Value = Params[i].Value;
+                    param.Value = _params[i].Value;
                 }
 
-                Cmd.Parameters.Add(param);
+                cmd.Parameters.Add(param);
             }
         }
 
-        private static void AddOutputParameter(SQLiteCommand Cmd, ref OutputParameter Outputs)
+        private static void AddOutputParameter(SQLiteCommand cmd, ref OutputParameter outputs)
         {
-            if (Cmd == null)
+            if (cmd == null)
             {
                 return;
             }
 
-            if (Cmd.Parameters.Count == 0)
+            if (cmd.Parameters.Count == 0)
             {
                 return;
             }
 
-            for (int i = 0; i < Cmd.Parameters.Count; i++)
+            for (int i = 0; i < cmd.Parameters.Count; i++)
             {
-                SQLiteParameter param = (SQLiteParameter)Cmd.Parameters[i];
+                SQLiteParameter param = (SQLiteParameter)cmd.Parameters[i];
 
                 if ((param.Direction != ParameterDirection.InputOutput) &&
                     (param.Direction != ParameterDirection.Output))
@@ -249,25 +249,25 @@ namespace Shove.Database
                     continue;
                 }
 
-                Outputs.Add(param.ParameterName, param.Value);
+                outputs.Add(param.ParameterName, param.Value);
             }
         }
 
-        private static SQLiteParameter GetReturnParameter(SQLiteCommand Cmd)
+        private static SQLiteParameter GetReturnParameter(SQLiteCommand cmd)
         {
-            if (Cmd == null)
+            if (cmd == null)
             {
                 return null;
             }
 
-            if (Cmd.Parameters.Count == 0)
+            if (cmd.Parameters.Count == 0)
             {
                 return null;
             }
 
-            for (int i = 0; i < Cmd.Parameters.Count; i++)
+            for (int i = 0; i < cmd.Parameters.Count; i++)
             {
-                SQLiteParameter param = (SQLiteParameter)Cmd.Parameters[i];
+                SQLiteParameter param = (SQLiteParameter)cmd.Parameters[i];
 
                 if (param.Direction == ParameterDirection.ReturnValue)
                 {
@@ -285,31 +285,31 @@ namespace Shove.Database
         /// <summary>
         /// 执行数据库命令
         /// </summary>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteNonQuery(string CommandText, params Parameter[] Params)
+        public static int ExecuteNonQuery(string commandText, params Parameter[] _params)
         {
-            return ExecuteNonQuery(GetConnectionStringFromConfig(), CommandText, Params);
+            return ExecuteNonQuery(GetConnectionStringFromConfig(), commandText, _params);
         }
 
         /// <summary>
         /// 执行数据库命令
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteNonQuery(string ConnectionString, string CommandText, params Parameter[] Params)
+        public static int ExecuteNonQuery(string connectionString, string commandText, params Parameter[] _params)
         {
-            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(ConnectionString);
+            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(connectionString);
 
             if (conn == null)
             {
                 return -1001;
             }
 
-            int Result = ExecuteNonQuery(conn, CommandText, Params);
+            int result = ExecuteNonQuery(conn, commandText, _params);
 
             try
             {
@@ -317,28 +317,28 @@ namespace Shove.Database
             }
             catch { }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// 执行数据库命令
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteNonQuery(SQLiteConnection conn, string CommandText, params Parameter[] Params)
+        public static int ExecuteNonQuery(SQLiteConnection conn, string commandText, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return -1001;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -350,8 +350,8 @@ namespace Shove.Database
                 }
             }
 
-            SQLiteCommand Cmd = new SQLiteCommand(CommandText, conn);
-            AddParameter(ref Cmd, Params);
+            SQLiteCommand cmd = new SQLiteCommand(commandText, conn);
+            AddParameter(ref cmd, _params);
 
             SQLiteTransaction trans;
             try
@@ -363,15 +363,15 @@ namespace Shove.Database
                 return -1001;
             }
 
-            Cmd.Transaction = trans;
-            bool Result = false;
+            cmd.Transaction = trans;
+            bool result;
 
             try
             {
-                Cmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
                 trans.Commit();
 
-                Result = true;
+                result = true;
             }
             catch
             {
@@ -381,10 +381,10 @@ namespace Shove.Database
                 }
                 catch { }
 
-                Result = false;
+                result = false;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -393,28 +393,28 @@ namespace Shove.Database
                 catch { }
             }
 
-            return Result ? 0 : -1002;
+            return result ? 0 : -1002;
         }
 
         /// <summary>
         /// 执行数据库命令(不用事务)
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static int ExecuteNonQueryNoTranscation(SQLiteConnection conn, string CommandText, params Parameter[] Params)
+        public static int ExecuteNonQueryNoTranscation(SQLiteConnection conn, string commandText, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return -1001;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -426,23 +426,23 @@ namespace Shove.Database
                 }
             }
 
-            SQLiteCommand Cmd = new SQLiteCommand(CommandText, conn);
-            AddParameter(ref Cmd, Params);
+            SQLiteCommand cmd = new SQLiteCommand(commandText, conn);
+            AddParameter(ref cmd, _params);
 
-            bool Result = false;
+            bool result;
 
             try
             {
-                Cmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
 
-                Result = true;
+                result = true;
             }
             catch
             {
-                Result = false;
+                result = false;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -451,7 +451,7 @@ namespace Shove.Database
                 catch { }
             }
 
-            return Result ? 0 : -1002;
+            return result ? 0 : -1002;
         }
 
         #endregion
@@ -461,31 +461,31 @@ namespace Shove.Database
         /// <summary>
         /// 打开数据集
         /// </summary>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static DataTable Select(string CommandText, params Parameter[] Params)
+        public static DataTable Select(string commandText, params Parameter[] _params)
         {
-            return Select(GetConnectionStringFromConfig(), CommandText, Params);
+            return Select(GetConnectionStringFromConfig(), commandText, _params);
         }
 
         /// <summary>
         /// 打开数据集
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static DataTable Select(string ConnectionString, string CommandText, params Parameter[] Params)
+        public static DataTable Select(string connectionString, string commandText, params Parameter[] _params)
         {
-            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(ConnectionString);
+            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(connectionString);
 
             if (conn == null)
             {
                 return null;
             }
 
-            DataTable dt = Select(conn, CommandText, Params);
+            DataTable dt = Select(conn, commandText, _params);
 
             try
             {
@@ -500,21 +500,21 @@ namespace Shove.Database
         /// 打开数据集
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static DataTable Select(SQLiteConnection conn, string CommandText, params Parameter[] Params)
+        public static DataTable Select(SQLiteConnection conn, string commandText, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return null;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -527,26 +527,26 @@ namespace Shove.Database
             }
 
             SQLiteDataAdapter da = new SQLiteDataAdapter("", conn);
-            SQLiteCommand Cmd = new SQLiteCommand(CommandText, conn);
+            SQLiteCommand cmd = new SQLiteCommand(commandText, conn);
 
-            AddParameter(ref Cmd, Params);
-            da.SelectCommand = Cmd;
+            AddParameter(ref cmd, _params);
+            da.SelectCommand = cmd;
 
             DataTable dt = new DataTable();
-            bool Result = false;
+            bool result;
 
             try
             {
                 da.Fill(dt);
 
-                Result = true;
+                result = true;
             }
             catch
             {
-                Result = false;
+                result = false;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -555,7 +555,7 @@ namespace Shove.Database
                 catch { }
             }
 
-            return Result ? dt : null;
+            return result ? dt : null;
         }
 
         #endregion
@@ -565,31 +565,31 @@ namespace Shove.Database
         /// <summary>
         /// 读取第一行第一列
         /// </summary>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteScalar(string CommandText, params Parameter[] Params)
+        public static object ExecuteScalar(string commandText, params Parameter[] _params)
         {
-            return ExecuteScalar(GetConnectionStringFromConfig(), CommandText, Params);
+            return ExecuteScalar(GetConnectionStringFromConfig(), commandText, _params);
         }
 
         /// <summary>
         /// 读取第一行第一列
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteScalar(string ConnectionString, string CommandText, params Parameter[] Params)
+        public static object ExecuteScalar(string connectionString, string commandText, params Parameter[] _params)
         {
-            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(ConnectionString);
+            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(connectionString);
 
             if (conn == null)
             {
                 return null;
             }
 
-            object obj = ExecuteScalar(conn, CommandText, Params);
+            object obj = ExecuteScalar(conn, commandText, _params);
 
             try
             {
@@ -604,21 +604,21 @@ namespace Shove.Database
         /// 读取第一行第一列
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="CommandText"></param>
-        /// <param name="Params"></param>
+        /// <param name="commandText"></param>
+        /// <param name="_params"></param>
         /// <returns></returns>
-        public static object ExecuteScalar(SQLiteConnection conn, string CommandText, params Parameter[] Params)
+        public static object ExecuteScalar(SQLiteConnection conn, string commandText, params Parameter[] _params)
         {
             if (conn == null)
             {
                 return null;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -630,21 +630,21 @@ namespace Shove.Database
                 }
             }
 
-            SQLiteCommand Cmd = new SQLiteCommand(CommandText, conn);
-            AddParameter(ref Cmd, Params);
+            SQLiteCommand cmd = new SQLiteCommand(commandText, conn);
+            AddParameter(ref cmd, _params);
 
-            object Result = null;
+            object result;
 
             try
             {
-                Result = Cmd.ExecuteScalar();
+                result = cmd.ExecuteScalar();
             }
             catch
             {
-                Result = null;
+                result = null;
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -653,7 +653,7 @@ namespace Shove.Database
                 catch { }
             }
 
-            return Result;
+            return result;
         }
 
         #endregion
@@ -672,18 +672,18 @@ namespace Shove.Database
         /// <summary>
         /// 备份数据库(表数据库 XML 描述，压缩为二进制流)
         /// </summary>
-        /// <param name="ConnectionString"></param>
+        /// <param name="connectionString"></param>
         /// <returns></returns>
-        public static byte[] BackupDataToZipStream(string ConnectionString)
+        public static byte[] BackupDataToZipStream(string connectionString)
         {
-            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(ConnectionString);
+            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(connectionString);
 
             if (conn == null)
             {
                 return null;
             }
 
-            byte[] Result = BackupDataToZipStream(conn);
+            byte[] result = BackupDataToZipStream(conn);
 
             try
             {
@@ -691,7 +691,7 @@ namespace Shove.Database
             }
             catch { }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
@@ -706,11 +706,11 @@ namespace Shove.Database
                 return null;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -726,7 +726,7 @@ namespace Shove.Database
             
             if (dt == null)
             {
-                if (!InitOpenState)
+                if (!initOpenState)
                 {
                     try
                     {
@@ -748,7 +748,7 @@ namespace Shove.Database
 
                 if (Table == null)
                 {
-                    if (!InitOpenState)
+                    if (!initOpenState)
                     {
                         try
                         {
@@ -764,7 +764,7 @@ namespace Shove.Database
                 ds.Tables.Add(Table);
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -783,29 +783,29 @@ namespace Shove.Database
         /// <summary>
         /// 恢复数据库(从二进制压缩流中提取表数据库的 XML 进行恢复)
         /// </summary>
-        /// <param name="DataBuffer"></param>
+        /// <param name="dataBuffer"></param>
         /// <returns></returns>
-        public static int RestoreDataFromZipStream(byte[] DataBuffer)
+        public static int RestoreDataFromZipStream(byte[] dataBuffer)
         {
-            return RestoreDataFromZipStream(GetConnectionStringFromConfig(), DataBuffer);
+            return RestoreDataFromZipStream(GetConnectionStringFromConfig(), dataBuffer);
         }
 
         /// <summary>
         /// 恢复数据库(从二进制压缩流中提取表数据库的 XML 进行恢复)
         /// </summary>
-        /// <param name="ConnectionString"></param>
-        /// <param name="DataBuffer"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="dataBuffer"></param>
         /// <returns></returns>
-        public static int RestoreDataFromZipStream(string ConnectionString, byte[] DataBuffer)
+        public static int RestoreDataFromZipStream(string connectionString, byte[] dataBuffer)
         {
-            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(ConnectionString);
+            SQLiteConnection conn = CreateDataConnection<SQLiteConnection>(connectionString);
 
             if (conn == null)
             {
                 return -1001;
             }
 
-            int Result = RestoreDataFromZipStream(conn, DataBuffer);
+            int result = RestoreDataFromZipStream(conn, dataBuffer);
 
             try
             {
@@ -813,27 +813,27 @@ namespace Shove.Database
             }
             catch { }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// 恢复数据库(从二进制压缩流中提取表数据库的 XML 进行恢复)
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="DataBuffer"></param>
+        /// <param name="dataBuffer"></param>
         /// <returns></returns>
-        public static int RestoreDataFromZipStream(SQLiteConnection conn, byte[] DataBuffer)
+        public static int RestoreDataFromZipStream(SQLiteConnection conn, byte[] dataBuffer)
         {
             if (conn == null)
             {
                 return -1001;
             }
 
-            bool InitOpenState = true;
+            bool initOpenState = true;
 
             if (conn.State != ConnectionState.Open)
             {
-                InitOpenState = false;
+                initOpenState = false;
 
                 try
                 {
@@ -845,10 +845,10 @@ namespace Shove.Database
                 }
             }
 
-            string XmlData = String.Decompress(DataBuffer);
+            string XmlData = String.Decompress(dataBuffer);
             if (string.IsNullOrEmpty(XmlData))
             {
-                if (!InitOpenState)
+                if (!initOpenState)
                 {
                     try
                     {
@@ -869,7 +869,7 @@ namespace Shove.Database
             }
             catch
             {
-                if (!InitOpenState)
+                if (!initOpenState)
                 {
                     try
                     {
@@ -883,7 +883,7 @@ namespace Shove.Database
 
             if ((ds == null) || (ds.Tables.Count < 1))
             {
-                if (!InitOpenState)
+                if (!initOpenState)
                 {
                     try
                     {
@@ -906,17 +906,17 @@ namespace Shove.Database
                 return -1001;
             }
 
-            bool Result = false;
+            bool result;
 
             try
             {
                 foreach (DataTable dt in ds.Tables)
                 {
-                    SQLiteCommand Cmd = new SQLiteCommand("delete from [" + dt.TableName + "]", conn);
-                    Cmd.Transaction = trans;
-                    Cmd.ExecuteNonQuery();
-                    Cmd.CommandText = "update sqlite_sequence set seq=0 where name='" + dt.TableName + "'";
-                    Cmd.ExecuteNonQuery();
+                    SQLiteCommand cmd = new SQLiteCommand("delete from [" + dt.TableName + "]", conn);
+                    cmd.Transaction = trans;
+                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = "update sqlite_sequence set seq=0 where name='" + dt.TableName + "'";
+                    cmd.ExecuteNonQuery();
 
                     SQLiteDataAdapter da = new SQLiteDataAdapter("select * from [" + dt.TableName + "]", conn);
                     System.Data.DataTable dtUpdate = new System.Data.DataTable();
@@ -943,17 +943,17 @@ namespace Shove.Database
                 }
 
                 trans.Commit();
-                Result = true;
+                result = true;
             }
             catch//(Exception ee)
             {
                 trans.Rollback();
-                Result = false;
+                result = false;
 
                 //System.Web.HttpContext.Current.Response.Write(ee.Message);
             }
 
-            if (!InitOpenState)
+            if (!initOpenState)
             {
                 try
                 {
@@ -962,7 +962,7 @@ namespace Shove.Database
                 catch { }
             }
 
-            return Result ? 0 : -1005;
+            return result ? 0 : -1005;
         }
 
         #endregion
@@ -1026,14 +1026,14 @@ namespace Shove.Database
             /// </summary>
             /// <param name="parent"></param>
             /// <param name="name"></param>
-            /// <param name="canonicalidentifiername"></param>
+            /// <param name="canonicalIdentifierName"></param>
             /// <param name="dbtype"></param>
             /// <param name="_readonly"></param>
-            public Field(object parent, string name, string canonicalidentifiername, DbType dbtype, bool _readonly)
+            public Field(object parent, string name, string canonicalIdentifierName, DbType dbtype, bool _readonly)
             {
                 Parent = parent;
                 Name = name;
-                CanonicalIdentifierName = canonicalidentifiername;
+                CanonicalIdentifierName = canonicalIdentifierName;
                 DbType = dbtype;
                 ReadOnly = _readonly;
             }
@@ -1077,18 +1077,18 @@ namespace Shove.Database
             /// <summary>
             /// 
             /// </summary>
-            /// <param name="Index"></param>
+            /// <param name="index"></param>
             /// <returns></returns>
-            public Field this[int Index]
+            public Field this[int index]
             {
                 get
                 {
-                    if ((Count < 1) || (Index < 0) || (Index > Count))
+                    if ((Count < 1) || (index < 0) || (index > Count))
                     {
                         return null;
                     }
 
-                    return fields[Index];
+                    return fields[index];
                 }
             }
         }
@@ -1112,51 +1112,51 @@ namespace Shove.Database
             /// <summary>
             /// 打开表
             /// </summary>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(string FieldList, string Condition, string Order)
+            public DataTable Open(string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select("select " + (FieldList == "" ? "*" : FieldList) + " from [" + TableName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select("select " + (fieldList == "" ? "*" : fieldList) + " from [" + TableName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             /// <summary>
             /// 打开表
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(string ConnectionString, string FieldList, string Condition, string Order)
+            public DataTable Open(string connectionString, string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select(ConnectionString, "select " + (FieldList == "" ? "*" : FieldList) + " from [" + TableName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select(connectionString, "select " + (fieldList == "" ? "*" : fieldList) + " from [" + TableName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             /// <summary>
             /// 打开表
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(SQLiteConnection conn, string FieldList, string Condition, string Order)
+            public DataTable Open(SQLiteConnection conn, string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select(conn, "select " + (FieldList == "" ? "*" : FieldList) + " from [" + TableName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select(conn, "select " + (fieldList == "" ? "*" : fieldList) + " from [" + TableName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             #endregion
@@ -1166,60 +1166,60 @@ namespace Shove.Database
             /// <summary>
             /// 获取表记录数
             /// </summary>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(string Condition)
+            public long GetCount(string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar("select count(*) from [" + TableName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar("select count(*) from [" + TableName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             /// <summary>
             /// 获取表记录数
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="Condition"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(string ConnectionString, string Condition)
+            public long GetCount(string connectionString, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar(ConnectionString, "select count(*) from [" + TableName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar(connectionString, "select count(*) from [" + TableName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             /// <summary>
             /// 获取表记录数
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(SQLiteConnection conn, string Condition)
+            public long GetCount(SQLiteConnection conn, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar(conn, "select count(*) from [" + TableName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar(conn, "select count(*) from [" + TableName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             #endregion
@@ -1255,9 +1255,9 @@ namespace Shove.Database
                     Parameters[i] = new Parameter(Fields[i].CanonicalIdentifierName, Fields[i].DbType, 0, ParameterDirection.Input, Fields[i].Value);
                 }
 
-                string CommandText = "insert into [" + TableName + "] (" + InsertFieldsList + ") values (" + InsertValuesList + "); select ifnull(last_insert_rowid(), -99999999)";
+                string commandText = "insert into [" + TableName + "] (" + InsertFieldsList + ") values (" + InsertValuesList + "); select ifnull(last_insert_rowid(), -99999999)";
 
-                object objResult = ExecuteScalar(CommandText, Parameters);
+                object objResult = ExecuteScalar(commandText, Parameters);
 
                 if (objResult == null)
                 {
@@ -1266,22 +1266,22 @@ namespace Shove.Database
 
                 Fields.Clear();
 
-                long Result = (long)objResult;
+                long result = (long)objResult;
 
-                if (Result == -99999999)
+                if (result == -99999999)
                 {
                     return 0;
                 }
 
-                return Result;
+                return result;
             }
 
             /// <summary>
             /// 增加记录
             /// </summary>
-            /// <param name="ConnectionString"></param>
+            /// <param name="connectionString"></param>
             /// <returns>小于0表示失败，0表示成功，无自增值，大于0表示自增值</returns>
-            public long Insert(string ConnectionString)
+            public long Insert(string connectionString)
             {
                 if (Fields.Count < 1)
                 {
@@ -1306,9 +1306,9 @@ namespace Shove.Database
                     Parameters[i] = new Parameter(Fields[i].CanonicalIdentifierName, Fields[i].DbType, 0, ParameterDirection.Input, Fields[i].Value);
                 }
 
-                string CommandText = "insert into [" + TableName + "] (" + InsertFieldsList + ") values (" + InsertValuesList + "); select ifnull(last_insert_rowid(), -99999999)";
+                string commandText = "insert into [" + TableName + "] (" + InsertFieldsList + ") values (" + InsertValuesList + "); select ifnull(last_insert_rowid(), -99999999)";
 
-                object objResult = ExecuteScalar(ConnectionString, CommandText, Parameters);
+                object objResult = ExecuteScalar(connectionString, commandText, Parameters);
 
                 if (objResult == null)
                 {
@@ -1317,14 +1317,14 @@ namespace Shove.Database
 
                 Fields.Clear();
 
-                long Result = (long)objResult;
+                long result = (long)objResult;
 
-                if (Result == -99999999)
+                if (result == -99999999)
                 {
                     return 0;
                 }
 
-                return Result;
+                return result;
             }
 
             /// <summary>
@@ -1357,9 +1357,9 @@ namespace Shove.Database
                     Parameters[i] = new Parameter(Fields[i].CanonicalIdentifierName, Fields[i].DbType, 0, ParameterDirection.Input, Fields[i].Value);
                 }
 
-                string CommandText = "insert into [" + TableName + "] (" + InsertFieldsList + ") values (" + InsertValuesList + "); select ifnull(last_insert_rowid(), -99999999)";
+                string commandText = "insert into [" + TableName + "] (" + InsertFieldsList + ") values (" + InsertValuesList + "); select ifnull(last_insert_rowid(), -99999999)";
 
-                object objResult = ExecuteScalar(conn, CommandText, Parameters);
+                object objResult = ExecuteScalar(conn, commandText, Parameters);
 
                 if (objResult == null)
                 {
@@ -1368,14 +1368,14 @@ namespace Shove.Database
 
                 Fields.Clear();
 
-                long Result = (long)objResult;
+                long result = (long)objResult;
 
-                if (Result == -99999999)
+                if (result == -99999999)
                 {
                     return 0;
                 }
 
-                return Result;
+                return result;
             }
 
             #endregion
@@ -1385,13 +1385,13 @@ namespace Shove.Database
             /// <summary>
             /// 删除表记录
             /// </summary>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Delete(string Condition)
+            public long Delete(string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object objResult = ExecuteScalar("delete from [" + TableName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + "; select ifnull(changes(), -99999999)");
+                object objResult = ExecuteScalar("delete from [" + TableName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + "; select ifnull(changes(), -99999999)");
 
                 if (objResult == null)
                 {
@@ -1400,27 +1400,27 @@ namespace Shove.Database
 
                 Fields.Clear();
 
-                long Result = (long)objResult;
+                long result = (long)objResult;
 
-                if (Result == -99999999)
+                if (result == -99999999)
                 {
                     return 0;
                 }
 
-                return Result;
+                return result;
             }
 
             /// <summary>
             /// 删除表记录
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="Condition"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Delete(string ConnectionString, string Condition)
+            public long Delete(string connectionString, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object objResult = ExecuteScalar(ConnectionString, "delete from [" + TableName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + "; select ifnull(changes(), -99999999)");
+                object objResult = ExecuteScalar(connectionString, "delete from [" + TableName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + "; select ifnull(changes(), -99999999)");
 
                 if (objResult == null)
                 {
@@ -1429,27 +1429,27 @@ namespace Shove.Database
 
                 Fields.Clear();
 
-                long Result = (long)objResult;
+                long result = (long)objResult;
 
-                if (Result == -99999999)
+                if (result == -99999999)
                 {
                     return 0;
                 }
 
-                return Result;
+                return result;
             }
 
             /// <summary>
             /// 删除表记录
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Delete(SQLiteConnection conn, string Condition)
+            public long Delete(SQLiteConnection conn, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object objResult = ExecuteScalar(conn, "delete from [" + TableName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + "; select ifnull(changes(), -99999999)");
+                object objResult = ExecuteScalar(conn, "delete from [" + TableName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + "; select ifnull(changes(), -99999999)");
 
                 if (objResult == null)
                 {
@@ -1458,14 +1458,14 @@ namespace Shove.Database
 
                 Fields.Clear();
 
-                long Result = (long)objResult;
+                long result = (long)objResult;
 
-                if (Result == -99999999)
+                if (result == -99999999)
                 {
                     return 0;
                 }
 
-                return Result;
+                return result;
             }
 
             #endregion
@@ -1475,40 +1475,40 @@ namespace Shove.Database
             /// <summary>
             /// 更新表
             /// </summary>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Update(string Condition)
+            public long Update(string condition)
             {
                 if (Fields.Count < 1)
                 {
                     return -101;
                 }
 
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                string CommandText = "update [" + TableName + "] set ";
+                string commandText = "update [" + TableName + "] set ";
                 Parameter[] Parameters = new Parameter[Fields.Count];
 
                 for (int i = 0; i < Fields.Count; i++)
                 {
                     if (i > 0)
                     {
-                        CommandText += ", ";
+                        commandText += ", ";
                     }
 
-                    CommandText += "[" + Fields[i].Name + "] = @" + Fields[i].CanonicalIdentifierName;
+                    commandText += "[" + Fields[i].Name + "] = @" + Fields[i].CanonicalIdentifierName;
 
                     Parameters[i] = new Parameter(Fields[i].CanonicalIdentifierName, Fields[i].DbType, 0, ParameterDirection.Input, Fields[i].Value);
                 }
 
-                if (!string.IsNullOrEmpty(Condition))
+                if (!string.IsNullOrEmpty(condition))
                 {
-                    CommandText += " where " + FilteSqlInfusionForCondition(Condition);
+                    commandText += " where " + FilteSqlInfusionForCondition(condition);
                 }
 
-                CommandText += "; select ifnull(changes(), -99999999)";
+                commandText += "; select ifnull(changes(), -99999999)";
 
-                object objResult = ExecuteScalar(CommandText, Parameters);
+                object objResult = ExecuteScalar(commandText, Parameters);
 
                 if (objResult == null)
                 {
@@ -1517,54 +1517,54 @@ namespace Shove.Database
 
                 Fields.Clear();
 
-                long Result = (long)objResult;
+                long result = (long)objResult;
 
-                if (Result == -99999999)
+                if (result == -99999999)
                 {
                     return 0;
                 }
 
-                return Result;
+                return result;
             }
 
             /// <summary>
             /// 更新表
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="Condition"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Update(string ConnectionString, string Condition)
+            public long Update(string connectionString, string condition)
             {
                 if (Fields.Count < 1)
                 {
                     return -101;
                 }
 
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                string CommandText = "update [" + TableName + "] set ";
+                string commandText = "update [" + TableName + "] set ";
                 Parameter[] Parameters = new Parameter[Fields.Count];
 
                 for (int i = 0; i < Fields.Count; i++)
                 {
                     if (i > 0)
                     {
-                        CommandText += ", ";
+                        commandText += ", ";
                     }
 
-                    CommandText += "[" + Fields[i].Name + "] = @" + Fields[i].CanonicalIdentifierName;
+                    commandText += "[" + Fields[i].Name + "] = @" + Fields[i].CanonicalIdentifierName;
 
                     Parameters[i] = new Parameter(Fields[i].CanonicalIdentifierName, Fields[i].DbType, 0, ParameterDirection.Input, Fields[i].Value);
                 }
 
-                if (!string.IsNullOrEmpty(Condition))
+                if (!string.IsNullOrEmpty(condition))
                 {
-                    CommandText += " where " + FilteSqlInfusionForCondition(Condition);
+                    commandText += " where " + FilteSqlInfusionForCondition(condition);
                 }
 
-                CommandText += "; select ifnull(changes(), -99999999)";
+                commandText += "; select ifnull(changes(), -99999999)";
 
-                object objResult = ExecuteScalar(ConnectionString, CommandText, Parameters);
+                object objResult = ExecuteScalar(connectionString, commandText, Parameters);
 
                 if (objResult == null)
                 {
@@ -1573,54 +1573,54 @@ namespace Shove.Database
 
                 Fields.Clear();
 
-                long Result = (long)objResult;
+                long result = (long)objResult;
 
-                if (Result == -99999999)
+                if (result == -99999999)
                 {
                     return 0;
                 }
 
-                return Result;
+                return result;
             }
 
             /// <summary>
             /// 更新表
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long Update(SQLiteConnection conn, string Condition)
+            public long Update(SQLiteConnection conn, string condition)
             {
                 if (Fields.Count < 1)
                 {
                     return -101;
                 }
 
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                string CommandText = "update [" + TableName + "] set ";
+                string commandText = "update [" + TableName + "] set ";
                 Parameter[] Parameters = new Parameter[Fields.Count];
 
                 for (int i = 0; i < Fields.Count; i++)
                 {
                     if (i > 0)
                     {
-                        CommandText += ", ";
+                        commandText += ", ";
                     }
 
-                    CommandText += "[" + Fields[i].Name + "] = @" + Fields[i].CanonicalIdentifierName;
+                    commandText += "[" + Fields[i].Name + "] = @" + Fields[i].CanonicalIdentifierName;
 
                     Parameters[i] = new Parameter(Fields[i].CanonicalIdentifierName, Fields[i].DbType, 0, ParameterDirection.Input, Fields[i].Value);
                 }
 
-                if (!string.IsNullOrEmpty(Condition))
+                if (!string.IsNullOrEmpty(condition))
                 {
-                    CommandText += " where " + FilteSqlInfusionForCondition(Condition);
+                    commandText += " where " + FilteSqlInfusionForCondition(condition);
                 }
 
-                CommandText += "; select ifnull(changes(), -99999999)";
+                commandText += "; select ifnull(changes(), -99999999)";
 
-                object objResult = ExecuteScalar(conn, CommandText, Parameters);
+                object objResult = ExecuteScalar(conn, commandText, Parameters);
 
                 if (objResult == null)
                 {
@@ -1629,14 +1629,14 @@ namespace Shove.Database
 
                 Fields.Clear();
 
-                long Result = (long)objResult;
+                long result = (long)objResult;
 
-                if (Result == -99999999)
+                if (result == -99999999)
                 {
                     return 0;
                 }
 
-                return Result;
+                return result;
             }
 
             #endregion
@@ -1657,51 +1657,51 @@ namespace Shove.Database
             /// <summary>
             /// 打开视图
             /// </summary>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(string FieldList, string Condition, string Order)
+            public DataTable Open(string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select("select " + (FieldList == "" ? "*" : FieldList) + " from [" + ViewName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select("select " + (fieldList == "" ? "*" : fieldList) + " from [" + ViewName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             /// <summary>
             /// 打开视图
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(string ConnectionString, string FieldList, string Condition, string Order)
+            public DataTable Open(string connectionString, string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select(ConnectionString, "select " + (FieldList == "" ? "*" : FieldList) + " from [" + ViewName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select(connectionString, "select " + (fieldList == "" ? "*" : fieldList) + " from [" + ViewName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             /// <summary>
             /// 打开视图
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="FieldList"></param>
-            /// <param name="Condition"></param>
-            /// <param name="Order"></param>
+            /// <param name="fieldList"></param>
+            /// <param name="condition"></param>
+            /// <param name="order"></param>
             /// <returns></returns>
-            public DataTable Open(SQLiteConnection conn, string FieldList, string Condition, string Order)
+            public DataTable Open(SQLiteConnection conn, string fieldList, string condition, string order)
             {
-                FieldList = FieldList.Trim();
-                Condition = Condition.Trim();
-                Order = Order.Trim();
+                fieldList = fieldList.Trim();
+                condition = condition.Trim();
+                order = order.Trim();
 
-                return Select(conn, "select " + (FieldList == "" ? "*" : FieldList) + " from [" + ViewName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)) + (Order == "" ? "" : " order by " + FilteSqlInfusionForCondition(Order)));
+                return Select(conn, "select " + (fieldList == "" ? "*" : fieldList) + " from [" + ViewName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)) + (order == "" ? "" : " order by " + FilteSqlInfusionForCondition(order)));
             }
 
             #endregion
@@ -1711,60 +1711,60 @@ namespace Shove.Database
             /// <summary>
             /// 获取视图记录数
             /// </summary>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(string Condition)
+            public long GetCount(string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar("select count(*) from [" + ViewName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar("select count(*) from [" + ViewName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             /// <summary>
             /// 获取视图记录数
             /// </summary>
-            /// <param name="ConnectionString"></param>
-            /// <param name="Condition"></param>
+            /// <param name="connectionString"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(string ConnectionString, string Condition)
+            public long GetCount(string connectionString, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar(ConnectionString, "select count(*) from [" + ViewName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar(connectionString, "select count(*) from [" + ViewName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             /// <summary>
             /// 获取视图记录数
             /// </summary>
             /// <param name="conn"></param>
-            /// <param name="Condition"></param>
+            /// <param name="condition"></param>
             /// <returns></returns>
-            public long GetCount(SQLiteConnection conn, string Condition)
+            public long GetCount(SQLiteConnection conn, string condition)
             {
-                Condition = Condition.Trim();
+                condition = condition.Trim();
 
-                object Result = ExecuteScalar(conn, "select count(*) from [" + ViewName + "]" + (Condition == "" ? "" : " where " + FilteSqlInfusionForCondition(Condition)));
+                object result = ExecuteScalar(conn, "select count(*) from [" + ViewName + "]" + (condition == "" ? "" : " where " + FilteSqlInfusionForCondition(condition)));
 
-                if (Result == null)
+                if (result == null)
                 {
                     return 0;
                 }
 
-                return long.Parse(Result.ToString());
+                return long.Parse(result.ToString());
             }
 
             #endregion

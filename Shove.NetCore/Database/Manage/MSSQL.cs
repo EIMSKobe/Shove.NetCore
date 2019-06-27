@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Data.SqlClient;
-using System.Data.Common;
 using System.Data;
 
 namespace Shove.Database.Manage
@@ -30,38 +27,38 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 创建一个新的数据库
         /// </summary>
-        /// <param name="DatabaseName"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="database"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool CreateDatabase(string DatabaseName, ref string ReturnDescription)
+        public override bool CreateDatabase(string database, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, DatabaseName))
+            description = "";
+            if (!VaildStringParameters(ref description, database))
             {
                 return false;
             }
 
-            DatabaseName = DatabaseName.Trim();
-            if (!DatabaseName.StartsWith("[") || !DatabaseName.EndsWith("]"))
+            database = database.Trim();
+            if (!database.StartsWith("[", StringComparison.Ordinal) || !database.EndsWith("]", StringComparison.Ordinal))
             {
-                DatabaseName = "[" + DatabaseName + "]";
+                database = "[" + database + "]";
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
-                ReturnDescription = "数据库打开出错！";
+                description = "数据库打开出错！";
                 return false;
             }
 
-            Shove.DatabaseFactory.MSSQL mssql = new Shove.DatabaseFactory.MSSQL(this.ConnectionString);
-            int result = mssql.ExecuteNonQuery("create database " + DatabaseName + ";");
+            DatabaseFactory.MSSQL mssql = new DatabaseFactory.MSSQL(this.ConnectionString);
+            int result = mssql.ExecuteNonQuery("create database " + database + ";");
 
             Close();
 
             //测试证明-1已经创建成功了
             if (result < -1)
             {
-                ReturnDescription = "数据库指令执行发生错误1，返回值是 " + result.ToString() + "|" + "create database " + DatabaseName + "|" + this.ConnectionString;
+                description = "数据库指令执行发生错误1，返回值是 " + result.ToString() + "|" + "create database " + database + "|" + this.ConnectionString;
 
                 return false;
             }
@@ -72,38 +69,38 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 创建一个数据库用户
         /// </summary>
-        /// <param name="UserName"></param>
+        /// <param name="user"></param>
         /// <param name="Password"></param>
-        /// <param name="GrantOwnerDatabaseName"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="grantOwnerDatabase"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool CreateUser(string UserName, string Password, string GrantOwnerDatabaseName, ref string ReturnDescription)
+        public override bool CreateUser(string user, string Password, string grantOwnerDatabase, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, UserName, Password, GrantOwnerDatabaseName))
+            description = "";
+            if (!VaildStringParameters(ref description, user, Password, grantOwnerDatabase))
             {
                 return false;
             }
 
-            GrantOwnerDatabaseName = GrantOwnerDatabaseName.Trim();
-            if (!GrantOwnerDatabaseName.StartsWith("[") || !GrantOwnerDatabaseName.EndsWith("]"))
+            grantOwnerDatabase = grantOwnerDatabase.Trim();
+            if (!grantOwnerDatabase.StartsWith("[", StringComparison.Ordinal) || !grantOwnerDatabase.EndsWith("]", StringComparison.Ordinal))
             {
-                GrantOwnerDatabaseName = "[" + GrantOwnerDatabaseName + "]";
+                grantOwnerDatabase = "[" + grantOwnerDatabase + "]";
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
-                ReturnDescription = "数据库打开出错！";
+                description = "数据库打开出错！";
                 return false;
             }
             string sql = string.Format("use {0};\r\n create login {1} with password='{2}', default_database={3},CHECK_EXPIRATION = OFF,CHECK_POLICY = OFF;\r\n create user {4} for login {5} with default_schema=dbo;\r\n exec sp_addrolemember 'db_owner', '{6}';",
-                GrantOwnerDatabaseName, UserName, Password, GrantOwnerDatabaseName, UserName, UserName, UserName);
-            int result = Shove.Database.MSSQL.ExecuteNonQuery((SqlConnection)this.conn, sql);
+                grantOwnerDatabase, user, Password, grantOwnerDatabase, user, user, user);
+            int result = Database.MSSQL.ExecuteNonQuery((SqlConnection)this.conn, sql);
             Close();
 
             if (result < 0)
             {
-                ReturnDescription = "数据库指令执行发生错误2,创建用户时出错，返回值是 " + result.ToString() + "||" + sql;
+                description = "数据库指令执行发生错误2,创建用户时出错，返回值是 " + result.ToString() + "||" + sql;
 
                 return false;
             }
@@ -114,37 +111,36 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 修改用户密码
         /// </summary>
-        /// <param name="UserName"></param>
-        /// <param name="OldPassword"></param>
-        /// <param name="NewPassword"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="user"></param>
+        /// <param name="oldPassword"></param>
+        /// <param name="newPassword"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool EditUserPassword(string UserName, string OldPassword, string NewPassword, ref string ReturnDescription)
+        public override bool EditUserPassword(string user, string oldPassword, string newPassword, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, UserName, OldPassword, NewPassword))
+            description = "";
+            if (!VaildStringParameters(ref description, user, oldPassword, newPassword))
             {
                 return false;
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
                 return false;
             }
             string sql = string.Format("exec sp_password '{0}', '{1}', '{2}';",
-                (string.IsNullOrEmpty(OldPassword) ? "NULL" : OldPassword), NewPassword, UserName);
-            Shove.DatabaseFactory.MSSQL mssql = new Shove.DatabaseFactory.MSSQL(this.ConnectionString);
+                (string.IsNullOrEmpty(oldPassword) ? "NULL" : oldPassword), newPassword, user);
+            DatabaseFactory.MSSQL mssql = new DatabaseFactory.MSSQL(this.ConnectionString);
 
             //int result =Shove . Database.MSSQL.ExecuteNonQuery((SqlConnection)this.conn,
             //    string.Format("exec sp_password '{0}', '{1}', '{2}'",
-            //    (string.IsNullOrEmpty(OldPassword) ? "NULL" : OldPassword), NewPassword, UserName));
+            //    (string.IsNullOrEmpty(oldPassword) ? "NULL" : oldPassword), newPassword, user));
 
             int result = mssql.ExecuteNonQuery(sql);
 
-
             if (result < -1)//-1时已经成功
             {
-                ReturnDescription = "数据库指令执行发生错误3，返回值是 " + result.ToString() + "||" + sql;
+                description = "数据库指令执行发生错误3，返回值是 " + result.ToString() + "||" + sql;
 
                 return false;
             }
@@ -154,36 +150,36 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 查询数据库使用的空间大小
         /// </summary>
-        /// <param name="DatabaseName"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="database"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override float QueryUsedSpaceSize(string DatabaseName, ref string ReturnDescription)
+        public override float QueryUsedSpaceSize(string database, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, DatabaseName))
+            description = "";
+            if (!VaildStringParameters(ref description, database))
             {
                 return -1;
             }
 
-            DatabaseName = DatabaseName.Trim();
-            if (!DatabaseName.StartsWith("[") || !DatabaseName.EndsWith("]"))
+            database = database.Trim();
+            if (!database.StartsWith("[", StringComparison.Ordinal) || !database.EndsWith("]", StringComparison.Ordinal))
             {
-                DatabaseName = "[" + DatabaseName + "]";
+                database = "[" + database + "]";
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
                 return -2;
             }
 
-            DataTable dt = Shove.Database.MSSQL.Select((SqlConnection)this.conn,
+            DataTable dt = Database.MSSQL.Select((SqlConnection)this.conn,
                 string.Format("use {0};\r\n exec sp_spaceused;",
-                DatabaseName));
+                database));
             Close();
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 NULL";
+                description = "数据库指令执行发生错误，返回值是 NULL";
 
                 return -3;
             }
@@ -193,15 +189,15 @@ namespace Shove.Database.Manage
 
             if ((strs == null) || (strs.Length != 2))
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 " + str;
+                description = "数据库指令执行发生错误，返回值是 " + str;
 
                 return -4;
             }
 
-            float result = Shove.Convert.StrToFloat(strs[0], -4);
+            float result = Convert.StrToFloat(strs[0], -4);
             if (result < 0)
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 " + result.ToString();
+                description = "数据库指令执行发生错误，返回值是 " + result.ToString();
 
                 return -5;
             }
@@ -228,25 +224,25 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 物理移除数据库
         /// </summary>
-        /// <param name="DatabaseName"></param>
-        /// <param name="UserName"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="database"></param>
+        /// <param name="user"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool RemoveDatabase(string DatabaseName, string UserName, ref string ReturnDescription)
+        public override bool RemoveDatabase(string database, string user, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, DatabaseName, UserName))
+            description = "";
+            if (!VaildStringParameters(ref description, database, user))
             {
                 return false;
             }
 
-            DatabaseName = DatabaseName.Trim();
-            if (!DatabaseName.StartsWith("[") || !DatabaseName.EndsWith("]"))
+            database = database.Trim();
+            if (!database.StartsWith("[", StringComparison.Ordinal) || !database.EndsWith("]", StringComparison.Ordinal))
             {
-                DatabaseName = "[" + DatabaseName + "]";
+                database = "[" + database + "]";
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
                 return false;
             }
@@ -256,14 +252,14 @@ namespace Shove.Database.Manage
                                             EXEC sp_droplogin N'{2}' 
                                          use master
                                             ALTER DATABASE {3} SET SINGLE_USER with ROLLBACK IMMEDIATE
-                                            DROP DATABASE {4}", DatabaseName, UserName, UserName, DatabaseName, DatabaseName);
-            Shove.DatabaseFactory.MSSQL mssql = new Shove.DatabaseFactory.MSSQL(this.ConnectionString);
+                                            DROP DATABASE {4}", database, user, user, database, database);
+            DatabaseFactory.MSSQL mssql = new DatabaseFactory.MSSQL(this.ConnectionString);
             int result = mssql.ExecuteNonQuery(sql);
             Close();
 
             if (result < 0)
             {
-                ReturnDescription = "移除数据库出现错误，返回值是 " + result.ToString();
+                description = "移除数据库出现错误，返回值是 " + result.ToString();
 
                 return false;
             }

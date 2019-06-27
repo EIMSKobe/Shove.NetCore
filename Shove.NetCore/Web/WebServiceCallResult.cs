@@ -85,16 +85,16 @@ namespace Shove.Web
         /// <summary>
         /// 从 WebService 返回的二进制值转换到 WebServiceCallResult 类。
         /// </summary>
-        /// <param name="Buffer"></param>
+        /// <param name="buffer"></param>
         /// <returns></returns>
-        public WebServiceCallResult Deserialize(byte[] Buffer)
+        public WebServiceCallResult Deserialize(byte[] buffer)
         {
-            if (Buffer == null)
+            if (buffer == null)
             {
                 return null;
             }
 
-            MemoryStream ms = new MemoryStream(Buffer);
+            MemoryStream ms = new MemoryStream(buffer);
             BinaryFormatter serializer = new BinaryFormatter();
 
             WebServiceCallResult wscr = (WebServiceCallResult)serializer.Deserialize(ms);

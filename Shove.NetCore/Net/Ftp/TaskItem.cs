@@ -164,110 +164,110 @@ namespace Shove.Net.Ftp
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="Identifiers">标识</param>
-        /// <param name="Server">服务器 IP 或名称</param>
-        /// <param name="UserName">用户名</param>
-        /// <param name="Password">密码</param>
-        /// <param name="LocalFileName">本地文件名</param>
-        /// <param name="RemoteFileName">远程文件名</param>
-        /// <param name="TransferDirection">传输方向</param>
-        public TaskItem(string Identifiers, string Server, string UserName, string Password, string LocalFileName, string RemoteFileName, Direction TransferDirection)
-            : this(Identifiers, Server, 21, UserName, Password, true, true, false, 4096, LocalFileName, RemoteFileName, TransferDirection, Instruct.Start)
+        /// <param name="identifiers">标识</param>
+        /// <param name="server">服务器 IP 或名称</param>
+        /// <param name="userName">用户名</param>
+        /// <param name="password">密码</param>
+        /// <param name="localFileName">本地文件名</param>
+        /// <param name="remoteFileName">远程文件名</param>
+        /// <param name="transferDirection">传输方向</param>
+        public TaskItem(string identifiers, string server, string userName, string password, string localFileName, string remoteFileName, Direction transferDirection)
+            : this(identifiers, server, 21, userName, password, true, true, false, 4096, localFileName, remoteFileName, transferDirection, Instruct.Start)
         {
         }
 
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="Identifiers">标识</param>
-        /// <param name="Server">服务器 IP 或名称</param>
-        /// <param name="UserName">用户名</param>
-        /// <param name="Password">密码</param>
-        /// <param name="LocalFileName">本地文件名</param>
-        /// <param name="RemoteFileName">远程文件名</param>
-        /// <param name="TransferDirection">传输方向</param>
-        /// <param name="InitializationInstruct">初始化时的默认指令</param>
-        public TaskItem(string Identifiers, string Server, string UserName, string Password, string LocalFileName, string RemoteFileName, Direction TransferDirection, Instruct InitializationInstruct)
-            : this(Identifiers, Server, 21, UserName, Password, true, true, false, 4096, LocalFileName, RemoteFileName, TransferDirection, InitializationInstruct)
+        /// <param name="identifiers">标识</param>
+        /// <param name="server">服务器 IP 或名称</param>
+        /// <param name="userName">用户名</param>
+        /// <param name="password">密码</param>
+        /// <param name="localFileName">本地文件名</param>
+        /// <param name="remoteFileName">远程文件名</param>
+        /// <param name="transferDirection">传输方向</param>
+        /// <param name="initializationInstruct">初始化时的默认指令</param>
+        public TaskItem(string identifiers, string server, string userName, string password, string localFileName, string remoteFileName, Direction transferDirection, Instruct initializationInstruct)
+            : this(identifiers, server, 21, userName, password, true, true, false, 4096, localFileName, remoteFileName, transferDirection, initializationInstruct)
         {
         }
 
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="Identifiers">标识</param>
-        /// <param name="Server">服务器 IP 或名称</param>
+        /// <param name="identifiers">标识</param>
+        /// <param name="server">服务器 IP 或名称</param>
         /// <param name="Port">端口</param>
-        /// <param name="UserName">用户名</param>
-        /// <param name="Password">密码</param>
-        /// <param name="LocalFileName">本地文件名</param>
-        /// <param name="RemoteFileName">远程文件名</param>
-        /// <param name="TransferDirection">传输方向</param>
-        public TaskItem(string Identifiers, string Server, int Port, string UserName, string Password, string LocalFileName, string RemoteFileName, Direction TransferDirection)
-            : this(Identifiers, Server, Port, UserName, Password, true, true, false, 4096, LocalFileName, RemoteFileName, TransferDirection, Instruct.Start)
+        /// <param name="userName">用户名</param>
+        /// <param name="password">密码</param>
+        /// <param name="localFileName">本地文件名</param>
+        /// <param name="remoteFileName">远程文件名</param>
+        /// <param name="transferDirection">传输方向</param>
+        public TaskItem(string identifiers, string server, int Port, string userName, string password, string localFileName, string remoteFileName, Direction transferDirection)
+            : this(identifiers, server, Port, userName, password, true, true, false, 4096, localFileName, remoteFileName, transferDirection, Instruct.Start)
         {
         }
 
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="Identifiers">标识</param>
-        /// <param name="Server">服务器 IP 或名称</param>
+        /// <param name="identifiers">标识</param>
+        /// <param name="server">服务器 IP 或名称</param>
         /// <param name="Port">端口</param>
-        /// <param name="UserName">用户名</param>
-        /// <param name="Password">密码</param>
-        /// <param name="LocalFileName">本地文件名</param>
-        /// <param name="RemoteFileName">远程文件名</param>
-        /// <param name="TransferDirection">传输方向</param>
-        /// <param name="InitializationInstruct">初始化时的默认指令</param>
-        public TaskItem(string Identifiers, string Server, int Port, string UserName, string Password, string LocalFileName, string RemoteFileName, Direction TransferDirection, Instruct InitializationInstruct)
-            : this(Identifiers, Server, Port, UserName, Password, true, true, false, 4096, LocalFileName, RemoteFileName, TransferDirection, InitializationInstruct)
+        /// <param name="userName">用户名</param>
+        /// <param name="password">密码</param>
+        /// <param name="localFileName">本地文件名</param>
+        /// <param name="remoteFileName">远程文件名</param>
+        /// <param name="transferDirection">传输方向</param>
+        /// <param name="initializationInstruct">初始化时的默认指令</param>
+        public TaskItem(string identifiers, string server, int Port, string userName, string password, string localFileName, string remoteFileName, Direction transferDirection, Instruct initializationInstruct)
+            : this(identifiers, server, Port, userName, password, true, true, false, 4096, localFileName, remoteFileName, transferDirection, initializationInstruct)
         {
         }
 
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="Identifiers">标识</param>
-        /// <param name="Server">服务器 IP 或名称</param>
+        /// <param name="identifiers">标识</param>
+        /// <param name="server">服务器 IP 或名称</param>
         /// <param name="Port">端口</param>
-        /// <param name="UserName">用户名</param>
-        /// <param name="Password">密码</param>
+        /// <param name="userName">用户名</param>
+        /// <param name="password">密码</param>
         /// <param name="UseBinary">二进制传输</param>
         /// <param name="UsePassive">使用被动模式，注意：一般此变量设置为 false, 用主动模式</param>
         /// <param name="EnableSsl">使用 SSL 加密传输</param>
-        /// <param name="LocalFileName">本地文件名</param>
-        /// <param name="RemoteFileName">远程文件名</param>
-        /// <param name="TransferDirection">传输方向</param>
-        /// <param name="InitializationInstruct">初始化时的默认指令</param>
-        public TaskItem(string Identifiers, string Server, int Port, string UserName, string Password, bool UseBinary, bool UsePassive, bool EnableSsl, string LocalFileName, string RemoteFileName, Direction TransferDirection, Instruct InitializationInstruct)
-            : this(Identifiers, Server, Port, UserName, Password, UseBinary, UsePassive, EnableSsl, 4096, LocalFileName, RemoteFileName, TransferDirection, InitializationInstruct)
+        /// <param name="localFileName">本地文件名</param>
+        /// <param name="remoteFileName">远程文件名</param>
+        /// <param name="transferDirection">传输方向</param>
+        /// <param name="initializationInstruct">初始化时的默认指令</param>
+        public TaskItem(string identifiers, string server, int Port, string userName, string password, bool UseBinary, bool UsePassive, bool EnableSsl, string localFileName, string remoteFileName, Direction transferDirection, Instruct initializationInstruct)
+            : this(identifiers, server, Port, userName, password, UseBinary, UsePassive, EnableSsl, 4096, localFileName, remoteFileName, transferDirection, initializationInstruct)
         {
         }
 
-		/// <param name="Identifiers">标识</param>
-        /// <param name="Server">服务器 IP 或名称</param>
+		/// <param name="identifiers">标识</param>
+        /// <param name="server">服务器 IP 或名称</param>
         /// <param name="Port">端口</param>
-        /// <param name="UserName">用户名</param>
-        /// <param name="Password">密码</param>
+        /// <param name="userName">用户名</param>
+        /// <param name="password">密码</param>
         /// <param name="UseBinary">二进制传输</param>
         /// <param name="UsePassive">使用被动模式，注意：一般此变量设置为 false, 用主动模式</param>
         /// <param name="EnableSsl">使用 SSL 加密传输</param>
 		/// <param name="TransferBufferSize">每次传输的缓冲区大小</param>
-        /// <param name="LocalFileName">本地文件名</param>
-        /// <param name="RemoteFileName">远程文件名</param>
-        /// <param name="TransferDirection">传输方向</param>
-        /// <param name="InitializationInstruct">初始化时的默认指令</param>
-        public TaskItem(string Identifiers, string Server, int Port, string UserName, string Password, bool UseBinary, bool UsePassive, bool EnableSsl, int TransferBufferSize, string LocalFileName, string RemoteFileName, Direction TransferDirection, Instruct InitializationInstruct)
+        /// <param name="localFileName">本地文件名</param>
+        /// <param name="remoteFileName">远程文件名</param>
+        /// <param name="transferDirection">传输方向</param>
+        /// <param name="initializationInstruct">初始化时的默认指令</param>
+        public TaskItem(string identifiers, string server, int Port, string userName, string password, bool UseBinary, bool UsePassive, bool EnableSsl, int TransferBufferSize, string localFileName, string remoteFileName, Direction transferDirection, Instruct initializationInstruct)
         {
-            this._Identifiers = Identifiers;
+            this._Identifiers = identifiers;
 
-            this._LocalFileName = LocalFileName;
-            this._RemoteFileName = RemoteFileName;
-            this._TransferDirection = TransferDirection;
-            this._TransferInstruct = InitializationInstruct;
+            this._LocalFileName = localFileName;
+            this._RemoteFileName = remoteFileName;
+            this._TransferDirection = transferDirection;
+            this._TransferInstruct = initializationInstruct;
 
-            ftp = new FtpClient(Server, Port, UserName, Password, UseBinary, UsePassive, EnableSsl, TransferBufferSize);
+            ftp = new FtpClient(server, Port, userName, password, UseBinary, UsePassive, EnableSsl, TransferBufferSize);
             ftp.OnTransfering += new FtpClient.TransferEventHandler(On_Transfering);
         }
 

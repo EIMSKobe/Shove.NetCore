@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Data;
-using System.Data.Common;
 using System.Data.SQLite;
 using System.Text.RegularExpressions;
 
@@ -31,7 +29,7 @@ namespace Shove.DatabaseFactory.Convert
                 return null;
             }
 
-            Shove.DatabaseFactory.Convert.Model.Database model = new Shove.DatabaseFactory.Convert.Model.Database();
+            DatabaseFactory.Convert.Model.Database model = new DatabaseFactory.Convert.Model.Database();
 
             #region 分析 Table、Index
 
@@ -94,8 +92,8 @@ namespace Shove.DatabaseFactory.Convert
 
             #region 分析 View
 
-            SQLiteCommand Cmd = new SQLiteCommand("select name, sql from sqlite_master where type = 'view' order by name desc;", conn);
-            SQLiteDataReader dr3 = Cmd.ExecuteReader();
+            SQLiteCommand cmd = new SQLiteCommand("select name, sql from sqlite_master where type = 'view' order by name desc;", conn);
+            SQLiteDataReader dr3 = cmd.ExecuteReader();
 
             if (dr3 != null)
             {
@@ -103,7 +101,7 @@ namespace Shove.DatabaseFactory.Convert
                 {
                     string ViewName = dr3["name"].ToString();
 
-                    if (ViewName.StartsWith("`") || ViewName.StartsWith("[") || ViewName.StartsWith("\""))
+                    if (ViewName.StartsWith("`", StringComparison.Ordinal) || ViewName.StartsWith("[", StringComparison.Ordinal) || ViewName.StartsWith("\"", StringComparison.Ordinal))
                     {
                         ViewName = ViewName.Substring(1, ViewName.Length - 2);
                     }
@@ -143,10 +141,10 @@ namespace Shove.DatabaseFactory.Convert
 
         #region SQLiteToModel 的辅助方法
 
-        private IList<Field> SplitColumns(SQLiteConnection conn, string TableName, string input)
+        private IList<Field> SplitColumns(SQLiteConnection conn, string tableName, string input)
         {
-            input = input.Substring(input.IndexOf("(") + 1);
-            input = input.Substring(0, input.LastIndexOf(")"));
+            input = input.Substring(input.IndexOf("(", StringComparison.Ordinal) + 1);
+            input = input.Substring(0, input.LastIndexOf(")", StringComparison.Ordinal));
 
             string[] strs = input.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -156,19 +154,19 @@ namespace Shove.DatabaseFactory.Convert
             }
 
             IList<Field> result = new List<Field>();
-            string MarkPrimaryKeyColumnName = "";
+            string markPrimaryKeyColumnName = "";
 
             for (int i = 0; i < strs.Length; i++)
             {
-                Field field = ExtractColumnProperties(conn, TableName, strs[i], ref MarkPrimaryKeyColumnName);
+                Field field = ExtractColumnProperties(conn, tableName, strs[i], ref markPrimaryKeyColumnName);
 
                 if (field == null)
                 {
-                    if (!string.IsNullOrEmpty(MarkPrimaryKeyColumnName))
+                    if (!string.IsNullOrEmpty(markPrimaryKeyColumnName))
                     {
                         for (int j = 0; j < result.Count; j++)
                         {
-                            if (result[j].Name.ToLower() == MarkPrimaryKeyColumnName.ToLower())
+                            if (result[j].Name.ToLower() == markPrimaryKeyColumnName.ToLower())
                             {
                                 result[j].IsPRIMARY_KEY = true;
 
@@ -202,15 +200,15 @@ namespace Shove.DatabaseFactory.Convert
         private Regex regex_col_name = new Regex(@"^(?<L0>[^\s\t\r\n\v\f]+?)[\s\t\r\n\v\f]+?(?<L1>[^\s\t\r\n\v\f]+?)[\s\t\r\n\v\f]+?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private Regex regex_datatype = new Regex(@"(?<L0>[^(]+?)[(](?<L1>[\d]+?)[)]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private Field ExtractColumnProperties(SQLiteConnection conn, string TableName, string input, ref string MarkPrimaryKeyColumnName)
+        private Field ExtractColumnProperties(SQLiteConnection conn, string tableName, string input, ref string markPrimaryKeyColumnName)
         {
             input = input.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }) + " ";
-            MarkPrimaryKeyColumnName = "";
+            markPrimaryKeyColumnName = "";
 
             string name = "";
             string dbtype = "";
             int length = 0;
-            bool AutoIncrement = false;
+            bool autoIncrement = false;
             bool PRIMARY_KEY = false;
             bool NOT_NULL = false;
             string DefaultValue = "";
@@ -222,13 +220,13 @@ namespace Shove.DatabaseFactory.Convert
                 m = regex_primary_key_col_name.Match(s);
                 if (m.Success)
                 {
-                    MarkPrimaryKeyColumnName = m.Groups["L0"].Value;
+                    markPrimaryKeyColumnName = m.Groups["L0"].Value;
                 }
 
                 return null;
             }
 
-            AutoIncrement = regex_auto_increment.IsMatch(input);
+            autoIncrement = regex_auto_increment.IsMatch(input);
             PRIMARY_KEY = regex_primary_key2.IsMatch(input);
             NOT_NULL = regex_not_null.IsMatch(input);
 
@@ -244,7 +242,7 @@ namespace Shove.DatabaseFactory.Convert
                 return null;
             }
             name = m.Groups["L0"].Value;
-            if ((name.StartsWith("[") && name.EndsWith("]")) || (name.StartsWith("\"") && name.EndsWith("\"")) || (name.StartsWith("\'") && name.EndsWith("\'")))
+            if ((name.StartsWith("[", StringComparison.Ordinal) && name.EndsWith("]", StringComparison.Ordinal)) || (name.StartsWith("\"", StringComparison.Ordinal) && name.EndsWith("\"", StringComparison.Ordinal)) || (name.StartsWith("\'", StringComparison.Ordinal) && name.EndsWith("\'", StringComparison.Ordinal)))
             {
                 name = name.Substring(1, name.Length - 2);
             }
@@ -261,7 +259,7 @@ namespace Shove.DatabaseFactory.Convert
             string t_type = dbtype.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }).ToUpper();
             if ((t_type == "VARCHAR") || (t_type == "NVARCHAR"))
             {
-                SQLiteCommand Cmd = new SQLiteCommand("select ifnull(max(length([" + name + "])), 0) as max_length from " + TableName, conn);
+                SQLiteCommand Cmd = new SQLiteCommand("select ifnull(max(length([" + name + "])), 0) as max_length from " + tableName, conn);
                 SQLiteDataReader dr = Cmd.ExecuteReader();
                 dr.Read();
                 int max_length = Shove.Convert.StrToInt(dr[0].ToString(), 0) * 2;
@@ -285,7 +283,7 @@ namespace Shove.DatabaseFactory.Convert
                 }
             }
 
-            return new Field(name, dbtype, length, AutoIncrement, PRIMARY_KEY, NOT_NULL, DefaultValue);
+            return new Field(name, dbtype, length, autoIncrement, PRIMARY_KEY, NOT_NULL, DefaultValue);
         }
 
         private string FilterViewStatement(string input)
@@ -294,8 +292,8 @@ namespace Shove.DatabaseFactory.Convert
 
             if (input.StartsWith("CREATE VIEW \"", StringComparison.OrdinalIgnoreCase))
             {
-                input = Shove.String.ReplaceAt(input, '[', input.IndexOf('\"'));
-                input = Shove.String.ReplaceAt(input, ']', input.IndexOf('\"'));
+                input = String.ReplaceAt(input, '[', input.IndexOf('\"'));
+                input = String.ReplaceAt(input, ']', input.IndexOf('\"'));
             }
 
             return input;
@@ -307,17 +305,17 @@ namespace Shove.DatabaseFactory.Convert
         /// 表行中是否存在某字段
         /// </summary>
         /// <param name="dr"></param>
-        /// <param name="ColumnName"></param>
+        /// <param name="columnName"></param>
         /// <returns></returns>
-        private bool isColumnExists(DataRow dr, string ColumnName)
+        private bool IsColumnExists(DataRow dr, string columnName)
         {
-            object obj = null;
+            object obj;
 
             for (int i = 0; i < dr.ItemArray.Length; i++)
             {
                 try
                 {
-                    obj = dr[ColumnName];
+                    obj = dr[columnName];
 
                     return true;
                 }

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Shove.DatabaseFactory
 {
@@ -34,7 +32,7 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 构造，带连接串，而不从配置文件读取
         /// </summary>
-        public FactoryManager(string ConnectionString)
+        public FactoryManager(string connectionString)
         {
             DataProvider = System.Configuration.ConfigurationManager.AppSettings["DataProvider"];
 
@@ -62,9 +60,9 @@ namespace Shove.DatabaseFactory
                 throw new Exception("DataProvider can in “MySQL”, “MSSQL”, “SQLite” only.");
             }
 
-            if (!string.IsNullOrEmpty(ConnectionString))
+            if (!string.IsNullOrEmpty(connectionString))
             {
-                factory = (Factory)Activator.CreateInstance(Type.GetType("Shove.DatabaseFactory." + DataProvider), new object[] { ConnectionString });
+                factory = (Factory)Activator.CreateInstance(Type.GetType("Shove.DatabaseFactory." + DataProvider), new object[] { connectionString });
             }
             else
             {

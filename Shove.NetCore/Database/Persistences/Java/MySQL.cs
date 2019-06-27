@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using MySql.Data.MySqlClient;
 using System.Data;
@@ -14,9 +13,9 @@ namespace Shove.Database.Persistences.Java
     {
         private string ConnStr = "";
 
-        string m_ServerName;
-        string m_DatabaseName;
-        string m_UserID;
+        string m_Server;
+        string m_Database;
+        string m_User;
         string m_Password;
         string m_Port;
         string m_NamespaceName;
@@ -30,26 +29,26 @@ namespace Shove.Database.Persistences.Java
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="ServerName"></param>
-        /// <param name="DatabaseName"></param>
-        /// <param name="UserID"></param>
-        /// <param name="Password"></param>
+        /// <param name="server"></param>
+        /// <param name="database"></param>
+        /// <param name="user"></param>
+        /// <param name="password"></param>
         /// <param name="Port"></param>
-        /// <param name="NamespaceName"></param>
+        /// <param name="namespaceName"></param>
         /// <param name="isUseConnectionStringConfig"></param>
         /// <param name="isUseConnectionString"></param>
         /// <param name="isWithTables"></param>
         /// <param name="isWithViews"></param>
         /// <param name="isWithProcedures"></param>
         /// <param name="isWithFunction"></param>
-        public MySQL(string ServerName, string DatabaseName, string UserID, string Password, string Port, string NamespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews, bool isWithProcedures, bool isWithFunction)
+        public MySQL(string server, string database, string user, string password, string Port, string namespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews, bool isWithProcedures, bool isWithFunction)
         {
-            m_ServerName = ServerName;
-            m_DatabaseName = DatabaseName;
-            m_UserID = UserID;
-            m_Password = Password;
+            m_Server = server;
+            m_Database = database;
+            m_User = user;
+            m_Password = password;
             m_Port = Port;
-            m_NamespaceName = NamespaceName.Trim();
+            m_NamespaceName = namespaceName.Trim();
             m_isUseConnectionStringConfig = isUseConnectionStringConfig;
             m_isUseConnectionString = isUseConnectionString;
             m_isWithTables = isWithTables;
@@ -69,9 +68,9 @@ namespace Shove.Database.Persistences.Java
                 return "Request a Compent from table, view, procedure or function.";
             }
 
-            ConnStr = Shove.Database.MySQL.BuildConnectString(m_ServerName, m_UserID, m_Password, m_DatabaseName, m_Port);
+            ConnStr = Database.MySQL.BuildConnectString(m_Server, m_User, m_Password, m_Database, m_Port);
 
-            MySqlConnection conn = Shove.Database.MySQL.CreateDataConnection<MySqlConnection>(ConnStr);
+            MySqlConnection conn = DatabaseAccess.CreateDataConnection<MySqlConnection>(ConnStr);
 
             if (conn == null)
             {
@@ -173,7 +172,7 @@ namespace Shove.Database.Persistences.Java
 
         private void Tables(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.MySQL.Select(ConnStr, "select table_name from information_schema.tables where table_schema = '" + m_DatabaseName + "' and table_type = 'BASE TABLE' order by table_name;");
+            DataTable dt = Database.MySQL.Select(ConnStr, "select table_name from information_schema.tables where table_schema = '" + m_Database + "' and table_type = 'BASE TABLE' order by table_name;");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -183,11 +182,11 @@ namespace Shove.Database.Persistences.Java
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string TableName = dr["table_name"].ToString();
+                string tableName = dr["table_name"].ToString();
 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(TableName) + " extends Table {");
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(tableName) + " extends Table {");
 
-                DataTable dt_col = Shove.Database.MySQL.Select(ConnStr, "select column_name, data_type, character_maximum_length, column_type, extra from information_schema.columns where table_schema = '" + m_DatabaseName + "' and table_name = '" + TableName + "' order by ordinal_position;");
+                DataTable dt_col = Database.MySQL.Select(ConnStr, "select column_name, data_type, character_maximum_length, column_type, extra from information_schema.columns where table_schema = '" + m_Database + "' and table_name = '" + tableName + "' order by ordinal_position;");
 
                 if ((dt_col == null) || (dt_col.Rows.Count < 1))
                 {
@@ -204,14 +203,14 @@ namespace Shove.Database.Persistences.Java
                 {
                     DataRow dr_col = dt_col.Rows[j];
 
-                    string ColName = dr_col["column_name"].ToString();
+                    string colName = dr_col["column_name"].ToString();
 
-                    sb.AppendLine("\t\t\tpublic Field " + GetCanonicalIdentifier(ColName) + " = new Field(this, \"" + GetBracketsedObjectName(ColName) + "\", Types." + GetSQLDataType(dr_col["data_type"].ToString()) + ", " + ((dr_col["extra"].ToString() == "auto_increment") ? "true" : "false") + ");");
+                    sb.AppendLine("\t\t\tpublic Field " + GetCanonicalIdentifier(colName) + " = new Field(this, \"" + GetBracketsedObjectName(colName) + "\", Types." + GetSQLDataType(dr_col["data_type"].ToString()) + ", " + ((dr_col["extra"].ToString() == "auto_increment") ? "true" : "false") + ");");
                 }
                 sb.AppendLine("");
 
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(TableName) + "() {");
-                sb.AppendLine("\t\t\t\tname = \"" + GetBracketsedObjectName(TableName) + "\";");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(tableName) + "() {");
+                sb.AppendLine("\t\t\t\tname = \"" + GetBracketsedObjectName(tableName) + "\";");
                 sb.AppendLine("\t\t\t}");
                 sb.AppendLine("\t\t}");
 
@@ -224,7 +223,7 @@ namespace Shove.Database.Persistences.Java
 
         private void Views(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.MySQL.Select(ConnStr, "select table_name from information_schema.tables where table_schema = '" + m_DatabaseName + "' and table_type = 'VIEW' order by table_name;");
+            DataTable dt = Database.MySQL.Select(ConnStr, "select table_name from information_schema.tables where table_schema = '" + m_Database + "' and table_type = 'VIEW' order by table_name;");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -234,11 +233,11 @@ namespace Shove.Database.Persistences.Java
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string ViewName = dr["table_name"].ToString();
+                string viewName = dr["table_name"].ToString();
 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(ViewName) + " extends View {");
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(ViewName) + "() {");
-                sb.AppendLine("\t\t\t\tname = \"" + GetBracketsedObjectName(ViewName) + "\";");
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(viewName) + " extends View {");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(viewName) + "() {");
+                sb.AppendLine("\t\t\t\tname = \"" + GetBracketsedObjectName(viewName) + "\";");
                 sb.AppendLine("\t\t\t}");
                 sb.AppendLine("\t\t}");
 
@@ -251,7 +250,7 @@ namespace Shove.Database.Persistences.Java
 
         private void Functions(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.MySQL.Select(ConnStr, "select routine_name, dtd_identifier, routine_body from information_schema.routines where routine_schema = '" + m_DatabaseName + "' and routine_type = 'FUNCTION' order by routine_name;");
+            DataTable dt = Database.MySQL.Select(ConnStr, "select routine_name, dtd_identifier, routine_body from information_schema.routines where routine_schema = '" + m_Database + "' and routine_type = 'FUNCTION' order by routine_name;");
             if (dt == null)
                 return;
             if (dt.Rows.Count < 1)
@@ -260,10 +259,10 @@ namespace Shove.Database.Persistences.Java
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string FunctionName = dr["routine_name"].ToString();
+                string functionName = dr["routine_name"].ToString();
 
                 //Function Builder...
-                DataTable dt_col = Shove.Database.MySQL.Select(ConnStr, "SELECT param_list, returns FROM mysql.proc where db = '" + m_DatabaseName + "' and type = 'FUNCTION' and name = '" + FunctionName + "';");
+                DataTable dt_col = Database.MySQL.Select(ConnStr, "SELECT param_list, returns FROM mysql.proc where db = '" + m_Database + "' and type = 'FUNCTION' and name = '" + functionName + "';");
                 if (dt_col == null)
                     continue;
                 if (dt_col.Rows.Count < 1)
@@ -277,7 +276,7 @@ namespace Shove.Database.Persistences.Java
                 string ReturnSQLType = "";
                 try
                 {
-                    ReturnType = GetDataType(FilterLengthDescriptionForReturnType(System.Text.ASCIIEncoding.ASCII.GetString((byte[])dt_col.Rows[0]["returns"])));
+                    ReturnType = GetDataType(FilterLengthDescriptionForReturnType(Encoding.ASCII.GetString((byte[])dt_col.Rows[0]["returns"])));
                 }
                 catch
                 {
@@ -285,14 +284,14 @@ namespace Shove.Database.Persistences.Java
                 }
                 try
                 {
-                    ReturnSQLType = GetSQLDataType(FilterLengthDescriptionForReturnType(System.Text.ASCIIEncoding.ASCII.GetString((byte[])dt_col.Rows[0]["returns"])));
+                    ReturnSQLType = GetSQLDataType(FilterLengthDescriptionForReturnType(Encoding.ASCII.GetString((byte[])dt_col.Rows[0]["returns"])));
                 }
                 catch
                 {
                     ReturnSQLType = GetSQLDataType(FilterLengthDescriptionForReturnType(dt_col.Rows[0]["returns"].ToString()));
                 }
 
-                sb.Append("\t\tpublic static " + ReturnType + " " + GetCanonicalIdentifier(FunctionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "Connection conn")));
+                sb.Append("\t\tpublic static " + ReturnType + " " + GetCanonicalIdentifier(functionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "Connection conn")));
                 string[] cols = SplitParameters(BytesToString((byte[])dt_col.Rows[0]["param_list"]));
                 if (cols != null)
                 {
@@ -303,16 +302,16 @@ namespace Shove.Database.Persistences.Java
                         {
                             continue;
                         }
-                        string ColName = t_strs[0];
+                        string colName = t_strs[0];
                         string Type = GetDataType(t_strs[1]);
                         if ((j > 0) || !m_isUseConnectionStringConfig)
                             sb.Append(", ");
-                        sb.Append(Type + " " + GetCanonicalIdentifier(ColName));
+                        sb.Append(Type + " " + GetCanonicalIdentifier(colName));
                     }
                 }
                 sb.AppendLine(") throws SQLException {");
 
-                sb.AppendLine("\t\t\tObject result = MySQL.executeFunction(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + GetBracketsedObjectName(FunctionName) + "\",");
+                sb.AppendLine("\t\t\tObject result = MySQL.executeFunction(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + GetBracketsedObjectName(functionName) + "\",");
                 sb.Append("\t\t\t\tnew Parameter(Types." + ReturnSQLType + ", ParameterDirection.RETURN, null)");
                 if (cols != null)
                 {
@@ -323,11 +322,11 @@ namespace Shove.Database.Persistences.Java
                         {
                             continue;
                         }
-                        string ColName = t_strs[0];
+                        string colName = t_strs[0];
                         string Type = GetDataType(t_strs[1]);
                         string SQLType = GetSQLDataType(t_strs[1]).ToString();
                         sb.AppendLine(",");
-                        sb.Append("\t\t\t\tnew Parameter(Types." + SQLType + ", ParameterDirection.IN, " + GetCanonicalIdentifier(ColName) + ((Type == "boolean") ? " ? 1 : 0" : "") + ")");
+                        sb.Append("\t\t\t\tnew Parameter(Types." + SQLType + ", ParameterDirection.IN, " + GetCanonicalIdentifier(colName) + ((Type == "boolean") ? " ? 1 : 0" : "") + ")");
                     }
                 }
                 sb.AppendLine(");");
@@ -351,7 +350,7 @@ namespace Shove.Database.Persistences.Java
 
         private void Procedures(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.MySQL.Select(ConnStr, "select routine_name, dtd_identifier, routine_body from information_schema.routines where routine_schema = '" + m_DatabaseName + "' and routine_type = 'PROCEDURE' order by routine_name;");
+            DataTable dt = Database.MySQL.Select(ConnStr, "select routine_name, dtd_identifier, routine_body from information_schema.routines where routine_schema = '" + m_Database + "' and routine_type = 'PROCEDURE' order by routine_name;");
             if (dt == null)
                 return;
             if (dt.Rows.Count < 1)
@@ -360,16 +359,16 @@ namespace Shove.Database.Persistences.Java
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string ProcedureName = dr["routine_name"].ToString();
+                string procedureName = dr["routine_name"].ToString();
 
                 //Procedure Class Builder...
-                DataTable dt_col = Shove.Database.MySQL.Select(ConnStr, "SELECT param_list FROM mysql.proc where db = '" + m_DatabaseName + "' and type = 'PROCEDURE' and name = '" + ProcedureName + "';");
+                DataTable dt_col = Database.MySQL.Select(ConnStr, "SELECT param_list FROM mysql.proc where db = '" + m_Database + "' and type = 'PROCEDURE' and name = '" + procedureName + "';");
                 if (dt_col == null)
                     continue;
                 if (dt_col.Rows.Count < 1)
                     continue;
 
-                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(ProcedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "Connection conn")) + ", DataSet ds, List<Object> outParameterValues");
+                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(procedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "Connection conn")) + ", DataSet ds, List<Object> outParameterValues");
                 string[] cols = SplitParameters(BytesToString((byte[])dt_col.Rows[0]["param_list"]));
                 if (cols != null)
                 {
@@ -384,18 +383,18 @@ namespace Shove.Database.Persistences.Java
                         {
                             continue;
                         }
-                        string ColName = t_strs[1];
+                        string colName = t_strs[1];
                         string Type = GetDataType(t_strs[2]);
                         int isOutput = ((t_strs[0].ToLower() == "in") ? 0 : (t_strs[0].ToLower() == "inout" ? 1 : 2));
                         if ((j > 0) || !m_isUseConnectionStringConfig)
                         {
                             sb.Append(", ");
                         }
-                        sb.Append(Type + " " + GetCanonicalIdentifier(ColName));
+                        sb.Append(Type + " " + GetCanonicalIdentifier(colName));
                     }
                 }
                 sb.AppendLine(") throws SQLException, DataException {");
-                sb.Append("\t\t\tint result = MySQL.executeProcedure(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + GetBracketsedObjectName(ProcedureName) + "\", ds, outParameterValues");
+                sb.Append("\t\t\tint result = MySQL.executeProcedure(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + GetBracketsedObjectName(procedureName) + "\", ds, outParameterValues");
                 if (cols != null)
                 {
                     for (int j = 0; j < cols.Length; j++)
@@ -405,12 +404,12 @@ namespace Shove.Database.Persistences.Java
                         {
                             continue;
                         }
-                        string ColName = t_strs[1];
+                        string colName = t_strs[1];
                         string Type = GetDataType(t_strs[2]);
                         string SQLType = GetSQLDataType(t_strs[2]).ToString();
                         int isOutput = ((t_strs[0].ToLower() == "in") ? 0 : (t_strs[0].ToLower() == "inout" ? 1 : 2));
                         sb.AppendLine(",");
-                        sb.Append("\t\t\t\tnew Parameter(Types." + SQLType + ", " + (isOutput == 0 ? "ParameterDirection.IN" : (isOutput == 1 ? "ParameterDirection.INOUT" : "ParameterDirection.OUT")) + ", " + GetCanonicalIdentifier(ColName) + ")");
+                        sb.Append("\t\t\t\tnew Parameter(Types." + SQLType + ", " + (isOutput == 0 ? "ParameterDirection.IN" : (isOutput == 1 ? "ParameterDirection.INOUT" : "ParameterDirection.OUT")) + ", " + GetCanonicalIdentifier(colName) + ")");
                     }
                 }
                 sb.AppendLine(");");
@@ -434,127 +433,127 @@ namespace Shove.Database.Persistences.Java
         private string GetDataType(string SQLType)
         {
             SQLType = SQLType.Trim().ToLower();//.Split('(')[0];
-            string Result = "String";
+            string result = "String";
 
             switch (SQLType)
             {
                 case "tinyint":
-                    Result = "short";
+                    result = "short";
                     break;
                 case "smallint":
-                    Result = "short";
+                    result = "short";
                     break;
                 case "mediumint":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "int":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "integer":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "bigint":
-                    Result = "long";
+                    result = "long";
                     break;
                 case "float":
-                    Result = "float";
+                    result = "float";
                     break;
                 case "double":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "decimal":
-                    Result = "BigDecimal";
+                    result = "BigDecimal";
                     break;
                 case "date":
-                    Result = "Date";
+                    result = "Date";
                     break;
                 case "datetime":
-                    Result = "Date";
+                    result = "Date";
                     break;
                 case "timestamp":
-                    Result = "Date";
+                    result = "Date";
                     break;
                 case "time":
-                    Result = "Date";
+                    result = "Date";
                     break;
                 case "year":
-                    Result = "Date";
+                    result = "Date";
                     break;
                 case "char":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "varchar":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "tinyblob":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "blob":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "mediumblob":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "longblob":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "tinytext":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "text":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "mediumtext":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "longtext":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "enum":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "set":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "binary":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "varbinary":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "bit":
-                    Result = "boolean";
+                    result = "boolean";
                     break;
                 case "boolean":
-                    Result = "boolean";
+                    result = "boolean";
                     break;
                 case "geometry":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "point":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "linestring":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "polygon":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "multipoint":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "multilinestring":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "multipolygon":
-                    Result = "String";
+                    result = "String";
                     break;
                 case "geometrycollection":
-                    Result = "String";
+                    result = "String";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
@@ -565,192 +564,192 @@ namespace Shove.Database.Persistences.Java
         private string GetSQLDataType(string SQLType)
         {
             SQLType = SQLType.Trim().ToLower();//.Split('(')[0];
-            string Result = "VARCHAR";
+            string result = "VARCHAR";
 
             switch (SQLType)
             {
                 case "tinyint":
-                    Result = "TINYINT";
+                    result = "TINYINT";
                     break;
                 case "smallint":
-                    Result = "SMALLINT";
+                    result = "SMALLINT";
                     break;
                 case "mediumint":
-                    Result = "INTEGER";
+                    result = "INTEGER";
                     break;
                 case "int":
-                    Result = "INTEGER";
+                    result = "INTEGER";
                     break;
                 case "integer":
-                    Result = "INTEGER";
+                    result = "INTEGER";
                     break;
                 case "bigint":
-                    Result = "BIGINT";
+                    result = "BIGINT";
                     break;
                 case "float":
-                    Result = "FLOAT";
+                    result = "FLOAT";
                     break;
                 case "double":
-                    Result = "DOUBLE";
+                    result = "DOUBLE";
                     break;
                 case "decimal":
-                    Result = "DECIMAL";
+                    result = "DECIMAL";
                     break;
                 case "date":
-                    Result = "DATE";
+                    result = "DATE";
                     break;
                 case "datetime":
-                    Result = "TIMESTAMP";
+                    result = "TIMESTAMP";
                     break;
                 case "timestamp":
-                    Result = "TIMESTAMP";
+                    result = "TIMESTAMP";
                     break;
                 case "time":
-                    Result = "TIME";
+                    result = "TIME";
                     break;
                 case "year":
-                    Result = "DATE";
+                    result = "DATE";
                     break;
                 case "char":
-                    Result = "CHAR";
+                    result = "CHAR";
                     break;
                 case "varchar":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "tinyblob":
-                    Result = "BLOB";
+                    result = "BLOB";
                     break;
                 case "blob":
-                    Result = "BLOB";
+                    result = "BLOB";
                     break;
                 case "mediumblob":
-                    Result = "BLOB";
+                    result = "BLOB";
                     break;
                 case "longblob":
-                    Result = "BLOB";
+                    result = "BLOB";
                     break;
                 case "tinytext":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "text":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "mediumtext":
-                    Result = "LONGVARCHAR";
+                    result = "LONGVARCHAR";
                     break;
                 case "longtext":
-                    Result = "LONGVARCHAR";
+                    result = "LONGVARCHAR";
                     break;
                 case "enum":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "set":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "binary":
-                    Result = "BINARY";
+                    result = "BINARY";
                     break;
                 case "varbinary":
-                    Result = "VARBINARY";
+                    result = "VARBINARY";
                     break;
                 case "bit":
-                    Result = "BIT";
+                    result = "BIT";
                     break;
                 case "boolean":
-                    Result = "BOOLEAN";
+                    result = "BOOLEAN";
                     break;
                 case "geometry":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "point":
-                    Result = "INTEGER";
+                    result = "INTEGER";
                     break;
                 case "linestring":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "polygon":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "multipoint":
-                    Result = "INTEGER";
+                    result = "INTEGER";
                     break;
                 case "multilinestring":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "multipolygon":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
                 case "geometrycollection":
-                    Result = "VARCHAR";
+                    result = "VARCHAR";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
-        private string GetDataTypeForConvert(string Type)
+        private string GetDataTypeForConvert(string type)
         {
-            Type = Type.Trim().ToLower();
-            string Result = "(String)";
+            type = type.Trim().ToLower();
+            string result = "(String)";
 
-            switch (Type)
+            switch (type)
             {
                 case "long":
-                    Result = "(Long)";
+                    result = "(Long)";
                     break;
                 case "boolean":
-                    Result = "(Boolean)";
+                    result = "(Boolean)";
                     break;
                 case "string":
-                    Result = "(String)";
+                    result = "(String)";
                     break;
                 case "date":
-                    Result = "(Date)";
+                    result = "(Date)";
                     break;
                 case "timestamp":
-                    Result = "(Date)";
+                    result = "(Date)";
                     break;
                 case "float":
-                    Result = "(Float)";
+                    result = "(Float)";
                     break;
                 case "double":
-                    Result = "(Double)";
+                    result = "(Double)";
                     break;
                 case "bigdecimal":
-                    Result = "(BigDecimal)";
+                    result = "(BigDecimal)";
                     break;
                 case "int":
-                    Result = "(Integer)";
+                    result = "(Integer)";
                     break;
                 case "short":
-                    Result = "(Short)";
+                    result = "(Short)";
                     break;
                 case "byte[]":
-                    Result = "(byte[])";
+                    result = "(byte[])";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
-        private string GetCanonicalIdentifier(string IdentifierName)
+        private string GetCanonicalIdentifier(string identifierName)
         {
-            IdentifierName = IdentifierName.Replace(" ", "_").Replace("$", "_").Replace("@", "_").Replace("`", "_");
+            identifierName = identifierName.Replace(" ", "_").Replace("$", "_").Replace("@", "_").Replace("`", "_");
 
-            if (IdentifierName.Length > 0)
+            if (identifierName.Length > 0)
             {
-                if ("0123456789".IndexOf(IdentifierName[0]) >= 0)
+                if ("0123456789".IndexOf(identifierName[0]) >= 0)
                 {
-                    IdentifierName = "_" + IdentifierName;
+                    identifierName = "_" + identifierName;
                 }
             }
 
-            if ((IdentifierName == "name") || (IdentifierName == "fields") || (IdentifierName == "this") || (IdentifierName == "super"))
+            if ((identifierName == "name") || (identifierName == "fields") || (identifierName == "this") || (identifierName == "super"))
             {
-                IdentifierName = "_" + IdentifierName;
+                identifierName = "_" + identifierName;
             }
 
-            return IdentifierName;
+            return identifierName;
         }
 
         /// <summary>
@@ -760,7 +759,7 @@ namespace Shove.Database.Persistences.Java
         /// <returns></returns>
         private string GetBracketsedObjectName(string input)
         {
-            if (!input.StartsWith("`"))
+            if (!input.StartsWith("`", System.StringComparison.Ordinal))
                 return "`" + input + "`";
             else
                 return input.Replace("`", "```");
@@ -768,17 +767,17 @@ namespace Shove.Database.Persistences.Java
 
         private string BytesToString(byte[] input)
         {
-            return System.Text.ASCIIEncoding.ASCII.GetString(input);
+            return Encoding.ASCII.GetString(input);
         }
 
         private string FilterSpace(string input)
         {
-            while (input.StartsWith("\n") || input.StartsWith("\r") || input.StartsWith("\t") || input.StartsWith("\v") || input.StartsWith("\f") || input.StartsWith(" "))
+            while (input.StartsWith("\n", System.StringComparison.Ordinal) || input.StartsWith("\r", System.StringComparison.Ordinal) || input.StartsWith("\t", System.StringComparison.Ordinal) || input.StartsWith("\v", System.StringComparison.Ordinal) || input.StartsWith("\f", System.StringComparison.Ordinal) || input.StartsWith(" ", System.StringComparison.Ordinal))
             {
                 input = input.Substring(1);
             }
 
-            while (input.EndsWith("\n") || input.EndsWith("\r") || input.EndsWith("\t") || input.StartsWith("\v") || input.StartsWith("\f") || input.EndsWith(" "))
+            while (input.EndsWith("\n", System.StringComparison.Ordinal) || input.EndsWith("\r", System.StringComparison.Ordinal) || input.EndsWith("\t", System.StringComparison.Ordinal) || input.StartsWith("\v", System.StringComparison.Ordinal) || input.StartsWith("\f", System.StringComparison.Ordinal) || input.EndsWith(" ", System.StringComparison.Ordinal))
             {
                 input = input.Substring(0, input.Length - 1);
             }
@@ -788,27 +787,27 @@ namespace Shove.Database.Persistences.Java
 
         private string FilterLengthDescriptionForReturnType(string input)
         {
-            string Result = input;
+            string result = input;
 
-            if (Result.Contains("("))
+            if (result.Contains("("))
             {
-                Result = Result.Substring(0, Result.IndexOf("("));
+                result = result.Substring(0, result.IndexOf("(", System.StringComparison.Ordinal));
             }
 
-            return Result;
+            return result;
         }
 
         private string FilterLengthDescription(string input)
         {
             input = FilterSpace(input);
-            string Result = input;
+            string result = input;
             int Len = 0;
 
-            if (Result.Contains("("))
+            if (result.Contains("("))
             {
-                Result = Result.Substring(0, Result.IndexOf("("));
+                result = result.Substring(0, result.IndexOf("(", System.StringComparison.Ordinal));
 
-                string t = input.Substring(input.IndexOf("("));
+                string t = input.Substring(input.IndexOf("(", System.StringComparison.Ordinal));
                 t = t.Substring(1, t.Length - 2);
 
                 if (t.Contains(","))
@@ -819,9 +818,9 @@ namespace Shove.Database.Persistences.Java
                 Len = int.Parse(t);
             }
 
-            Result = FilterSpace(Result).Replace("`", "");
+            result = FilterSpace(result).Replace("`", "");
 
-            return Result + " " + Len.ToString();
+            return result + " " + Len.ToString();
         }
 
         private string[] SplitParameters(string input)

@@ -37,4 +37,15 @@
       <UpdateFromURL>http://sms.gateway.i3km.com/sms_gateway.asmx?wsdl</UpdateFromURL>
     </WebReferenceUrl>
   </ItemGroup>
+  <ItemGroup>
+    <None Update="ChineseDictionary.dat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="InjectionInterceptor.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="IPAddress.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

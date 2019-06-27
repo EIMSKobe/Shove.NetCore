@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Data;
-using System.Data.Common;
 using System.Data.SQLite;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -23,12 +22,12 @@ namespace Shove.DatabaseFactory.Convert
         /// </summary>
         /// <param name="SQLite_ConnectionString">源 SQLite 数据库连接串</param>
         /// <param name="MySQL_ConnectionString">目标 MySQL 数据库连接串</param>
-        /// <param name="IsWithData">是否携带所有的数据进行转换</param>
-        /// <param name="Description">错误描述</param>
+        /// <param name="isWithData">是否携带所有的数据进行转换</param>
+        /// <param name="description">错误描述</param>
         /// <returns></returns>
-        public bool SQLiteToMySQL(string SQLite_ConnectionString, string MySQL_ConnectionString, bool IsWithData, ref string Description)
+        public bool SQLiteToMySQL(string SQLite_ConnectionString, string MySQL_ConnectionString, bool isWithData, ref string description)
         {
-            return SQLiteToMySQL(SQLite_ConnectionString, MySQL_ConnectionString, IsWithData, false, ref Description);
+            return SQLiteToMySQL(SQLite_ConnectionString, MySQL_ConnectionString, isWithData, false, ref description);
         }
 
         /// <summary>
@@ -36,13 +35,13 @@ namespace Shove.DatabaseFactory.Convert
         /// </summary>
         /// <param name="SQLite_ConnectionString">源 SQLite 数据库连接串</param>
         /// <param name="MySQL_ConnectionString">目标 MySQL 数据库连接串</param>
-        /// <param name="IsWithData">是否携带所有的数据进行转换</param>
+        /// <param name="isWithData">是否携带所有的数据进行转换</param>
         /// <param name="ignoreViewRelyon">是否忽略视图依赖关系</param>
-        /// <param name="Description">错误描述</param>
+        /// <param name="description">错误描述</param>
         /// <returns></returns>
-        public bool SQLiteToMySQL(string SQLite_ConnectionString, string MySQL_ConnectionString, bool IsWithData, bool ignoreViewRelyon, ref string Description)
+        public bool SQLiteToMySQL(string SQLite_ConnectionString, string MySQL_ConnectionString, bool isWithData, bool ignoreViewRelyon, ref string description)
         {
-            Description = "";
+            description = "";
 
             #region 连接数据库 & 读取SQLite 结构到 Model
 
@@ -54,7 +53,7 @@ namespace Shove.DatabaseFactory.Convert
             SQLiteConnection conn_s = Database.DatabaseAccess.CreateDataConnection<SQLiteConnection>(SQLite_ConnectionString);
             if ((conn_s == null) || (conn_s.State != ConnectionState.Open))
             {
-                Description = "连接源数据库发生错误，请检查网站源数据库文件(基本数据库文件)";
+                description = "连接源数据库发生错误，请检查网站源数据库文件(基本数据库文件)";
 
                 return false;
             }
@@ -64,7 +63,7 @@ namespace Shove.DatabaseFactory.Convert
             if (model == null)
             {
                 conn_s.Close();
-                Description = "从原数据中读取表、视图结构发生错误";
+                description = "从原数据中读取表、视图结构发生错误";
 
                 return false;
             }
@@ -73,7 +72,7 @@ namespace Shove.DatabaseFactory.Convert
             if ((conn_t == null) || (conn_t.State != ConnectionState.Open))
             {
                 conn_s.Close();
-                Description = "连接目标数据库发生错误，请检查连接字符串";
+                description = "连接目标数据库发生错误，请检查连接字符串";
 
                 return false;
             }
@@ -138,7 +137,7 @@ namespace Shove.DatabaseFactory.Convert
 
             #region 升迁数据
 
-            if (IsWithData)
+            if (isWithData)
             {
                 for (int i = 0; i < model.Tables.Count; i++)
                 {
@@ -194,7 +193,7 @@ namespace Shove.DatabaseFactory.Convert
                                     {
                                         if ((table.Name == "T_WXUsers") && (table.Fields[j].Name == "Name"))
                                         {
-                                            value = "'" + Shove.String.ConvertEncoding(dr_sqlite[j].ToString(), Encoding.Default, Encoding.UTF8).Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"").Replace("\r\n", "\\r\\n") + "'";
+                                            value = "'" + String.ConvertEncoding(dr_sqlite[j].ToString(), Encoding.Default, Encoding.UTF8).Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"").Replace("\r\n", "\\r\\n") + "'";
                                         }
                                         else
                                         {
@@ -310,7 +309,7 @@ namespace Shove.DatabaseFactory.Convert
 
             #endregion
 
-            //Shove.IO.File.WriteFile("C:\\aaaa\\shovemysql.sql", sb.ToString(), Encoding.UTF8);
+            //IO.File.WriteFile("C:\\aaaa\\shovemysql.sql", sb.ToString(), Encoding.UTF8);
 
             #region 执行命令
 
@@ -327,7 +326,7 @@ namespace Shove.DatabaseFactory.Convert
                 trans.Rollback();
                 conn_s.Close();
                 conn_t.Close();
-                Description = "升迁数据库过程中发生了错误：" + e.Message;
+                description = "升迁数据库过程中发生了错误：" + e.Message;
 
                 return false;
             }
@@ -396,7 +395,7 @@ namespace Shove.DatabaseFactory.Convert
                         trans.Rollback();
                         conn_s.Close();
                         conn_t.Close();
-                        Description = "更新视图“" + ViewName + "”发生错误：" + e.Message;
+                        description = "更新视图“" + ViewName + "”发生错误：" + e.Message;
 
                         return false;
                     }
@@ -412,11 +411,11 @@ namespace Shove.DatabaseFactory.Convert
             return true;
         }
 
-        private string MySQL_MergeDbType(string DbType, int Length)
+        private string MySQL_MergeDbType(string dbType, int Length)
         {
-            DbType = DbType.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }).ToUpper();
+            dbType = dbType.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }).ToUpper();
 
-            switch (DbType)
+            switch (dbType)
             {
                 case "INT":
                     return "INT";
@@ -455,20 +454,20 @@ namespace Shove.DatabaseFactory.Convert
             }
         }
 
-        private string MySQL_MergeDefaultValue(string DbType, string DefaultValue)
+        private string MySQL_MergeDefaultValue(string dbType, string defaultValue)
         {
-            string t_default = DefaultValue.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }).ToUpper();
+            string t_default = defaultValue.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }).ToUpper();
 		
-            if (string.IsNullOrEmpty(DefaultValue) || string.IsNullOrEmpty(t_default))
+            if (string.IsNullOrEmpty(defaultValue) || string.IsNullOrEmpty(t_default))
             {
                 return "";
             }
 
-            DbType = DbType.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }).ToUpper();
+            dbType = dbType.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }).ToUpper();
             
 			if ((t_default == "NULL") || (t_default == "\"NULL\"") || (t_default == "\'NULL\'"))
             {
-                if ((DbType == "TEXT") || (DbType == "LONGTEXT"))
+                if ((dbType == "TEXT") || (dbType == "LONGTEXT"))
                 {
                     return "";
                 }
@@ -480,37 +479,37 @@ namespace Shove.DatabaseFactory.Convert
 			
 			string result = "DEFAULT ";
 
-            if ((DbType == "INT") || (DbType == "INTEGER") || (DbType == "LONG") || (DbType == "FLOAT") || (DbType == "REAL") || (DbType == "NUMERIC") || (DbType == "BOOL") || (DbType == "BOOLEAN") || (DbType == "BIT"))
+            if ((dbType == "INT") || (dbType == "INTEGER") || (dbType == "LONG") || (dbType == "FLOAT") || (dbType == "REAL") || (dbType == "NUMERIC") || (dbType == "BOOL") || (dbType == "BOOLEAN") || (dbType == "BIT"))
             {
-                if ((DefaultValue.StartsWith("\"") && DefaultValue.EndsWith("\"")) || (DefaultValue.StartsWith("\'") && DefaultValue.EndsWith("\'")))
+                if ((defaultValue.StartsWith("\"", StringComparison.Ordinal) && defaultValue.EndsWith("\"", StringComparison.Ordinal)) || (defaultValue.StartsWith("\'", StringComparison.Ordinal) && defaultValue.EndsWith("\'", StringComparison.Ordinal)))
                 {
-                    result += DefaultValue.Substring(1, DefaultValue.Length - 2);
+                    result += defaultValue.Substring(1, defaultValue.Length - 2);
                 }
                 else
                 {
-                    result += DefaultValue;
+                    result += defaultValue;
                 }
             }
             else
             {
-                if (!((DefaultValue.StartsWith("\"") && DefaultValue.EndsWith("\"")) || (DefaultValue.StartsWith("\'") && DefaultValue.EndsWith("\'"))))
+                if (!((defaultValue.StartsWith("\"", StringComparison.Ordinal) && defaultValue.EndsWith("\"", StringComparison.Ordinal)) || (defaultValue.StartsWith("\'", StringComparison.Ordinal) && defaultValue.EndsWith("\'", StringComparison.Ordinal))))
                 {
-                    result += "'" + DefaultValue + "'";
+                    result += "'" + defaultValue + "'";
                 }
                 else
                 {
-                    result += DefaultValue;
+                    result += defaultValue;
                 }
             }
 
             return result;
         }
 
-        private int MySQL_QuotesDbType(string DbType)
+        private int MySQL_QuotesDbType(string dbType)
         {
-            DbType = DbType.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }).ToUpper();
+            dbType = dbType.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' }).ToUpper();
 
-            switch (DbType)
+            switch (dbType)
             {
                 case "INT":
                     return 0;

@@ -10,9 +10,9 @@ namespace Shove.Database
         /// <summary>
         /// 
         /// </summary>
-        protected const string DesKey = "Q56GtyNkop97Ht334Ttyurfg";
+        protected const string desKey = "Q56GtyNkop97Ht334Ttyurfg";
 
-        #region ConnectString
+        #region connectString
 
         /// <summary>
         /// 
@@ -41,17 +41,17 @@ namespace Shove.Database
         /// <summary>
         /// 创建一个连接
         /// </summary>
-        /// <param name="ConnectionString"></param>
+        /// <param name="connectionString"></param>
         /// <returns></returns>
-        public static T CreateDataConnection<T>(string ConnectionString) where T : System.Data.Common.DbConnection, new()
+        public static T CreateDataConnection<T>(string connectionString) where T : System.Data.Common.DbConnection, new()
         {
-            if (ConnectionString.StartsWith("0x78AD", StringComparison.Ordinal))
+            if (connectionString.StartsWith("0x78AD", StringComparison.Ordinal))
             {
-                ConnectionString = Security.Encrypt.Decrypt3DES(ConnectionString.Substring(6), DesKey);
+                connectionString = Security.Encrypt.Decrypt3DES(connectionString.Substring(6), desKey);
             }
 
-            T conn = new T(); //new T(ConnectionString);
-            conn.ConnectionString = ConnectionString;
+            T conn = new T(); //new T(connectionString);
+            conn.ConnectionString = connectionString;
 
             try
             {
@@ -75,13 +75,13 @@ namespace Shove.Database
         /// <returns></returns>
         protected static string FilteSqlInfusionForCondition(string input)
         {
-            if (true) //[shove] Shove.Web.Security.InjectionInterceptor.__SYS_SHOVE_FLAG_IsUsed_InjectionInterceptor)
+            if (true) //[shove] Web.Security.InjectionInterceptor.__SYS_SHOVE_FLAG_IsUsed_InjectionInterceptor)
             {
                 return input;
             }
             else
             {
-                //[shove] return Shove.Web.Utility.FilteSqlInfusion(input, false);
+                //[shove] return Web.Utility.FilteSqlInfusion(input, false);
             }
         }
     }

@@ -14,27 +14,27 @@ namespace Shove.Database
         /// 将 DataTable 进行过滤
         /// </summary>
         /// <param name="dt">源 DataTable</param>
-        /// <param name="Condition">过滤条件</param>
-        /// <param name="LimitStart">开始行号</param>
-        /// <param name="RowCount">总行数</param>
+        /// <param name="condition">过滤条件</param>
+        /// <param name="limitStart">开始行号</param>
+        /// <param name="rowCount">总行数</param>
         /// <returns></returns>
-        public static DataTable FilterDataTableData(DataTable dt, string Condition, long LimitStart, long RowCount)
+        public static DataTable FilterDataTableData(DataTable dt, string condition, long limitStart, long rowCount)
         {
             if (dt == null)
             {
                 return null;
             }
 
-            if (string.IsNullOrEmpty(Condition) && ((LimitStart < 0) || (RowCount < 1)))
+            if (string.IsNullOrEmpty(condition) && ((limitStart < 0) || (rowCount < 1)))
             {
                 return dt;
             }
 
             DataRow[] drs = null;
 
-            if (!string.IsNullOrEmpty(Condition))
+            if (!string.IsNullOrEmpty(condition))
             {
-                drs = dt.Select(Condition);
+                drs = dt.Select(condition);
             }
             else
             {
@@ -44,26 +44,26 @@ namespace Shove.Database
 
             DataTable dt2 = dt.Clone();
 
-            if ((LimitStart >= 0) && (RowCount >= 1))
+            if ((limitStart >= 0) && (rowCount >= 1))
             {
-                if (LimitStart >= drs.LongLength)
+                if (limitStart >= drs.LongLength)
                 {
                     return dt2;
                 }
 
-                if ((LimitStart + RowCount) > drs.LongLength)
+                if ((limitStart + rowCount) > drs.LongLength)
                 {
-                    RowCount = drs.LongLength - LimitStart;
+                    rowCount = drs.LongLength - limitStart;
                 }
 
                 DataRow[] drs2 = new DataRow[drs.LongLength];
                 drs.CopyTo(drs2, 0);
 
-                drs = new DataRow[RowCount];
+                drs = new DataRow[rowCount];
 
-                for (long i = LimitStart; i < LimitStart + RowCount; i++)
+                for (long i = limitStart; i < limitStart + rowCount; i++)
                 {
-                    drs[i - LimitStart] = drs2[i];
+                    drs[i - limitStart] = drs2[i];
                 }
             }
 

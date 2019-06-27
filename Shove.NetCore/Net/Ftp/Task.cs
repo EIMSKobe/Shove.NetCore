@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Collections;
 
 namespace Shove.Net.Ftp
@@ -78,18 +77,18 @@ namespace Shove.Net.Ftp
         /// <summary>
         /// 任务索引器
         /// </summary>
-        /// <param name="Index"></param>
+        /// <param name="index"></param>
         /// <returns></returns>
-        public TaskItem this[int Index]
+        public TaskItem this[int index]
         {
             get
             {
-                if (Index >= Count)
+                if (index >= Count)
                 {
                     return null;
                 }
 
-                return Items[Index];
+                return Items[index];
             }
         }
 
@@ -181,15 +180,15 @@ namespace Shove.Net.Ftp
         /// <summary>
         /// 构造，启动任务控制线程
         /// </summary>
-        /// <param name="MaxRuningTaskNumber">同时工作的最大线程数[1-100, 根据网络情况选择，推荐3、4、5]</param>
-        public Task(int MaxRuningTaskNumber)
+        /// <param name="maxRuningTaskNumber">同时工作的最大线程数[1-100, 根据网络情况选择，推荐3、4、5]</param>
+        public Task(int maxRuningTaskNumber)
         {
-            if ((MaxRuningTaskNumber < 1) || (MaxRuningTaskNumber > 100))
+            if ((maxRuningTaskNumber < 1) || (maxRuningTaskNumber > 100))
             {
                 throw new Exception("Shove.Net.Ftp.Task 的 MaxRuningTaskNumber 只能在 1-100 之间。");
             }
 
-            this.MaxRuningTaskNumber = MaxRuningTaskNumber;
+            this.MaxRuningTaskNumber = maxRuningTaskNumber;
 
             threadTaskControler = new System.Threading.Thread(new System.Threading.ThreadStart(this.TaskControler));
             threadTaskControler.IsBackground = true;

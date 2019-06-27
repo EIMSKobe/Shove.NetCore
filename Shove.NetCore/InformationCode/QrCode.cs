@@ -17,13 +17,13 @@ namespace Shove.InformationCode
         /// </summary>
         /// <param name="input">输入的需要编码的信息字符串</param>
         /// <param name="fromat">二维码格式</param>
-        /// <param name="CanvasWidth">画布宽度</param>
-        /// <param name="CanvasHeight">画布高度</param>
-        /// <param name="OutputFileName">保存图片的文件名</param>
+        /// <param name="canvasWidth">画布宽度</param>
+        /// <param name="canvasHeight">画布高度</param>
+        /// <param name="outputFileName">保存图片的文件名</param>
         /// <param name="imageFormat">图像格式</param>
-        public static void CreateCode(string input, BarcodeFormat fromat, int CanvasWidth, int CanvasHeight, string OutputFileName, System.Drawing.Imaging.ImageFormat imageFormat)
+        public static void CreateCode(string input, BarcodeFormat fromat, int canvasWidth, int canvasHeight, string outputFileName, System.Drawing.Imaging.ImageFormat imageFormat)
         {
-            CreateCode(input, fromat, CanvasWidth, CanvasHeight, OutputFileName, imageFormat, "");
+            CreateCode(input, fromat, canvasWidth, canvasHeight, outputFileName, imageFormat, "");
         }
 
         /// <summary>
@@ -31,15 +31,15 @@ namespace Shove.InformationCode
         /// </summary>
         /// <param name="input">输入的需要编码的信息字符串</param>
         /// <param name="fromat">二维码格式</param>
-        /// <param name="CanvasWidth">画布宽度</param>
-        /// <param name="CanvasHeight">画布高度</param>
-        /// <param name="OutputFileName">保存图片的文件名</param>
+        /// <param name="canvasWidth">画布宽度</param>
+        /// <param name="canvasHeight">画布高度</param>
+        /// <param name="outputFileName">保存图片的文件名</param>
         /// <param name="imageFormat">图像格式</param>
         /// <param name="logoImageFileName">中间嵌入的 Logo 图片</param>
-        public static void CreateCode(string input, BarcodeFormat fromat, int CanvasWidth, int CanvasHeight, string OutputFileName, System.Drawing.Imaging.ImageFormat imageFormat, string logoImageFileName)
+        public static void CreateCode(string input, BarcodeFormat fromat, int canvasWidth, int canvasHeight, string outputFileName, System.Drawing.Imaging.ImageFormat imageFormat, string logoImageFileName)
         {
-            Bitmap bmap = CreateCode(input, fromat, CanvasWidth, CanvasHeight, imageFormat, logoImageFileName);
-            bmap.Save(OutputFileName, imageFormat);
+            Bitmap bmap = CreateCode(input, fromat, canvasWidth, canvasHeight, imageFormat, logoImageFileName);
+            bmap.Save(outputFileName, imageFormat);
         }
 
         /// <summary>
@@ -47,13 +47,13 @@ namespace Shove.InformationCode
         /// </summary>
         /// <param name="input">输入的需要编码的信息字符串</param>
         /// <param name="fromat">二维码格式</param>
-        /// <param name="CanvasWidth">画布宽度</param>
-        /// <param name="CanvasHeight">画布高度</param>
+        /// <param name="canvasWidth">画布宽度</param>
+        /// <param name="canvasHeight">画布高度</param>
         /// <param name="imageFormat">图像格式</param>
         /// <returns></returns>
-        public static Bitmap CreateCode(string input, BarcodeFormat fromat, int CanvasWidth, int CanvasHeight, System.Drawing.Imaging.ImageFormat imageFormat)
+        public static Bitmap CreateCode(string input, BarcodeFormat fromat, int canvasWidth, int canvasHeight, System.Drawing.Imaging.ImageFormat imageFormat)
         {
-            return CreateCode(input, fromat, CanvasWidth, CanvasHeight, imageFormat, "");
+            return CreateCode(input, fromat, canvasWidth, canvasHeight, imageFormat, "");
         }
 
         /// <summary>
@@ -61,17 +61,17 @@ namespace Shove.InformationCode
         /// </summary>
         /// <param name="input">输入的需要编码的信息字符串</param>
         /// <param name="fromat">二维码格式</param>
-        /// <param name="CanvasWidth">画布宽度</param>
-        /// <param name="CanvasHeight">画布高度</param>
+        /// <param name="canvasWidth">画布宽度</param>
+        /// <param name="canvasHeight">画布高度</param>
         /// <param name="imageFormat">图像格式</param>
         /// <param name="logoImageFileName">中间嵌入的 Logo 图片</param>
         /// <returns></returns>
-        public static Bitmap CreateCode(string input, BarcodeFormat fromat, int CanvasWidth, int CanvasHeight, System.Drawing.Imaging.ImageFormat imageFormat, string logoImageFileName)
+        public static Bitmap CreateCode(string input, BarcodeFormat fromat, int canvasWidth, int canvasHeight, System.Drawing.Imaging.ImageFormat imageFormat, string logoImageFileName)
         {
             System.Collections.Hashtable hints = new System.Collections.Hashtable();
             hints.Add(EncodeHintType.CHARACTER_SET, "utf-8");
 
-            BitMatrix byteMatrix = new MultiFormatWriter().encode(input, fromat, CanvasWidth, CanvasHeight, (System.Collections.Generic.IDictionary<ZXing.EncodeHintType, object>)hints);
+            BitMatrix byteMatrix = new MultiFormatWriter().encode(input, fromat, canvasWidth, canvasHeight, (System.Collections.Generic.IDictionary<ZXing.EncodeHintType, object>)hints);
 
             int x, y;
             int width = byteMatrix.Width;
@@ -124,11 +124,11 @@ namespace Shove.InformationCode
         /// <summary>
         /// 从二维码图片读取二维码信息
         /// </summary>
-        /// <param name="FileName"></param>
+        /// <param name="fileName"></param>
         /// <returns></returns>
-        public static string ReadCode(string FileName)
+        public static string ReadCode(string fileName)
         {
-            Image img = Image.FromFile(FileName);
+            Image img = Image.FromFile(fileName);
 
             return ReadCode(img);
         }

@@ -36,27 +36,27 @@ namespace Shove.IO
         /// <summary>
         /// 打印输出到打印机
         /// </summary>
-        /// <param name="PortName">打印机端口名称</param>
-        /// <param name="Content">要打印的内容，这里输入字符串，含打印机的控制码</param>
-        /// <param name="ErrorDescription"></param>
+        /// <param name="portName">打印机端口名称</param>
+        /// <param name="content">要打印的内容，这里输入字符串，含打印机的控制码</param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public static bool Print(string PortName, string Content, ref string ErrorDescription)
+        public static bool Print(string portName, string content, ref string description)
         {
-            ErrorDescription = "";
+            description = "";
             System.ComponentModel.Win32Exception we = null;
 
-            int iHandle = CreateFile(PortName, 0x40000000, 0, 0, 3, 0, 0);
+            int iHandle = CreateFile(portName, 0x40000000, 0, 0, 3, 0, 0);
 
             if (iHandle == -1)
             {
                 we = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-                ErrorDescription = we.Message;
+                description = we.Message;
                 return false;
             }
 
             int i;
             OVERLAPPED x;
-            byte[] bData = System.Text.Encoding.Default.GetBytes(Content);
+            byte[] bData = System.Text.Encoding.Default.GetBytes(content);
             bool Result = WriteFile(iHandle, bData, bData.Length, out i, out x);
 
             CloseHandle(iHandle);
@@ -67,7 +67,7 @@ namespace Shove.IO
             }
 
             we = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-            ErrorDescription = we.Message;
+            description = we.Message;
             return false;
         }
     }

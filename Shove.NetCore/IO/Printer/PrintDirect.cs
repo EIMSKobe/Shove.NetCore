@@ -25,7 +25,7 @@ namespace Shove.IO
         }
 
         [DllImport("winspool.drv", SetLastError = true, CharSet = CharSet.Unicode, ExactSpelling = false, CallingConvention = CallingConvention.StdCall)]
-        private static extern long OpenPrinter(string pPrinterName, ref IntPtr phPrinter, int pDefault);
+        private static extern long OpenPrinter(string pprinterName, ref IntPtr phPrinter, int pDefault);
         [DllImport("winspool.drv", SetLastError = true, CharSet = CharSet.Unicode, ExactSpelling = false, CallingConvention = CallingConvention.StdCall)]
         private static extern long StartDocPrinter(IntPtr hPrinter, int Level, ref DOCINFO pDocInfo);
 
@@ -46,13 +46,13 @@ namespace Shove.IO
         /// <summary>
         /// 打印输出到打印机
         /// </summary>
-        /// <param name="PrinterName">打印机的名称</param>
-        /// <param name="DocumentName"></param>
-        /// <param name="Content">要打印的内容，这里输入字符串，含打印机的控制码</param>
+        /// <param name="printerName">打印机的名称</param>
+        /// <param name="documentName"></param>
+        /// <param name="content">要打印的内容，这里输入字符串，含打印机的控制码</param>
         /// <param name="pcWritten">实际打印输出的长度</param>
-        /// <param name="ErrorDescription"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public static bool Print(string PrinterName, string DocumentName, string Content, ref int pcWritten, ref string ErrorDescription)
+        public static bool Print(string printerName, string documentName, string content, ref int pcWritten, ref string description)
         {
             System.IntPtr lhPrinter = new System.IntPtr();
             DOCINFO di = new DOCINFO();
@@ -60,17 +60,17 @@ namespace Shove.IO
 
             System.ComponentModel.Win32Exception we = null;
             pcWritten = 0;
-            ErrorDescription = "";
+            description = "";
 
-            di.pDocName = DocumentName;
+            di.pDocName = documentName;
             di.pDataType = "RAW";
 
 
-            Result = OpenPrinter(PrinterName, ref lhPrinter, 0);
+            Result = OpenPrinter(printerName, ref lhPrinter, 0);
             if (Result == 0)
             {
                 we = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-                ErrorDescription = we.Message;
+                description = we.Message;
                 return false;
             }
 
@@ -78,7 +78,7 @@ namespace Shove.IO
             if (Result == 0)
             {
                 we = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-                ErrorDescription = we.Message;
+                description = we.Message;
                 return false;
             }
 
@@ -86,15 +86,15 @@ namespace Shove.IO
             if (Result == 0)
             {
                 we = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-                ErrorDescription = we.Message;
+                description = we.Message;
                 return false;
             }
 
-            Result = WritePrinter(lhPrinter, Content, Content.Length, ref pcWritten);
+            Result = WritePrinter(lhPrinter, content, content.Length, ref pcWritten);
             if (Result == 0)
             {
                 we = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-                ErrorDescription = we.Message;
+                description = we.Message;
                 return false;
             }
 
@@ -102,7 +102,7 @@ namespace Shove.IO
             if (Result == 0)
             {
                 we = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-                ErrorDescription = we.Message;
+                description = we.Message;
                 return false;
             } 
             
@@ -110,7 +110,7 @@ namespace Shove.IO
             if (Result == 0)
             {
                 we = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-                ErrorDescription = we.Message;
+                description = we.Message;
                 return false;
             }
             
@@ -118,7 +118,7 @@ namespace Shove.IO
             if (Result == 0)
             {
                 we = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-                ErrorDescription = we.Message;
+                description = we.Message;
                 return false;
             }
 

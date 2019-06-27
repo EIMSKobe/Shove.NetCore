@@ -172,61 +172,61 @@ namespace Shove.Net.Ftp
         /// <summary>
         /// 乖胩
         /// </summary>
-        /// <param name="Server">服务器 IP 地址或域名</param>
-        /// <param name="UserName">用户名</param>
-        /// <param name="Password">密码</param>
-        public FtpClient(string Server, string UserName, string Password)
-            : this(Server, 21, UserName, Password, true, true, false, 4096)
+        /// <param name="server">服务器 IP 地址或域名</param>
+        /// <param name="userName">用户名</param>
+        /// <param name="password">密码</param>
+        public FtpClient(string server, string userName, string password)
+            : this(server, 21, userName, password, true, true, false, 4096)
         { }
 
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="Server">服务器 IP 地址或域名</param>
+        /// <param name="server">服务器 IP 地址或域名</param>
         /// <param name="Port">FTP 端口</param>
-        /// <param name="UserName">用户名</param>
-        /// <param name="Password">密码</param>
-        /// <param name="UseBinary">使用二进制传输</param>
-        /// <param name="UsePassive">使用被动模式</param>
-        /// <param name="EnableSsl">使用SSL</param>
-        public FtpClient(string Server, int Port, string UserName, string Password, bool UseBinary, bool UsePassive, bool EnableSsl)
-            : this(Server, 21, UserName, Password, UseBinary, UsePassive, EnableSsl, 4096)
+        /// <param name="userName">用户名</param>
+        /// <param name="password">密码</param>
+        /// <param name="useBinary">使用二进制传输</param>
+        /// <param name="usePassive">使用被动模式</param>
+        /// <param name="enableSsl">使用SSL</param>
+        public FtpClient(string server, int Port, string userName, string password, bool useBinary, bool usePassive, bool enableSsl)
+            : this(server, 21, userName, password, useBinary, usePassive, enableSsl, 4096)
         { }
 
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="Server">服务器 IP 地址或域名</param>
+        /// <param name="server">服务器 IP 地址或域名</param>
         /// <param name="Port">FTP 端口</param>
-        /// <param name="UserName">用户名</param>
-        /// <param name="Password">密码</param>
-        /// <param name="UseBinary">使用二进制传输</param>
-        /// <param name="UsePassive">使用被动模式</param>
-        /// <param name="EnableSsl">使用SSL</param>
-        /// <param name="TransferBufferSize">每次传输的缓冲区大小</param>
-        public FtpClient(string Server, int Port, string UserName, string Password, bool UseBinary, bool UsePassive, bool EnableSsl, int TransferBufferSize)
+        /// <param name="userName">用户名</param>
+        /// <param name="password">密码</param>
+        /// <param name="useBinary">使用二进制传输</param>
+        /// <param name="usePassive">使用被动模式</param>
+        /// <param name="enableSsl">使用SSL</param>
+        /// <param name="transferBufferSize">每次传输的缓冲区大小</param>
+        public FtpClient(string server, int Port, string userName, string password, bool useBinary, bool usePassive, bool enableSsl, int transferBufferSize)
         {
-            this.Server = Server;
+            this.Server = server;
             this.Port = Port > 0 ? Port : 21;
-            this.UserName = UserName;
-            this.Password = Password;
-            this.UseBinary = UseBinary;
-            this.UsePassive = UsePassive;
-            this.EnableSsl = EnableSsl;
+            this.UserName = userName;
+            this.Password = password;
+            this.UseBinary = useBinary;
+            this.UsePassive = usePassive;
+            this.EnableSsl = enableSsl;
 
             m_pFtp = new FTPConnection();
 
-            m_pFtp.ServerAddress = Server;
+            m_pFtp.ServerAddress = server;
             m_pFtp.ServerPort = Port;
-            m_pFtp.UserName = UserName;
-            m_pFtp.Password = Password;
+            m_pFtp.UserName = userName;
+            m_pFtp.Password = password;
             m_pFtp.TransferType = UseBinary ? FTPTransferType.BINARY : FTPTransferType.ASCII;
             m_pFtp.ConnectMode = UsePassive ? FTPConnectMode.PASV : FTPConnectMode.ACTIVE;
 
             m_pFtp.CommandEncoding = Encoding.UTF8; // Encoding.GetEncoding("GB2312");
             m_pFtp.ShowHiddenFiles = true;
-            m_pFtp.TransferBufferSize = TransferBufferSize;
-            m_pFtp.TransferNotifyInterval = TransferBufferSize;
+            m_pFtp.TransferBufferSize = transferBufferSize;
+            m_pFtp.TransferNotifyInterval = transferBufferSize;
             m_pFtp.EventsEnabled = true;
             m_pFtp.Timeout = 30000;//20000;
             m_pFtp.AutoFeatures = true;
@@ -234,7 +234,7 @@ namespace Shove.Net.Ftp
             m_pFtp.DeleteOnFailure = true;
             m_pFtp.ParsingCulture = new System.Globalization.CultureInfo("");
             m_pFtp.StrictReturnCodes = true;
-            m_pFtp.TransferNotifyInterval = (long)TransferBufferSize;
+            m_pFtp.TransferNotifyInterval = (long)transferBufferSize;
 
             m_pFtp.BytesTransferred += new BytesTransferredHandler(OnBytesTransferred);
             m_pFtp.Uploading += new FTPFileTransferEventHandler(OnUploading);
@@ -954,8 +954,8 @@ namespace Shove.Net.Ftp
         public void _AsynchronousDownload(string localFileName, string remoteFileName, OverrideMode mode)
         {
             TransferEventArgs arg = new TransferEventArgs();
-            long LocalFileSize = 0;
-            long RemoteFileSize = 0;
+            long localFileSize = 0;
+            long remoteFileSize = 0;
             bool localExists = false;
             bool remoteExists = false;
 
@@ -1001,7 +1001,7 @@ namespace Shove.Net.Ftp
 
             try
             {
-                RemoteFileSize = GetFileSize(remoteFileName);
+                remoteFileSize = GetFileSize(remoteFileName);
             }
             catch (Exception e)
             {
@@ -1029,7 +1029,7 @@ namespace Shove.Net.Ftp
 
             if (localExists)
             {
-                LocalFileSize = fi.Length;
+                localFileSize = fi.Length;
             }
 
             #endregion
@@ -1101,13 +1101,13 @@ namespace Shove.Net.Ftp
 
             if (mode == OverrideMode.Resume)
             {
-                if (LocalFileSize == RemoteFileSize)
+                if (localFileSize == remoteFileSize)
                 {
                     if (OnTransfering != null)
                     {
                         arg.TransferStatus = Status.Finished;
-                        arg.FileSize = RemoteFileSize;
-                        arg.TransferredSize = RemoteFileSize;
+                        arg.FileSize = remoteFileSize;
+                        arg.TransferredSize = remoteFileSize;
                         arg.Exception = null;
 
                         OnTransfering(this, arg);
@@ -1115,7 +1115,7 @@ namespace Shove.Net.Ftp
 
                     return;
                 }
-                else if (LocalFileSize > RemoteFileSize)
+                else if (localFileSize > remoteFileSize)
                 {
                     if (OnTransfering != null)
                     {

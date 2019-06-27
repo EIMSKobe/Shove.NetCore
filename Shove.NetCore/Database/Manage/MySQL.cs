@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Data.Common;
 using MySql.Data.MySqlClient;
 using System.Data;
 
@@ -31,39 +28,39 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 创建一个新的数据库
         /// </summary>
-        /// <param name="DatabaseName"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="database"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool CreateDatabase(string DatabaseName, ref string ReturnDescription)
+        public override bool CreateDatabase(string database, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, DatabaseName))
+            description = "";
+            if (!VaildStringParameters(ref description, database))
             {
                 return false;
             }
 
-            DatabaseName = DatabaseName.Trim();
-            if (!DatabaseName.StartsWith("`") || !DatabaseName.EndsWith("`"))
+            database = database.Trim();
+            if (!database.StartsWith("`", StringComparison.Ordinal) || !database.EndsWith("`", StringComparison.Ordinal))
             {
-                DatabaseName = "`" + DatabaseName + "`";
+                database = "`" + database + "`";
             }
 
-            Shove.DatabaseFactory.MySQL mysql = new Shove.DatabaseFactory.MySQL(this.ConnectionString);
+            DatabaseFactory.MySQL mysql = new DatabaseFactory.MySQL(this.ConnectionString);
             try
             {
-                int result = mysql.ExecuteNonQuery("create database " + DatabaseName + " DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;");
+                int result = mysql.ExecuteNonQuery("create database " + database + " DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;");
                 Close();
 
                 if (result < 0)
                 {
-                    ReturnDescription = "数据库指令执行发生错误，返回值是 " + result.ToString() + "|" + "create database " + DatabaseName;
+                    description = "数据库指令执行发生错误，返回值是 " + result.ToString() + "|" + "create database " + database;
 
                     return false;
                 }
             }
             catch (Exception e)
             {
-                ReturnDescription = "创建数据库出错！" + e.ToString() + "|" + "create database " + DatabaseName;
+                description = "创建数据库出错！" + e.ToString() + "|" + "create database " + database;
                 return false;
             }
 
@@ -75,38 +72,38 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 创建一个数据库用户
         /// </summary>
-        /// <param name="UserName"></param>
+        /// <param name="user"></param>
         /// <param name="Password"></param>
-        /// <param name="GrantOwnerDatabaseName"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="grantOwnerDatabase"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool CreateUser(string UserName, string Password, string GrantOwnerDatabaseName, ref string ReturnDescription)
+        public override bool CreateUser(string user, string Password, string grantOwnerDatabase, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, UserName, Password, GrantOwnerDatabaseName))
+            description = "";
+            if (!VaildStringParameters(ref description, user, Password, grantOwnerDatabase))
             {
                 return false;
             }
 
-            GrantOwnerDatabaseName = GrantOwnerDatabaseName.Trim();
-            if (!GrantOwnerDatabaseName.StartsWith("`") || !GrantOwnerDatabaseName.EndsWith("`"))
+            grantOwnerDatabase = grantOwnerDatabase.Trim();
+            if (!grantOwnerDatabase.StartsWith("`", StringComparison.Ordinal) || !grantOwnerDatabase.EndsWith("`", StringComparison.Ordinal))
             {
-                GrantOwnerDatabaseName = "`" + GrantOwnerDatabaseName + "`";
+                grantOwnerDatabase = "`" + grantOwnerDatabase + "`";
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
                 return false;
             }
             string comm = string.Format("CREATE USER '{0}'@'%' IDENTIFIED BY '{1}';\r\n GRANT ALL ON {2}.* TO '{3}'@'%';\r\n flush privileges;",
-                UserName, Password, GrantOwnerDatabaseName, UserName);
+                user, Password, grantOwnerDatabase, user);
 
-            Shove.DatabaseFactory.MySQL mysql = new Shove.DatabaseFactory.MySQL(this.ConnectionString);
+            DatabaseFactory.MySQL mysql = new DatabaseFactory.MySQL(this.ConnectionString);
             int result = mysql.ExecuteNonQuery(comm);
             Close();
             if (result < 0)
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 " + result.ToString() + "||" + comm;
+                description = "数据库指令执行发生错误，返回值是 " + result.ToString() + "||" + comm;
 
                 return false;
             }
@@ -119,32 +116,32 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 修改用户密码
         /// </summary>
-        /// <param name="UserName"></param>
-        /// <param name="OldPassword"></param>
-        /// <param name="NewPassword"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="user"></param>
+        /// <param name="oldPassword"></param>
+        /// <param name="newPassword"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool EditUserPassword(string UserName, string OldPassword, string NewPassword, ref string ReturnDescription)
+        public override bool EditUserPassword(string user, string oldPassword, string newPassword, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, UserName, OldPassword, NewPassword))
+            description = "";
+            if (!VaildStringParameters(ref description, user, oldPassword, newPassword))
             {
                 return false;
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
                 return false;
             }
 
-            int result = Shove.Database.MySQL.ExecuteNonQuery((MySqlConnection)this.conn,
+            int result = Database.MySQL.ExecuteNonQuery((MySqlConnection)this.conn,
                 string.Format("use mysql;\r\n update user set password=password('{0}') where User='{1}';\r\n flush privileges;",
-                NewPassword, UserName));
+                newPassword, user));
             Close();
 
             if (result < 0)
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 " + result.ToString();
+                description = "数据库指令执行发生错误，返回值是 " + result.ToString();
 
                 return false;
             }
@@ -156,36 +153,36 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 查询数据库使用的空间大小
         /// </summary>
-        /// <param name="DatabaseName"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="database"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override float QueryUsedSpaceSize(string DatabaseName, ref string ReturnDescription)
+        public override float QueryUsedSpaceSize(string database, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, DatabaseName))
+            description = "";
+            if (!VaildStringParameters(ref description, database))
             {
                 return -1;
             }
 
-            DatabaseName = DatabaseName.Trim();
-            if (!DatabaseName.StartsWith("`") || !DatabaseName.EndsWith("`"))
+            database = database.Trim();
+            if (!database.StartsWith("`", StringComparison.Ordinal) || !database.EndsWith("`", StringComparison.Ordinal))
             {
-                DatabaseName = "`" + DatabaseName + "`";
+                database = "`" + database + "`";
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
                 return -2;
             }
 
-            DataTable dt = Shove.Database.MySQL.Select((MySqlConnection)this.conn,
+            DataTable dt = Database.MySQL.Select((MySqlConnection)this.conn,
                 string.Format("use information_schema;\r\n select sum(DATA_LENGTH) as database_size from TABLES where table_schema = '{0}'; ",
-                DatabaseName));
+                database));
             Close();
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 NULL";
+                description = "数据库指令执行发生错误，返回值是 NULL";
 
                 return -3;
             }
@@ -196,10 +193,10 @@ namespace Shove.Database.Manage
                 return 0;
             }
 
-            float result = Shove.Convert.StrToFloat(str, -4);
+            float result = Convert.StrToFloat(str, -4);
             if (result < 0)
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 " + result.ToString();
+                description = "数据库指令执行发生错误，返回值是 " + result.ToString();
 
                 return -4;
             }
@@ -212,37 +209,37 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 物理移除数据库
         /// </summary>
-        /// <param name="DatabaseName"></param>
-        /// <param name="UserName"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="database"></param>
+        /// <param name="user"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool RemoveDatabase(string DatabaseName, string UserName, ref string ReturnDescription)
+        public override bool RemoveDatabase(string database, string user, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, DatabaseName, UserName))
+            description = "";
+            if (!VaildStringParameters(ref description, database, user))
             {
                 return false;
             }
 
-            DatabaseName = DatabaseName.Trim();
-            if (!DatabaseName.StartsWith("`") || !DatabaseName.EndsWith("`"))
+            database = database.Trim();
+            if (!database.StartsWith("`", StringComparison.Ordinal) || !database.EndsWith("`", StringComparison.Ordinal))
             {
-                DatabaseName = "`" + DatabaseName + "`";
+                database = "`" + database + "`";
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
                 return false;
             }
 
-            int result = Shove.Database.MySQL.ExecuteNonQuery((MySqlConnection)this.conn,
+            int result = Database.MySQL.ExecuteNonQuery((MySqlConnection)this.conn,
                 string.Format("use mysql;\r\n delete from user where user='{0}';\r\n flush privileges;\r\n drop database {1};\r\n flush privileges;",
-                UserName, DatabaseName));
+                user, database));
             Close();
 
             if (result < 0)
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 " + result.ToString();
+                description = "数据库指令执行发生错误，返回值是 " + result.ToString();
 
                 return false;
             }
@@ -255,36 +252,36 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 检测数据库是否存在
         /// </summary>
-        /// <param name="DatabaseName">数据库名称</param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="database">数据库名称</param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool DatabaseExists(string DatabaseName, ref string ReturnDescription)
+        public override bool DatabaseExists(string database, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, DatabaseName))
+            description = "";
+            if (!VaildStringParameters(ref description, database))
             {
                 return false;
             }
 
-            DatabaseName = DatabaseName.Trim();
-            //if (!DatabaseName.StartsWith("`") || !DatabaseName.EndsWith("`"))
+            database = database.Trim();
+            //if (!database.StartsWith("`") || !database.EndsWith("`"))
             //{
-            //    DatabaseName = "`" + DatabaseName + "`";
+            //    database = "`" + database + "`";
             //}
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
                 return false;
             }
 
-            int result = Shove.Convert.StrToInt(Shove.Database.MySQL.ExecuteScalar((MySqlConnection)this.conn,
+            int result = Convert.StrToInt(Database.MySQL.ExecuteScalar((MySqlConnection)this.conn,
                 string.Format("use mysql;\r\n select count(0) from information_schema.schemata where schema_name='{0}';",
-                DatabaseName)) + "", -1);
+                database)) + "", -1);
             Close();
 
             if (result < 0)
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 " + result.ToString();
+                description = "数据库指令执行发生错误，返回值是 " + result.ToString();
 
                 return false;
             }
@@ -302,30 +299,30 @@ namespace Shove.Database.Manage
         /// <summary>
         /// 检测数据库用户是否存在
         /// </summary>
-        /// <param name="DatabaseUser"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="user"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public override bool DatabaseUserExists(string DatabaseUser, ref string ReturnDescription)
+        public override bool userExists(string user, ref string description)
         {
-            ReturnDescription = "";
-            if (!VaildStringParameters(ref ReturnDescription, DatabaseUser))
+            description = "";
+            if (!VaildStringParameters(ref description, user))
             {
                 return false;
             }
 
-            if (!Open(ref ReturnDescription))
+            if (!Open(ref description))
             {
                 return false;
             }
 
-            int result = Shove.Convert.StrToInt(Shove.Database.MySQL.ExecuteScalar((MySqlConnection)this.conn,
+            int result = Convert.StrToInt(Database.MySQL.ExecuteScalar((MySqlConnection)this.conn,
                 string.Format("use mysql;\r\n SELECT count(0) from mysql.`user` WHERE `User`='{0}';",
-                DatabaseUser)) + "", -1);
+                user)) + "", -1);
             Close();
 
             if (result < 0)
             {
-                ReturnDescription = "数据库指令执行发生错误，返回值是 " + result.ToString();
+                description = "数据库指令执行发生错误，返回值是 " + result.ToString();
 
                 return false;
             }

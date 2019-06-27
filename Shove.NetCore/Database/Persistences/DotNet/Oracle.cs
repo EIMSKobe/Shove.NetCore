@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using System.Data.OracleClient;
 using System.Data;
-using System.Text.RegularExpressions;
 
 namespace Shove.Database.Persistences
 {
@@ -14,8 +11,8 @@ namespace Shove.Database.Persistences
     {
         private string ConnStr = "";
 
-        string m_ServerName;
-        string m_UserID;
+        string m_Server;
+        string m_User;
         string m_Password;
         string m_NamespaceName;
         bool m_isUseConnectionStringConfig;
@@ -28,22 +25,22 @@ namespace Shove.Database.Persistences
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="ServerName"></param>
-        /// <param name="UserID"></param>
-        /// <param name="Password"></param>
-        /// <param name="NamespaceName"></param>
+        /// <param name="server"></param>
+        /// <param name="user"></param>
+        /// <param name="password"></param>
+        /// <param name="namespaceName"></param>
         /// <param name="isUseConnectionStringConfig"></param>
         /// <param name="isUseConnectionString"></param>
         /// <param name="isWithTables"></param>
         /// <param name="isWithViews"></param>
         /// <param name="isWithProcedures"></param>
         /// <param name="isWithFunction"></param>
-        public Oracle(string ServerName, string UserID, string Password, string NamespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews, bool isWithProcedures, bool isWithFunction)
+        public Oracle(string server, string user, string password, string namespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews, bool isWithProcedures, bool isWithFunction)
         {
-            m_ServerName = ServerName;
-            m_UserID = UserID;
-            m_Password = Password;
-            m_NamespaceName = NamespaceName.Trim();
+            m_Server = server;
+            m_User = user;
+            m_Password = password;
+            m_NamespaceName = namespaceName.Trim();
             m_isUseConnectionStringConfig = isUseConnectionStringConfig;
             m_isUseConnectionString = isUseConnectionString;
             m_isWithTables = isWithTables;
@@ -63,9 +60,9 @@ namespace Shove.Database.Persistences
                 return "Request a Compent from table, view, procedure or function.";
             }
 
-            ConnStr = Shove.Database.Oracle.BuildConnectString(m_ServerName, m_UserID, m_Password);
+            ConnStr = Database.Oracle.BuildConnectString(m_Server, m_User, m_Password);
 
-            OracleConnection conn = Shove.Database.Oracle.CreateDataConnection<OracleConnection>(ConnStr);
+            OracleConnection conn = DatabaseAccess.CreateDataConnection<OracleConnection>(ConnStr);
             if (conn == null)
             {
                 return "Database Connect Fail.";
@@ -161,7 +158,7 @@ namespace Shove.Database.Persistences
 
         private void Tables(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.Oracle.Select(ConnStr, "select table_name from user_tables order by table_name");
+            DataTable dt = Database.Oracle.Select(ConnStr, "select table_name from user_tables order by table_name");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -171,12 +168,12 @@ namespace Shove.Database.Persistences
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string TableName = dr["table_name"].ToString();
+                string tableName = dr["table_name"].ToString();
                 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(TableName) + " : Oracle.TableBase");
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(tableName) + " : Oracle.TableBase");
                 sb.AppendLine("\t\t{");
 
-                DataTable dt_col = Shove.Database.Oracle.Select(ConnStr, "select column_name, data_type, data_length from user_tab_cols where table_name = '" + TableName + "' order by column_id");
+                DataTable dt_col = Database.Oracle.Select(ConnStr, "select column_name, data_type, data_length from user_tab_cols where table_name = '" + tableName + "' order by column_id");
 
                 if ((dt_col == null) || (dt_col.Rows.Count < 1))
                 {
@@ -193,24 +190,24 @@ namespace Shove.Database.Persistences
                 {
                     DataRow dr_col = dt_col.Rows[j];
 
-                    string ColName = dr_col["column_name"].ToString();
+                    string colName = dr_col["column_name"].ToString();
 
-                    sb.AppendLine("\t\t\tpublic Oracle.Field " + GetCanonicalIdentifier(ColName) + ";");
+                    sb.AppendLine("\t\t\tpublic Oracle.Field " + GetCanonicalIdentifier(colName) + ";");
                 }
                 sb.AppendLine("");
 
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(TableName) + "()");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(tableName) + "()");
                 sb.AppendLine("\t\t\t{");
-                sb.AppendLine("\t\t\t\tTableName = \"" + TableName + "\";");
+                sb.AppendLine("\t\t\t\tTableName = \"" + tableName + "\";");
                 sb.AppendLine("");
 
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
                     DataRow dr_col = dt_col.Rows[j];
 
-                    string ColName = dr_col["column_name"].ToString();
+                    string colName = dr_col["column_name"].ToString();
 
-                    sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(ColName) + " = new Oracle.Field(this, \"" + ColName + "\", \"" + GetCanonicalIdentifier(ColName) + "\", OracleType." + GetSQLDataType(dr_col["data_type"].ToString()) + ");");
+                    sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(colName) + " = new Oracle.Field(this, \"" + colName + "\", \"" + GetCanonicalIdentifier(colName) + "\", OracleType." + GetSQLDataType(dr_col["data_type"].ToString()) + ");");
                 }
 
                 sb.AppendLine("\t\t\t}");
@@ -225,7 +222,7 @@ namespace Shove.Database.Persistences
 
         private void Views(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.Oracle.Select(ConnStr, "select view_name from user_views order by view_name");
+            DataTable dt = Database.Oracle.Select(ConnStr, "select view_name from user_views order by view_name");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -235,13 +232,13 @@ namespace Shove.Database.Persistences
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string ViewName = dr["view_name"].ToString();
+                string viewName = dr["view_name"].ToString();
 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(ViewName) + " : Oracle.ViewBase");
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(viewName) + " : Oracle.ViewBase");
                 sb.AppendLine("\t\t{");
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(ViewName) + "()");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(viewName) + "()");
                 sb.AppendLine("\t\t\t{");
-                sb.AppendLine("\t\t\t\tViewName = \"" + ViewName + "\";");
+                sb.AppendLine("\t\t\t\tViewName = \"" + viewName + "\";");
                 sb.AppendLine("\t\t\t}");
                 sb.AppendLine("\t\t}");
 
@@ -254,7 +251,7 @@ namespace Shove.Database.Persistences
 
         private void Functions(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.Oracle.Select(ConnStr, "select object_name, procedure_name, overload from user_procedures where object_type = 'FUNCTION' or (object_type = 'PACKAGE' and not procedure_name is null and procedure_name in (select object_name from all_arguments where argument_name is null)) order by object_name");
+            DataTable dt = Database.Oracle.Select(ConnStr, "select object_name, procedure_name, overload from user_procedures where object_type = 'FUNCTION' or (object_type = 'PACKAGE' and not procedure_name is null and procedure_name in (select object_name from all_arguments where argument_name is null)) order by object_name");
 
             if (dt == null)
                 return;
@@ -266,15 +263,15 @@ namespace Shove.Database.Persistences
                 DataRow dr = dt.Rows[i];
 
                 string PackageName = "";
-                string FunctionName = dr["object_name"].ToString();
-                string FunctionName_sub = FunctionName;
+                string functionName = dr["object_name"].ToString();
+                string functionName_sub = functionName;
                 string OverLoad = dr["overload"].ToString();
 
                 if (!string.IsNullOrEmpty(dr["procedure_name"].ToString()))
                 {
-                    PackageName = FunctionName;
-                    FunctionName_sub = dr["procedure_name"].ToString();
-                    FunctionName += "." + FunctionName_sub;
+                    PackageName = functionName;
+                    functionName_sub = dr["procedure_name"].ToString();
+                    functionName += "." + functionName_sub;
                 }
 
                 OverLoad = string.IsNullOrEmpty(OverLoad) ? "NVL(overload, 0) = 0" : ("NVL(overload, 0) = " + OverLoad);
@@ -283,11 +280,11 @@ namespace Shove.Database.Persistences
                 DataTable dt_col = null;
                 if (string.IsNullOrEmpty(PackageName))
                 {
-                    dt_col = Shove.Database.Oracle.Select(ConnStr, "select argument_name, data_type, data_length, data_scale, in_out from all_arguments where object_name='" + FunctionName_sub + "' and OWNER='" + m_UserID.ToUpper() + "' and DATA_LEVEL = 0 and " + OverLoad + " order by position");
+                    dt_col = Database.Oracle.Select(ConnStr, "select argument_name, data_type, data_length, data_scale, in_out from all_arguments where object_name='" + functionName_sub + "' and OWNER='" + m_User.ToUpper() + "' and DATA_LEVEL = 0 and " + OverLoad + " order by position");
                 }
                 else
                 {
-                    dt_col = Shove.Database.Oracle.Select(ConnStr, "select argument_name, data_type, data_length, data_scale, in_out from all_arguments where package_name = '" + PackageName + "' and object_name='" + FunctionName_sub + "' and OWNER='" + m_UserID.ToUpper() + "' and DATA_LEVEL = 0 and " + OverLoad + " order by position");
+                    dt_col = Database.Oracle.Select(ConnStr, "select argument_name, data_type, data_length, data_scale, in_out from all_arguments where package_name = '" + PackageName + "' and object_name='" + functionName_sub + "' and OWNER='" + m_User.ToUpper() + "' and DATA_LEVEL = 0 and " + OverLoad + " order by position");
                 }
 
                 if (dt_col == null)
@@ -295,7 +292,7 @@ namespace Shove.Database.Persistences
                 if (dt_col.Rows.Count < 1)
                     continue;
 
-                if (isContainOracleTypeCursor(dt_col))
+                if (IsContainOracleTypeCursor(dt_col))
                 {
                     goto WithQuery;
                 }
@@ -303,15 +300,15 @@ namespace Shove.Database.Persistences
                 // NonQuery
                 bool hasOutput = false;
                 string ReturnType = GetDataType(dt_col.Rows[0]["data_type"].ToString());
-                sb.Append("\t\tpublic static " + ReturnType + " " + GetCanonicalIdentifier(FunctionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "OracleConnection conn")));
+                sb.Append("\t\tpublic static " + ReturnType + " " + GetCanonicalIdentifier(functionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "OracleConnection conn")));
                 for (int j = 1; j < dt_col.Rows.Count; j++)
                 {
-                    string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                    string colName = dt_col.Rows[j]["argument_name"].ToString();
                     string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                     string In_Out = dt_col.Rows[j]["in_out"].ToString();
                     if ((j > 1) || !m_isUseConnectionStringConfig)
                         sb.Append(", ");
-                    sb.Append((In_Out != "IN" ? "ref " : "") + Type + " " + GetCanonicalIdentifier(ColName));
+                    sb.Append((In_Out != "IN" ? "ref " : "") + Type + " " + GetCanonicalIdentifier(colName));
                     if (In_Out != "IN")
                     {
                         hasOutput = true;
@@ -320,7 +317,7 @@ namespace Shove.Database.Persistences
                 sb.AppendLine(")");
                 sb.AppendLine("\t\t{");
                 sb.AppendLine("\t\t\tOracle.OutputParameter Outputs = new Oracle.OutputParameter();");
-                sb.Append("\t\t\tobject Result = Oracle.ExecuteFunction(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + FunctionName + "\", OracleType.");
+                sb.Append("\t\t\tobject Result = Oracle.ExecuteFunction(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + functionName + "\", OracleType.");
                 string ReturnLength = dt_col.Rows[0]["data_length"].ToString();
                 if (string.IsNullOrEmpty(ReturnLength))
                 {
@@ -329,7 +326,7 @@ namespace Shove.Database.Persistences
                 sb.Append(GetSQLDataType(dt_col.Rows[0]["data_type"].ToString()).ToString() + ", " + ReturnLength + ", ref Outputs");
                 for (int j = 1; j < dt_col.Rows.Count; j++)
                 {
-                    string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                    string colName = dt_col.Rows[j]["argument_name"].ToString();
                     string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                     string SQLType = GetSQLDataType(dt_col.Rows[j]["data_type"].ToString()).ToString();
                     string In_Out = dt_col.Rows[j]["in_out"].ToString();
@@ -340,7 +337,7 @@ namespace Shove.Database.Persistences
                     {
                         ReturnLength = (GetDataType(dt_col.Rows[j]["data_type"].ToString()) == "string") ? "4000" : "0";
                     }
-                    sb.Append("\t\t\t\tnew Oracle.Parameter(\"" + ColName + "\", OracleType." + SQLType + ", " + ReturnLength + ", ParameterDirection." + In_Out + ", " + GetCanonicalIdentifier(ColName) + ")");
+                    sb.Append("\t\t\t\tnew Oracle.Parameter(\"" + colName + "\", OracleType." + SQLType + ", " + ReturnLength + ", ParameterDirection." + In_Out + ", " + GetCanonicalIdentifier(colName) + ")");
                 }
                 if (dt_col.Rows.Count == 1)
                 {
@@ -357,13 +354,13 @@ namespace Shove.Database.Persistences
                     sb.AppendLine("");
                     for (int j = 1; j < dt_col.Rows.Count; j++)
                     {
-                        string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                        string colName = dt_col.Rows[j]["argument_name"].ToString();
                         string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                         string SQLType = GetSQLDataType(dt_col.Rows[j]["data_type"].ToString()).ToString();
                         string In_Out = dt_col.Rows[j]["in_out"].ToString();
                         if (In_Out != "IN")
                         {
-                            sb.AppendLine("\t\t\t" + GetCanonicalIdentifier(ColName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + ColName + "\"]);");
+                            sb.AppendLine("\t\t\t" + GetCanonicalIdentifier(colName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + colName + "\"]);");
                         }
                     }
                 }
@@ -378,15 +375,15 @@ namespace Shove.Database.Persistences
                 // WithQuery
                 hasOutput = false;
                 ReturnType = GetDataType(dt_col.Rows[0]["data_type"].ToString());
-                sb.Append("\t\tpublic static " + ReturnType + " " + GetCanonicalIdentifier(FunctionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "OracleConnection conn")));
+                sb.Append("\t\tpublic static " + ReturnType + " " + GetCanonicalIdentifier(functionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "OracleConnection conn")));
                 for (int j = 1; j < dt_col.Rows.Count; j++)
                 {
-                    string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                    string colName = dt_col.Rows[j]["argument_name"].ToString();
                     string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                     string In_Out = dt_col.Rows[j]["in_out"].ToString();
                     if ((j > 1) || !m_isUseConnectionStringConfig)
                         sb.Append(", ");
-                    sb.Append((In_Out != "IN" ? "ref " : "") + Type + " " + GetCanonicalIdentifier(ColName));
+                    sb.Append((In_Out != "IN" ? "ref " : "") + Type + " " + GetCanonicalIdentifier(colName));
                     if (In_Out != "IN")
                     {
                         hasOutput = true;
@@ -395,7 +392,7 @@ namespace Shove.Database.Persistences
                 sb.AppendLine(((dt_col.Rows.Count > 1) ? ", " : "") + "ref DataSet ds)");
                 sb.AppendLine("\t\t{");
                 sb.AppendLine("\t\t\tOracle.OutputParameter Outputs = new Oracle.OutputParameter();");
-                sb.Append("\t\t\tobject Result = Oracle.ExecuteFunctionWithQuery(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + FunctionName + "\", OracleType.");
+                sb.Append("\t\t\tobject Result = Oracle.ExecuteFunctionWithQuery(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + functionName + "\", OracleType.");
                 ReturnLength = dt_col.Rows[0]["data_length"].ToString();
                 if (string.IsNullOrEmpty(ReturnLength))
                 {
@@ -404,7 +401,7 @@ namespace Shove.Database.Persistences
                 sb.Append(GetSQLDataType(dt_col.Rows[0]["data_type"].ToString()).ToString() + ", " + ReturnLength + ", ref ds, ref Outputs");
                 for (int j = 1; j < dt_col.Rows.Count; j++)
                 {
-                    string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                    string colName = dt_col.Rows[j]["argument_name"].ToString();
                     string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                     string SQLType = GetSQLDataType(dt_col.Rows[j]["data_type"].ToString()).ToString();
                     string In_Out = dt_col.Rows[j]["in_out"].ToString();
@@ -415,7 +412,7 @@ namespace Shove.Database.Persistences
                     {
                         ReturnLength = (GetDataType(dt_col.Rows[j]["data_type"].ToString()) == "string") ? "4000" : "0";
                     }
-                    sb.Append("\t\t\t\tnew Oracle.Parameter(\"" + ColName + "\", OracleType." + SQLType + ", " + ReturnLength + ", ParameterDirection." + In_Out + ", " + GetCanonicalIdentifier(ColName) + ")");
+                    sb.Append("\t\t\t\tnew Oracle.Parameter(\"" + colName + "\", OracleType." + SQLType + ", " + ReturnLength + ", ParameterDirection." + In_Out + ", " + GetCanonicalIdentifier(colName) + ")");
                 }
                 if (dt_col.Rows.Count == 1)
                 {
@@ -432,13 +429,13 @@ namespace Shove.Database.Persistences
                     sb.AppendLine("");
                     for (int j = 1; j < dt_col.Rows.Count; j++)
                     {
-                        string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                        string colName = dt_col.Rows[j]["argument_name"].ToString();
                         string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                         string SQLType = GetSQLDataType(dt_col.Rows[j]["data_type"].ToString()).ToString();
                         string In_Out = dt_col.Rows[j]["in_out"].ToString();
                         if (In_Out != "IN")
                         {
-                            sb.AppendLine("\t\t\t" + GetCanonicalIdentifier(ColName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + ColName + "\"]);");
+                            sb.AppendLine("\t\t\t" + GetCanonicalIdentifier(colName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + colName + "\"]);");
                         }
                     }
                 }
@@ -459,7 +456,7 @@ namespace Shove.Database.Persistences
 
         private void Procedures(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.Oracle.Select(ConnStr, "select object_name, procedure_name, overload from user_procedures where object_type = 'PROCEDURE' or (object_type = 'PACKAGE' and not procedure_name is null and procedure_name not in (select object_name from all_arguments where argument_name is null)) order by object_name");
+            DataTable dt = Database.Oracle.Select(ConnStr, "select object_name, procedure_name, overload from user_procedures where object_type = 'PROCEDURE' or (object_type = 'PACKAGE' and not procedure_name is null and procedure_name not in (select object_name from all_arguments where argument_name is null)) order by object_name");
             if (dt == null)
                 return;
             if (dt.Rows.Count < 1)
@@ -470,15 +467,15 @@ namespace Shove.Database.Persistences
                 DataRow dr = dt.Rows[i];
 
                 string PackageName = "";
-                string ProcedureName = dr["object_name"].ToString();
-                string ProcedureName_sub = ProcedureName;
+                string procedureName = dr["object_name"].ToString();
+                string procedureName_sub = procedureName;
                 string OverLoad = dr["overload"].ToString();
 
                 if (!string.IsNullOrEmpty(dr["procedure_name"].ToString()))
                 {
-                    PackageName = ProcedureName;
-                    ProcedureName_sub = dr["procedure_name"].ToString();
-                    ProcedureName += "." + ProcedureName_sub;
+                    PackageName = procedureName;
+                    procedureName_sub = dr["procedure_name"].ToString();
+                    procedureName += "." + procedureName_sub;
                 }
 
                 OverLoad = string.IsNullOrEmpty(OverLoad) ? "NVL(overload, 0) = 0" : ("NVL(overload, 0) = " + OverLoad);
@@ -487,11 +484,11 @@ namespace Shove.Database.Persistences
                 DataTable dt_col = null;
                 if (string.IsNullOrEmpty(PackageName))
                 {
-                    dt_col = Shove.Database.Oracle.Select(ConnStr, "select argument_name, data_type, data_length, data_scale, in_out from all_arguments where object_name='" + ProcedureName_sub + "' and OWNER='" + m_UserID.ToUpper() + "' and DATA_LEVEL = 0 and " + OverLoad + " order by position");
+                    dt_col = Database.Oracle.Select(ConnStr, "select argument_name, data_type, data_length, data_scale, in_out from all_arguments where object_name='" + procedureName_sub + "' and OWNER='" + m_User.ToUpper() + "' and DATA_LEVEL = 0 and " + OverLoad + " order by position");
                 }
                 else
                 {
-                    dt_col = Shove.Database.Oracle.Select(ConnStr, "select argument_name, data_type, data_length, data_scale, in_out from all_arguments where package_name = '" + PackageName + "' and object_name='" + ProcedureName_sub + "' and OWNER='" + m_UserID.ToUpper() + "' and DATA_LEVEL = 0 and " + OverLoad + " order by position");
+                    dt_col = Database.Oracle.Select(ConnStr, "select argument_name, data_type, data_length, data_scale, in_out from all_arguments where package_name = '" + PackageName + "' and object_name='" + procedureName_sub + "' and OWNER='" + m_User.ToUpper() + "' and DATA_LEVEL = 0 and " + OverLoad + " order by position");
                 }
                 
                 if (dt_col == null)
@@ -499,22 +496,22 @@ namespace Shove.Database.Persistences
                 if (dt_col.Rows.Count < 1)
                     continue;
 
-                if (isContainOracleTypeCursor(dt_col))
+                if (IsContainOracleTypeCursor(dt_col))
                 {
                     goto WithQuery;
                 }
 
                 // NonQuery
                 bool hasOutput = false;
-                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(ProcedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "OracleConnection conn")));
+                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(procedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "OracleConnection conn")));
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
-                    string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                    string colName = dt_col.Rows[j]["argument_name"].ToString();
                     string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                     string In_Out = dt_col.Rows[j]["in_out"].ToString();
                     if ((j > 0) || !m_isUseConnectionStringConfig)
                         sb.Append(", ");
-                    sb.Append((In_Out != "IN" ? "ref " : "") + Type + " " + GetCanonicalIdentifier(ColName));
+                    sb.Append((In_Out != "IN" ? "ref " : "") + Type + " " + GetCanonicalIdentifier(colName));
                     if (In_Out != "IN")
                     {
                         hasOutput = true;
@@ -523,10 +520,10 @@ namespace Shove.Database.Persistences
                 sb.AppendLine(")");
                 sb.AppendLine("\t\t{");
                 sb.AppendLine("\t\t\tOracle.OutputParameter Outputs = new Oracle.OutputParameter();");
-                sb.Append("\t\t\tint Result = Oracle.ExecuteProcedure(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + ProcedureName + "\", ref Outputs");
+                sb.Append("\t\t\tint Result = Oracle.ExecuteProcedure(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + procedureName + "\", ref Outputs");
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
-                    string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                    string colName = dt_col.Rows[j]["argument_name"].ToString();
                     string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                     string SQLType = GetSQLDataType(dt_col.Rows[j]["data_type"].ToString()).ToString();
                     string In_Out = dt_col.Rows[j]["in_out"].ToString();
@@ -537,7 +534,7 @@ namespace Shove.Database.Persistences
                     {
                         ReturnLength = (GetDataType(dt_col.Rows[j]["data_type"].ToString()) == "string") ? "4000" : "0";
                     }
-                    sb.Append("\t\t\t\tnew Oracle.Parameter(\"" + ColName + "\", OracleType." + SQLType + ", " + ReturnLength + ", ParameterDirection." + In_Out + ", " + GetCanonicalIdentifier(ColName) + ")");
+                    sb.Append("\t\t\t\tnew Oracle.Parameter(\"" + colName + "\", OracleType." + SQLType + ", " + ReturnLength + ", ParameterDirection." + In_Out + ", " + GetCanonicalIdentifier(colName) + ")");
                 }
                 if (dt_col.Rows.Count == 1)
                 {
@@ -554,13 +551,13 @@ namespace Shove.Database.Persistences
                     sb.AppendLine("");
                     for (int j = 0; j < dt_col.Rows.Count; j++)
                     {
-                        string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                        string colName = dt_col.Rows[j]["argument_name"].ToString();
                         string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                         string SQLType = GetSQLDataType(dt_col.Rows[j]["data_type"].ToString()).ToString();
                         string In_Out = dt_col.Rows[j]["in_out"].ToString();
                         if (In_Out != "IN")
                         {
-                            sb.AppendLine("\t\t\t" + GetCanonicalIdentifier(ColName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + ColName + "\"]);");
+                            sb.AppendLine("\t\t\t" + GetCanonicalIdentifier(colName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + colName + "\"]);");
                         }
                     }
                 }
@@ -574,15 +571,15 @@ namespace Shove.Database.Persistences
 
                 // WithQuery
                 hasOutput = false;
-                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(ProcedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "OracleConnection conn")));
+                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(procedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "OracleConnection conn")));
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
-                    string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                    string colName = dt_col.Rows[j]["argument_name"].ToString();
                     string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                     string In_Out = dt_col.Rows[j]["in_out"].ToString();
                     if ((j > 0) || !m_isUseConnectionStringConfig)
                         sb.Append(", ");
-                    sb.Append((In_Out != "IN" ? "ref " : "") + Type + " " + GetCanonicalIdentifier(ColName));
+                    sb.Append((In_Out != "IN" ? "ref " : "") + Type + " " + GetCanonicalIdentifier(colName));
                     if (In_Out != "IN")
                     {
                         hasOutput = true;
@@ -591,10 +588,10 @@ namespace Shove.Database.Persistences
                 sb.AppendLine(((dt_col.Rows.Count > 0) ? ", " : "") + "ref DataSet ds)");
                 sb.AppendLine("\t\t{");
                 sb.AppendLine("\t\t\tOracle.OutputParameter Outputs = new Oracle.OutputParameter();");
-                sb.Append("\t\t\tint Result = Oracle.ExecuteProcedureWithQuery(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + ProcedureName + "\", ref ds, ref Outputs");
+                sb.Append("\t\t\tint Result = Oracle.ExecuteProcedureWithQuery(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + procedureName + "\", ref ds, ref Outputs");
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
-                    string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                    string colName = dt_col.Rows[j]["argument_name"].ToString();
                     string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                     string SQLType = GetSQLDataType(dt_col.Rows[j]["data_type"].ToString()).ToString();
                     string In_Out = dt_col.Rows[j]["in_out"].ToString();
@@ -605,7 +602,7 @@ namespace Shove.Database.Persistences
                     {
                         ReturnLength = (GetDataType(dt_col.Rows[j]["data_type"].ToString()) == "string") ? "4000" : "0";
                     }
-                    sb.Append("\t\t\t\tnew Oracle.Parameter(\"" + ColName + "\", OracleType." + SQLType + ", " + ReturnLength + ", ParameterDirection." + In_Out + ", " + GetCanonicalIdentifier(ColName) + ")");
+                    sb.Append("\t\t\t\tnew Oracle.Parameter(\"" + colName + "\", OracleType." + SQLType + ", " + ReturnLength + ", ParameterDirection." + In_Out + ", " + GetCanonicalIdentifier(colName) + ")");
                 }
                 if (dt_col.Rows.Count == 1)
                 {
@@ -622,13 +619,13 @@ namespace Shove.Database.Persistences
                     sb.AppendLine("");
                     for (int j = 0; j < dt_col.Rows.Count; j++)
                     {
-                        string ColName = dt_col.Rows[j]["argument_name"].ToString();
+                        string colName = dt_col.Rows[j]["argument_name"].ToString();
                         string Type = GetDataType(dt_col.Rows[j]["data_type"].ToString());
                         string SQLType = GetSQLDataType(dt_col.Rows[j]["data_type"].ToString()).ToString();
                         string In_Out = dt_col.Rows[j]["in_out"].ToString();
                         if (In_Out != "IN")
                         {
-                            sb.AppendLine("\t\t\t" + GetCanonicalIdentifier(ColName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + ColName + "\"]);");
+                            sb.AppendLine("\t\t\t" + GetCanonicalIdentifier(colName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + colName + "\"]);");
                         }
                     }
                 }
@@ -650,331 +647,331 @@ namespace Shove.Database.Persistences
         private string GetDataType(string SQLType)
         {
             SQLType = SQLType.Trim().ToLower();
-            string Result = "string";
+            string result = "string";
 
             switch (SQLType)
             {
                 case "char":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "nchar":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "varchar":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "nvarchar":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "varchar2":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "nvarchar2":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "clob":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "nclob":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "long":
-                    Result = "long";
+                    result = "long";
                     break;
                 case "number":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "binary_float":
-                    Result = "float";
+                    result = "float";
                     break;
                 case "binary_double":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "date":
-                    Result = "DateTime";
+                    result = "DateTime";
                     break;
                 case "interval day to second":
-                    Result = "TimeSpan";
+                    result = "TimeSpan";
                     break;
                 case "interval year to month":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "timestamp":
-                    Result = "DateTime";
+                    result = "DateTime";
                     break;
                 case "timestamp with time zone":
-                    Result = "DateTime";
+                    result = "DateTime";
                     break;
                 case "timestamp with local time zone":
-                    Result = "DateTime";
+                    result = "DateTime";
                     break;
                 case "blob":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "bfile":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "raw":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "long raw":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "rowid":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "character":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "character varying":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "char varying":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "national character":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "national char":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "national character varying":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "national char varying":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "nchar varying":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "numeric":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "decimal":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "integer":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "int":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "smallint":
-                    Result = "short";
+                    result = "short";
                     break;
                 case "float":
-                    Result = "float";
+                    result = "float";
                     break;
                 case "double precision":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "real":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "ref cursor":
-                    Result = "object";
+                    result = "object";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
         private OracleType GetSQLDataType(string SQLType)
         {
             SQLType = SQLType.Trim().ToLower();
-            OracleType Result = OracleType.NVarChar;
+            OracleType result = OracleType.NVarChar;
 
             switch (SQLType)
             {
                 case "char":
-                    Result = OracleType.Char;
+                    result = OracleType.Char;
                     break;
                 case "nchar":
-                    Result = OracleType.NChar;
+                    result = OracleType.NChar;
                     break;
                 case "varchar":
-                    Result = OracleType.VarChar;
+                    result = OracleType.VarChar;
                     break;
                 case "nvarchar":
-                    Result = OracleType.NVarChar;
+                    result = OracleType.NVarChar;
                     break;
                 case "varchar2":
-                    Result = OracleType.LongVarChar;
+                    result = OracleType.LongVarChar;
                     break;
                 case "nvarchar2":
-                    Result = OracleType.LongVarChar;
+                    result = OracleType.LongVarChar;
                     break;
                 case "clob":
-                    Result = OracleType.Clob;
+                    result = OracleType.Clob;
                     break;
                 case "nclob":
-                    Result = OracleType.NClob;
+                    result = OracleType.NClob;
                     break;
                 case "long":
-                    Result = OracleType.Int32;
+                    result = OracleType.Int32;
                     break;
                 case "number":
-                    Result = OracleType.Number;
+                    result = OracleType.Number;
                     break;
                 case "binary_float":
-                    Result = OracleType.Float;
+                    result = OracleType.Float;
                     break;
                 case "binary_double":
-                    Result = OracleType.Double;
+                    result = OracleType.Double;
                     break;
                 case "date":
-                    Result = OracleType.DateTime;
+                    result = OracleType.DateTime;
                     break;
                 case "interval day to second":
-                    Result = OracleType.IntervalDayToSecond;
+                    result = OracleType.IntervalDayToSecond;
                     break;
                 case "interval year to month":
-                    Result = OracleType.IntervalYearToMonth;
+                    result = OracleType.IntervalYearToMonth;
                     break;
                 case "timestamp":
-                    Result = OracleType.Timestamp;
+                    result = OracleType.Timestamp;
                     break;
                 case "timestamp with time zone":
-                    Result = OracleType.TimestampWithTZ;
+                    result = OracleType.TimestampWithTZ;
                     break;
                 case "timestamp with local time zone":
-                    Result = OracleType.TimestampLocal;
+                    result = OracleType.TimestampLocal;
                     break;
                 case "blob":
-                    Result = OracleType.Blob;
+                    result = OracleType.Blob;
                     break;
                 case "bfile":
-                    Result = OracleType.BFile;
+                    result = OracleType.BFile;
                     break;
                 case "raw":
-                    Result = OracleType.Raw;
+                    result = OracleType.Raw;
                     break;
                 case "long raw":
-                    Result = OracleType.LongRaw;
+                    result = OracleType.LongRaw;
                     break;
                 case "rowid":
-                    Result = OracleType.RowId;
+                    result = OracleType.RowId;
                     break;
                 case "character":
-                    Result = OracleType.NVarChar;
+                    result = OracleType.NVarChar;
                     break;
                 case "character varying":
-                    Result = OracleType.NVarChar;
+                    result = OracleType.NVarChar;
                     break;
                 case "char varying":
-                    Result = OracleType.NVarChar;
+                    result = OracleType.NVarChar;
                     break;
                 case "national character":
-                    Result = OracleType.NVarChar;
+                    result = OracleType.NVarChar;
                     break;
                 case "national char":
-                    Result = OracleType.NVarChar;
+                    result = OracleType.NVarChar;
                     break;
                 case "national character varying":
-                    Result = OracleType.NVarChar;
+                    result = OracleType.NVarChar;
                     break;
                 case "national char varying":
-                    Result = OracleType.NVarChar;
+                    result = OracleType.NVarChar;
                     break;
                 case "nchar varying":
-                    Result = OracleType.NVarChar;
+                    result = OracleType.NVarChar;
                     break;
                 case "numeric":
-                    Result = OracleType.Double;
+                    result = OracleType.Double;
                     break;
                 case "decimal":
-                    Result = OracleType.Double;
+                    result = OracleType.Double;
                     break;
                 case "integer":
-                    Result = OracleType.Int32;
+                    result = OracleType.Int32;
                     break;
                 case "int":
-                    Result = OracleType.Int32;
+                    result = OracleType.Int32;
                     break;
                 case "smallint":
-                    Result = OracleType.Int16;
+                    result = OracleType.Int16;
                     break;
                 case "float":
-                    Result = OracleType.Float;
+                    result = OracleType.Float;
                     break;
                 case "double precision":
-                    Result = OracleType.Double;
+                    result = OracleType.Double;
                     break;
                 case "real":
-                    Result = OracleType.Double;
+                    result = OracleType.Double;
                     break;
                 case "ref cursor":
-                    Result = OracleType.Cursor;
+                    result = OracleType.Cursor;
                     break;
             }
 
-            return Result;
+            return result;
         }
 
-        private string GetDataTypeForConvert(string Type)
+        private string GetDataTypeForConvert(string type)
         {
-            Type = Type.Trim().ToLower();
-            string Result = "System.Convert.ToString";
+            type = type.Trim().ToLower();
+            string result = "System.Convert.ToString";
 
-            switch (Type)
+            switch (type)
             {
                 case "long":
-                    Result = "System.Convert.ToInt64";
+                    result = "System.Convert.ToInt64";
                     break;
                 case "bool":
-                    Result = "System.Convert.ToBoolean";
+                    result = "System.Convert.ToBoolean";
                     break;
                 case "string":
-                    Result = "System.Convert.ToString";
+                    result = "System.Convert.ToString";
                     break;
                 case "datetime":
-                    Result = "System.Convert.ToDateTime";
+                    result = "System.Convert.ToDateTime";
                     break;
                 case "double":
-                    Result = "System.Convert.ToDouble";
+                    result = "System.Convert.ToDouble";
                     break;
                 case "float":
-                    Result = "System.Convert.ToSingle";
+                    result = "System.Convert.ToSingle";
                     break;
                 case "decimal":
-                    Result = "System.Convert.ToDecimal";
+                    result = "System.Convert.ToDecimal";
                     break;
                 case "int":
-                    Result = "System.Convert.ToInt32";
+                    result = "System.Convert.ToInt32";
                     break;
                 case "short":
-                    Result = "System.Convert.ToInt16";
+                    result = "System.Convert.ToInt16";
                     break;
                 case "byte[]":
-                    Result = "(byte[])";
+                    result = "(byte[])";
                     break;
                 case "timespan":
-                    Result = "(TimeSpan)";
+                    result = "(TimeSpan)";
                     break;
                 case "object":
-                    Result = "";
+                    result = "";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
-        private string GetCanonicalIdentifier(string IdentifierName)
+        private string GetCanonicalIdentifier(string identifierName)
         {
-            IdentifierName = IdentifierName.Replace(" ", "_").Replace("$", "_").Replace("@", "_").Replace(".", "_");
+            identifierName = identifierName.Replace(" ", "_").Replace("$", "_").Replace("@", "_").Replace(".", "_");
 
-            if (IdentifierName.Length > 0)
+            if (identifierName.Length > 0)
             {
-                if ("0123456789".IndexOf(IdentifierName[0]) >= 0)
+                if ("0123456789".IndexOf(identifierName[0]) >= 0)
                 {
-                    IdentifierName = "_" + IdentifierName;
+                    identifierName = "_" + identifierName;
                 }
             }
 
-            return IdentifierName;
+            return identifierName;
         }
 
-        private bool isContainOracleTypeCursor(DataTable dt)
+        private bool IsContainOracleTypeCursor(DataTable dt)
         {
             foreach (DataRow dr in dt.Rows)
             {

@@ -28,10 +28,10 @@ namespace Shove.Alipay
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="OptionValue"></param>
-        public void SetOption(string OptionValue)
+        /// <param name="optionValue"></param>
+        public void SetOption(string optionValue)
         {
-            if (!CheckOptonValue(OptionValue))
+            if (!CheckOptonValue(optionValue))
             {
                 throw new Exception("OptionValue is error.");
             }
@@ -62,15 +62,15 @@ namespace Shove.Alipay
 
 
             if (MSSQL.ExecuteNonQuery("if exists (select 1 from T_Options where [Key] = 'AlipayOnlinePaySetting') update T_Options set [Value] = @Value where [Key] = 'AlipayOnlinePaySetting' else insert into T_Options ([Key], [Value]) values ('AlipayOnlinePaySetting', @Value2)",
-                new MSSQL.Parameter("Value", SqlDbType.VarChar, 0, ParameterDirection.Input, OptionValue),
-                new MSSQL.Parameter("Value2", SqlDbType.VarChar, 0, ParameterDirection.Input, OptionValue)) < 0)
+                new MSSQL.Parameter("Value", SqlDbType.VarChar, 0, ParameterDirection.Input, optionValue),
+                new MSSQL.Parameter("Value2", SqlDbType.VarChar, 0, ParameterDirection.Input, optionValue)) < 0)
             {
                 throw new Exception("Set fail.");
             }
 
             try
             {
-                string[] strs = Security.Encrypt.Decrypt3DES(OptionValue.Substring(32, OptionValue.Length - 32), "key").Split(',');
+                string[] strs = Security.Encrypt.Decrypt3DES(optionValue.Substring(32, optionValue.Length - 32), "key").Split(',');
 
                 PartnerID = strs[0];
                 PartnerKey = strs[1];
@@ -120,31 +120,31 @@ namespace Shove.Alipay
             }
         }
 
-        private bool CheckOptonValue(string OptionValue)
+        private bool CheckOptonValue(string optionValue)
         {
-            if (OptionValue.Length < 32)
+            if (optionValue.Length < 32)
             {
                 return false;
             }
 
-            string MD5Key = OptionValue.Substring(0, 32);
-            OptionValue = OptionValue.Substring(32, OptionValue.Length - 32);
+            string MD5Key = optionValue.Substring(0, 32);
+            optionValue = optionValue.Substring(32, optionValue.Length - 32);
 
-            if (MD5Key != Security.Encrypt.MD5(OptionValue))
+            if (MD5Key != Security.Encrypt.MD5(optionValue))
             {
                 return false;
             }
 
             try
             {
-                OptionValue = Security.Encrypt.Decrypt3DES(OptionValue, "key");
+                optionValue = Security.Encrypt.Decrypt3DES(optionValue, "key");
             }
             catch
             {
                 return false;
             }
 
-            string[] strs = OptionValue.Split(',');
+            string[] strs = optionValue.Split(',');
 
             if (strs.Length < 4)
             {
@@ -166,7 +166,7 @@ namespace Shove.Alipay
             return (dt.Rows.Count > 0);
         }
 
-        private bool IsExistsOptionTableField(string ColumnName)
+        private bool IsExistsOptionTableField(string columnName)
         {
             DataTable dt = MSSQL.Select("select * from T_Options where 1 = 2");
 
@@ -177,7 +177,7 @@ namespace Shove.Alipay
 
             foreach (DataColumn dc in dt.Columns)
             {
-                if (dc.ColumnName.ToLower() == ColumnName.ToLower())
+                if (dc.ColumnName.ToLower() == columnName.ToLower())
                 {
                     return true;
                 }
@@ -193,10 +193,10 @@ namespace Shove.Alipay
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="OptionValue"></param>
-        public void SetOptionForMySQL(string OptionValue)
+        /// <param name="optionValue"></param>
+        public void SetOptionForMySQL(string optionValue)
         {
-            if (!CheckOptonValue(OptionValue))
+            if (!CheckOptonValue(optionValue))
             {
                 throw new Exception("OptionValue is error.");
             }
@@ -244,15 +244,15 @@ namespace Shove.Alipay
                             call ShoveTmpP_options (@Value,@Value2);
                             drop procedure  if exists ShoveTmpP_options;";
             if (MySQL.ExecuteNonQuery(sql,
-                new MySQL.Parameter("@Value", MySql.Data.MySqlClient.MySqlDbType.VarChar, 0, ParameterDirection.Input, OptionValue),
-                new MySQL.Parameter("@Value2", MySql.Data.MySqlClient.MySqlDbType.VarChar, 0, ParameterDirection.Input, OptionValue)) < 0)
+                new MySQL.Parameter("@Value", MySql.Data.MySqlClient.MySqlDbType.VarChar, 0, ParameterDirection.Input, optionValue),
+                new MySQL.Parameter("@Value2", MySql.Data.MySqlClient.MySqlDbType.VarChar, 0, ParameterDirection.Input, optionValue)) < 0)
             {
                 throw new Exception("Set fail.");
             }
 
             try
             {
-                string[] strs = Security.Encrypt.Decrypt3DES(OptionValue.Substring(32, OptionValue.Length - 32), "key").Split(',');
+                string[] strs = Security.Encrypt.Decrypt3DES(optionValue.Substring(32, optionValue.Length - 32), "key").Split(',');
 
                 PartnerID = strs[0];
                 PartnerKey = strs[1];
@@ -305,7 +305,7 @@ namespace Shove.Alipay
         private bool IsExistsOptionTableForMySQL()
         {
             DataTable dt = MySQL.Select("select `TABLE_NAME` from `INFORMATION_SCHEMA`.`TABLES` where `TABLE_SCHEMA`=@database and `TABLE_NAME`='T_Options' ",
-                                 new MySQL.Parameter("@database", MySql.Data.MySqlClient.MySqlDbType.VarChar, 0, ParameterDirection.Input, MySQL.CreateDataConnection<MySql.Data.MySqlClient.MySqlConnection>().Database));
+                                 new MySQL.Parameter("@database", MySql.Data.MySqlClient.MySqlDbType.VarChar, 0, ParameterDirection.Input, DatabaseAccess.CreateDataConnection<MySql.Data.MySqlClient.MySqlConnection>().Database));
 
             if (dt == null)
             {
@@ -315,7 +315,7 @@ namespace Shove.Alipay
             return (dt.Rows.Count > 0);
         }
 
-        private bool IsExistsOptionTableFieldForMySQL(string ColumnName)
+        private bool IsExistsOptionTableFieldForMySQL(string columnName)
         {
             DataTable dt = MySQL.Select("select * from T_Options where 1 = 2");
 
@@ -326,7 +326,7 @@ namespace Shove.Alipay
 
             foreach (DataColumn dc in dt.Columns)
             {
-                if (dc.ColumnName.ToLower() == ColumnName.ToLower())
+                if (dc.ColumnName.ToLower() == columnName.ToLower())
                 {
                     return true;
                 }
@@ -340,32 +340,32 @@ namespace Shove.Alipay
         /// <summary>
         /// 仅适应 MSSQL 数据库
         /// </summary>
-        /// <param name="NotifyService"></param>
-        /// <param name="NotifyID"></param>
-        /// <param name="SellerEmail"></param>
-        /// <param name="Charset"></param>
-        /// <param name="NotifyType"></param>
-        /// <param name="_TimeOut"></param>
+        /// <param name="notifyService"></param>
+        /// <param name="notifyID"></param>
+        /// <param name="sellerEmail"></param>
+        /// <param name="charset"></param>
+        /// <param name="notifyType"></param>
+        /// <param name="timeOut"></param>
         /// <returns></returns>
-        public string Get_Http(string NotifyService, string NotifyID, string SellerEmail, string Charset, int NotifyType, int _TimeOut)
+        public string Get_Http(string notifyService, string notifyID, string sellerEmail, string charset, int notifyType, int timeOut)
         {
             GetOption();
 
-            return Get_HttpPublic(NotifyService, NotifyID, NotifyType, _TimeOut);
+            return Get_HttpPublic(notifyService, notifyID, notifyType, timeOut);
         }
 
         /// <summary>
         /// 如果使用的数据库不是 MSSQL，请使用此方法
         /// </summary>
-        /// <param name="NotifyService"></param>
-        /// <param name="NotifyID"></param>
-        /// <param name="SellerEmail"></param>
-        /// <param name="Charset"></param>
-        /// <param name="NotifyType"></param>
-        /// <param name="_TimeOut"></param>
-        /// <param name="type">Type 表示数据库类型 1 MSSQL 2 MySQL</param>
+        /// <param name="notifyService"></param>
+        /// <param name="notifyID"></param>
+        /// <param name="sellerEmail"></param>
+        /// <param name="charset"></param>
+        /// <param name="notifyType"></param>
+        /// <param name="timeOut"></param>
+        /// <param name="type">type 表示数据库类型 1 MSSQL 2 MySQL</param>
         /// <returns></returns>
-        public string Get_Http(string NotifyService, string NotifyID, string SellerEmail, string Charset, int NotifyType, int _TimeOut, int type)
+        public string Get_Http(string notifyService, string notifyID, string sellerEmail, string charset, int notifyType, int timeOut, int type)
         {
             if (type == 1)
             {
@@ -375,36 +375,36 @@ namespace Shove.Alipay
             {
                 GetOptionForMySQL();
             }
-            return Get_HttpPublic(NotifyService, NotifyID, NotifyType, _TimeOut);
+            return Get_HttpPublic(notifyService, notifyID, notifyType, timeOut);
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="NotifyService"></param>
-        /// <param name="NotifyID"></param>
-        /// <param name="NotifyType"></param>
-        /// <param name="_TimeOut"></param>
+        /// <param name="notifyService"></param>
+        /// <param name="notifyID"></param>
+        /// <param name="notifyType"></param>
+        /// <param name="timeOut"></param>
         /// <returns></returns>
-        public string Get_HttpPublic(string NotifyService, string NotifyID, int NotifyType, int _TimeOut)
+        public string Get_HttpPublic(string notifyService, string notifyID, int notifyType, int timeOut)
         {
             string partner = PartnerID;
             string Url = "";
 
-            if (NotifyType == 1)
+            if (notifyType == 1)
             {
-                Url = "https://www.alipay.com/cooperate/gateway.do?service=" + NotifyService + "&partner=" + partner + "&notify_id=" + NotifyID;	        //支付接口
+                Url = "https://www.alipay.com/cooperate/gateway.do?service=" + notifyService + "&partner=" + partner + "&notify_id=" + notifyID;	        //支付接口
             }
             else
             {
-                Url = "http://notify.alipay.com/trade/notify_query.do?partner=" + partner + "&notify_id=" + NotifyID;
+                Url = "http://notify.alipay.com/trade/notify_query.do?partner=" + partner + "&notify_id=" + notifyID;
             }
 
             string strResult;
             try
             {
-                HttpWebRequest myReq = (HttpWebRequest)HttpWebRequest.Create(Url);
-                myReq.Timeout = _TimeOut;
+                HttpWebRequest myReq = (HttpWebRequest)WebRequest.Create(Url);
+                myReq.Timeout = timeOut;
                 HttpWebResponse HttpWResp = (HttpWebResponse)myReq.GetResponse();
                 Stream myStream = HttpWResp.GetResponseStream();
                 StreamReader sr = new StreamReader(myStream, Encoding.Default);
@@ -430,10 +430,10 @@ namespace Shove.Alipay
         /// <summary>
         /// 与ASP兼容的MD5加密算法
         /// </summary>
-        public static string GetMD5(string s, string Charset)
+        public static string GetMD5(string s, string charset)
         {
             MD5 md5 = new MD5CryptoServiceProvider();
-            byte[] t = md5.ComputeHash(Encoding.GetEncoding(Charset).GetBytes(s));
+            byte[] t = md5.ComputeHash(Encoding.GetEncoding(charset).GetBytes(s));
             StringBuilder sb = new StringBuilder(32);
             for (int i = 0; i < t.Length; i++)
             {
@@ -445,32 +445,32 @@ namespace Shove.Alipay
         /// <summary>
         /// 与ASP兼容的MD5加密算法（仅适应 MSSQL 数据库）
         /// </summary>
-        public string GetMD5(string s, string SellerEmail, string Charset)
+        public string GetMD5(string s, string sellerEmail, string charset)
         {
-            string Key = "";
+            string key = "";
 
             GetOption();
 
-            Key = PartnerKey;
+            key = PartnerKey;
 
-            s += Key;
+            s += key;
 
-            return GetMD5(s, Charset);
+            return GetMD5(s, charset);
         }
 
         /// <summary>
         /// 与ASP兼容的MD5加密算法（如果使用的数据库不是 MSSQL，请使用此方法）
         /// </summary>
         /// <param name="s"></param>
-        /// <param name="SellerEmail"></param>
-        /// <param name="Charset"></param>
-        /// <param name="Type">Type 表示数据库类型 1 MSSQL 2 MySQL</param>
+        /// <param name="sellerEmail"></param>
+        /// <param name="charset"></param>
+        /// <param name="type">type 表示数据库类型 1 MSSQL 2 MySQL</param>
         /// <returns></returns>
-        public string GetMD5(string s, string SellerEmail, string Charset, int Type)
+        public string GetMD5(string s, string sellerEmail, string charset, int type)
         {
-            string Key = "";
+            string key = "";
 
-            if (Type == 2)
+            if (type == 2)
             {
                 GetOptionForMySQL();
             }
@@ -479,20 +479,20 @@ namespace Shove.Alipay
                 GetOption();
             }
 
-            Key = PartnerKey;
+            key = PartnerKey;
 
-            s += Key;
+            s += key;
 
-            return GetMD5(s, Charset);
+            return GetMD5(s, charset);
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="Date"></param>
-        /// <param name="Charset"></param>
+        /// <param name="charset"></param>
         /// <returns></returns>
-        public static string GetMD5(byte[] Date, string Charset)
+        public static string GetMD5(byte[] Date, string charset)
         {
             MD5 md5 = new MD5CryptoServiceProvider();
 
@@ -551,29 +551,29 @@ namespace Shove.Alipay
         /// 支付结果查询（仅适用 MSSQL 数据库）
         /// </summary>
         /// <param name="gateway"></param>
-        /// <param name="PaymentNumber"></param>
-        /// <param name="AlipayPaymentNumber"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="paymentNumber"></param>
+        /// <param name="alipaypaymentNumber"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public int Query(string gateway, string PaymentNumber, ref string AlipayPaymentNumber, ref string ReturnDescription)
+        public int Query(string gateway, string paymentNumber, ref string alipaypaymentNumber, ref string description)
         {
             GetOption();
 
-            return Query_Public(gateway, PaymentNumber, ref AlipayPaymentNumber, ref ReturnDescription);
+            return Query_Public(gateway, paymentNumber, ref alipaypaymentNumber, ref description);
         }
 
         /// <summary>
         /// 支付结果查询（如果使用的数据库不是 MSSQL，请使用此方法）
         /// </summary>
         /// <param name="gateway"></param>
-        /// <param name="PaymentNumber"></param>
-        /// <param name="Type">Type 表示数据库类型 1 MSSQL 2 MySQL</param>
-        /// <param name="AlipayPaymentNumber"></param>
-        /// <param name="ReturnDescription"></param>
+        /// <param name="paymentNumber"></param>
+        /// <param name="type">type 表示数据库类型 1 MSSQL 2 MySQL</param>
+        /// <param name="alipaypaymentNumber"></param>
+        /// <param name="description"></param>
         /// <returns></returns>
-        public int Query(string gateway, string PaymentNumber, int Type, ref string AlipayPaymentNumber, ref string ReturnDescription)
+        public int Query(string gateway, string paymentNumber, int type, ref string alipaypaymentNumber, ref string description)
         {
-            if (Type == 2)
+            if (type == 2)
             {
                 GetOptionForMySQL();
             }
@@ -581,26 +581,26 @@ namespace Shove.Alipay
             {
                 GetOption();
             }
-            return Query_Public(gateway, PaymentNumber, ref AlipayPaymentNumber, ref ReturnDescription);
+            return Query_Public(gateway, paymentNumber, ref alipaypaymentNumber, ref description);
         }
 
-        private int Query_Public(string gateway, string PaymentNumber, ref string AlipayPaymentNumber, ref string ReturnDescription)
+        private int Query_Public(string gateway, string paymentNumber, ref string alipaypaymentNumber, ref string description)
         {
             string service = "single_trade_query";
             string partner = PartnerID;  //卖家商户号
-            string Key = PartnerKey;
+            string key = PartnerKey;
 
             string _input_charset = "utf-8";
             string sign_type = "MD5";
 
-            if ((gateway == "") || (partner == "") || (Key == ""))
+            if ((gateway == "") || (partner == "") || (key == ""))
             {
-                ReturnDescription = "系统设置信息错误";
+                description = "系统设置信息错误";
 
                 return -1;
             }
 
-            string aliay_url = Creaturl(gateway, service, partner, Key, sign_type, _input_charset, "out_trade_no", PaymentNumber);
+            string aliay_url = Creaturl(gateway, service, partner, key, sign_type, _input_charset, "out_trade_no", paymentNumber);
 
             string AlipayResult = "";
 
@@ -610,14 +610,14 @@ namespace Shove.Alipay
             }
             catch
             {
-                ReturnDescription = "数据获取异常，请重新审核";
+                description = "数据获取异常，请重新审核";
 
                 return -2;
             }
 
             if (string.IsNullOrEmpty(AlipayResult))
             {
-                ReturnDescription = "数据获取异常，请重新审核";
+                description = "数据获取异常，请重新审核";
 
                 return -3;
             }
@@ -630,7 +630,7 @@ namespace Shove.Alipay
             }
             catch
             {
-                ReturnDescription = "数据获取异常，请重新审核";
+                description = "数据获取异常，请重新审核";
 
                 return -4;
             }
@@ -639,7 +639,7 @@ namespace Shove.Alipay
 
             if ((nodesIs_success == null) || (nodesIs_success.Count < 1))
             {
-                ReturnDescription = "查询信息获取异常，请重新查询";
+                description = "查询信息获取异常，请重新查询";
 
                 return -5;
             }
@@ -648,7 +648,7 @@ namespace Shove.Alipay
 
             if (is_success.ToUpper() != "T")
             {
-                ReturnDescription = "该支付记录未支付成功";
+                description = "该支付记录未支付成功";
 
                 return -6;
             }
@@ -657,18 +657,18 @@ namespace Shove.Alipay
 
             if ((nodesTrade_no == null) || (nodesTrade_no.Count < 1))
             {
-                ReturnDescription = "没有对应的支付信息";
+                description = "没有对应的支付信息";
 
                 return -7;
             }
 
-            AlipayPaymentNumber = nodesTrade_no[0].InnerText;
+            alipaypaymentNumber = nodesTrade_no[0].InnerText;
 
             System.Xml.XmlNodeList nodesTrade_Status = XmlDoc.GetElementsByTagName("trade_status");
 
             if ((nodesTrade_Status == null) || (nodesTrade_Status.Count < 1))
             {
-                ReturnDescription = "没有对应的支付信息";
+                description = "没有对应的支付信息";
 
                 return -8;
             }
@@ -677,35 +677,35 @@ namespace Shove.Alipay
 
             if (Trade_Status == "WAIT_BUYER_PAY")
             {
-                ReturnDescription = "等待买家付款";
+                description = "等待买家付款";
 
                 return -9;
             }
 
             if (Trade_Status == "WAIT_SELLER_SEND_GOODS")
             {
-                ReturnDescription = "买家付款成功(担保交易，未确定支付给商家)";
+                description = "买家付款成功(担保交易，未确定支付给商家)";
 
                 return -10;
             }
 
             if (Trade_Status == "WAIT_BUYER_CONFIRM_GOODS")
             {
-                ReturnDescription = "卖家发货成功(未确定支付给商家)";
+                description = "卖家发货成功(未确定支付给商家)";
 
                 return -11;
             }
 
             if (Trade_Status == "TRADE_CLOSED")
             {
-                ReturnDescription = "交易被关闭，未成功付款";
+                description = "交易被关闭，未成功付款";
 
                 return -12;
             }
 
             if (Trade_Status != "TRADE_FINISHED")
             {
-                ReturnDescription = "其他未成功支付的错误";
+                description = "其他未成功支付的错误";
 
                 return -9999;
             }
@@ -729,10 +729,10 @@ namespace Shove.Alipay
         /// <param name="payment_type"></param>
         /// <param name="total_fee"></param>
         /// <param name="seller_email"></param>
-        /// <param name="Key"></param>
-        /// <param name="Charset"></param>
-        /// <param name="SignType"></param>
-        /// <param name="ParamsAndValue"></param>
+        /// <param name="key"></param>
+        /// <param name="charset"></param>
+        /// <param name="signType"></param>
+        /// <param name="paramsAndValue"></param>
         /// <returns></returns>
         public string CreatUrl(
         string gateway,
@@ -745,14 +745,14 @@ namespace Shove.Alipay
         string payment_type,
         string total_fee,
         string seller_email,
-        string Key,
-        string Charset,
-        string SignType,
-        params string[] ParamsAndValue)
+        string key,
+        string charset,
+        string signType,
+        params string[] paramsAndValue)
         {
             GetOption();
 
-            return CreateUrl_Public(gateway, service, partner, return_url, notify_url, out_trade_no, subject, payment_type, total_fee, seller_email, Key, Charset, SignType, ParamsAndValue);
+            return CreateUrl_Public(gateway, service, partner, return_url, notify_url, out_trade_no, subject, payment_type, total_fee, seller_email, key, charset, signType, paramsAndValue);
         }
 
         /// <summary>
@@ -768,11 +768,11 @@ namespace Shove.Alipay
         /// <param name="payment_type"></param>
         /// <param name="total_fee"></param>
         /// <param name="seller_email"></param>
-        /// <param name="Key"></param>
-        /// <param name="Charset"></param>
-        /// <param name="SignType"></param>
-        /// <param name="Type">Type 表示数据库类型 1 MSSQL 2 MySQL</param>
-        /// <param name="ParamsAndValue"></param>
+        /// <param name="key"></param>
+        /// <param name="charset"></param>
+        /// <param name="signType"></param>
+        /// <param name="type">type 表示数据库类型 1 MSSQL 2 MySQL</param>
+        /// <param name="paramsAndValue"></param>
         /// <returns></returns>
         public string CreatUrl(
         string gateway,
@@ -785,13 +785,13 @@ namespace Shove.Alipay
         string payment_type,
         string total_fee,
         string seller_email,
-        string Key,
-        string Charset,
-        string SignType,
-        int Type,
-        params string[] ParamsAndValue)
+        string key,
+        string charset,
+        string signType,
+        int type,
+        params string[] paramsAndValue)
         {
-            if (Type == 2)
+            if (type == 2)
             {
                 GetOptionForMySQL();
             }
@@ -800,7 +800,7 @@ namespace Shove.Alipay
                 GetOption();
             }
 
-            return CreateUrl_Public(gateway, service, partner, return_url, notify_url, out_trade_no, subject, payment_type, total_fee, seller_email, Key, Charset, SignType, ParamsAndValue);
+            return CreateUrl_Public(gateway, service, partner, return_url, notify_url, out_trade_no, subject, payment_type, total_fee, seller_email, key, charset, signType, paramsAndValue);
 
         }
 
@@ -815,10 +815,10 @@ namespace Shove.Alipay
         string payment_type,
         string total_fee,
         string seller_email,
-        string Key,
-        string Charset,
-        string SignType,
-        params string[] ParamsAndValue)
+        string key,
+        string charset,
+        string signType,
+        params string[] paramsAndValue)
         {
             string Royalty = "10";
             string ServicesUser = "";
@@ -826,7 +826,7 @@ namespace Shove.Alipay
             double _FormalitiesFees = 0.01;
 
             partner = PartnerID;
-            Key = PartnerKey;
+            key = PartnerKey;
             ServicesUser = ServicesAccount;
             _FormalitiesFees = FormalitiesFees;
 
@@ -867,23 +867,23 @@ namespace Shove.Alipay
             ///////////////////代理商相关信息//////////////////////////////////
             al.Add("partner=" + partner);
 
-            for (int i = 0; i < ParamsAndValue.Length / 2; i++)
+            for (int i = 0; i < paramsAndValue.Length / 2; i++)
             {
-                if ((ParamsAndValue[i * 2] != "") && (ParamsAndValue[i * 2 + 1]) != "")
+                if ((paramsAndValue[i * 2] != "") && (paramsAndValue[i * 2 + 1]) != "")
                 {
-                    if (ParamsAndValue[i * 2].ToLower().IndexOf("royalty_parameters", StringComparison.Ordinal) < 0)
+                    if (paramsAndValue[i * 2].ToLower().IndexOf("royalty_parameters", StringComparison.Ordinal) < 0)
                     {
-                        al.Add(ParamsAndValue[i * 2].ToLower() + "=" + ParamsAndValue[i * 2 + 1]);
+                        al.Add(paramsAndValue[i * 2].ToLower() + "=" + paramsAndValue[i * 2 + 1]);
                     }
                     else
                     {
                         if (RoyaltyPparameters != "")
                         {
-                            RoyaltyPparameters += "|" + ParamsAndValue[i * 2 + 1]; //ParamsAndValue[i * 2 + 1]的格式必须是alipay_services_cn@yahoo.com^10.0^alipay_service（分账账户^金额^描述）
+                            RoyaltyPparameters += "|" + paramsAndValue[i * 2 + 1]; //paramsAndValue[i * 2 + 1]的格式必须是alipay_services_cn@yahoo.com^10.0^alipay_service（分账账户^金额^描述）
                         }
                         else
                         {
-                            RoyaltyPparameters += ParamsAndValue[i * 2 + 1];
+                            RoyaltyPparameters += paramsAndValue[i * 2 + 1];
                         }
                     }
                 }
@@ -902,7 +902,7 @@ namespace Shove.Alipay
                 al.Add("royalty_parameters=" + RoyaltyPparameters);
             }
             ///////////////////////////////////////////////////////////////////
-            al.Add("_input_charset=" + Charset);
+            al.Add("_input_charset=" + charset);
             al.Add("payment_type=" + payment_type);
             al.Add("service=" + service);
 
@@ -937,10 +937,10 @@ namespace Shove.Alipay
                 }
             }
 
-            prestr.Append(Key);
+            prestr.Append(key);
 
             //生成Md5摘要；
-            string sign = GetMD5(prestr.ToString(), Charset);
+            string sign = GetMD5(prestr.ToString(), charset);
 
             //构造支付Url；
             char[] delimiterChars = { '=' };
@@ -953,7 +953,7 @@ namespace Shove.Alipay
                 //parameter.Append(Sortedstr[i].Split(delimiterChars)[0] + "=" + Sortedstr[i].Split(delimiterChars)[1] + "&");
             }
 
-            parameter.Append("sign=" + sign + "&sign_type=" + SignType);
+            parameter.Append("sign=" + sign + "&sign_type=" + signType);
 
             //返回支付Url；
             return parameter.ToString();
@@ -965,12 +965,12 @@ namespace Shove.Alipay
         /// <param name="gateway"></param>
         /// <param name="service"></param>
         /// <param name="partner"></param>
-        /// <param name="Key"></param>
+        /// <param name="key"></param>
         /// <param name="sign_type"></param>
-        /// <param name="Charset"></param>
-        /// <param name="ParamsAndValue"></param>
+        /// <param name="charset"></param>
+        /// <param name="paramsAndValue"></param>
         /// <returns></returns>
-        public string Creaturl(string gateway, string service, string partner, string Key, string sign_type, string Charset, params string[] ParamsAndValue)
+        public string Creaturl(string gateway, string service, string partner, string key, string sign_type, string charset, params string[] paramsAndValue)
         {
             if (!gateway.EndsWith("?", StringComparison.Ordinal))
             {
@@ -981,16 +981,16 @@ namespace Shove.Alipay
 
             //////////////////固定参数///////////
 
-            al.Add("_input_charset=" + Charset);
+            al.Add("_input_charset=" + charset);
             al.Add("partner=" + partner);
             al.Add("service=" + service);
 
             ////////可变参数/////////////////
-            for (int i = 0; i < ParamsAndValue.Length / 2; i++)
+            for (int i = 0; i < paramsAndValue.Length / 2; i++)
             {
-                if ((ParamsAndValue[i * 2] != "") && (ParamsAndValue[i * 2 + 1]) != "")
+                if ((paramsAndValue[i * 2] != "") && (paramsAndValue[i * 2 + 1]) != "")
                 {
-                    al.Add(ParamsAndValue[i * 2].ToLower() + "=" + ParamsAndValue[i * 2 + 1]);
+                    al.Add(paramsAndValue[i * 2].ToLower() + "=" + paramsAndValue[i * 2 + 1]);
                 }
             }
             ///////////////////////////////////////////////////////////////////
@@ -1026,10 +1026,10 @@ namespace Shove.Alipay
                 }
             }
 
-            prestr.Append(Key);
+            prestr.Append(key);
 
             //生成Md5摘要；
-            string sign = GetMD5(prestr.ToString(), Charset);
+            string sign = GetMD5(prestr.ToString(), charset);
 
             //构造支付Url；
             char[] delimiterChars = { '=' };
@@ -1058,7 +1058,7 @@ namespace Shove.Alipay
         /// <param name="key"></param>
         /// <param name="return_url"></param>
         /// <param name="_input_charset"></param>
-        /// <param name="ReturnUrl"></param>
+        /// <param name="returnUrl"></param>
         /// <returns></returns>
         public string CreatUrl(
             string gateway,
@@ -1068,7 +1068,7 @@ namespace Shove.Alipay
             string key,
             string return_url,
             string _input_charset,
-            string ReturnUrl
+            string returnUrl
             )
         {
             // created by sunzhizhi 2006.5.21,sunzhizhi@msn.com。
@@ -1086,7 +1086,7 @@ namespace Shove.Alipay
                 "partner=" + partner, 
                 "_input_charset="+_input_charset,          
                 "return_url=" + return_url,
-                "returnurl=" + ReturnUrl
+                "returnurl=" + returnUrl
                 };
 
             //进行排序；

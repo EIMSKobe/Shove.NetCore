@@ -22,21 +22,21 @@ namespace Shove.DatabaseFactory.Convert.Model
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="Name"></param>
-        public Index(string Name)
+        /// <param name="name"></param>
+        public Index(string name)
         {
-            this.Name = Name;
+            this.Name = name;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="Name"></param>
-        /// <param name="Body"></param>
-        public Index(string Name, string Body)
+        /// <param name="name"></param>
+        /// <param name="body"></param>
+        public Index(string name, string body)
         {
-            this.Name = Name;
-            this.Body = Body;
+            this.Name = name;
+            this.Body = body;
         }
     }
 }

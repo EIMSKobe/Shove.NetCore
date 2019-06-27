@@ -13,9 +13,9 @@ namespace Shove.Database.Persistences
     {
         private string ConnStr = "";
 
-        string m_ServerName;
-        string m_DatabaseName;
-        string m_UserID;
+        string m_Server;
+        string m_Database;
+        string m_User;
         string m_Password;
         string m_NamespaceName;
         bool m_isUseConnectionStringConfig;
@@ -28,24 +28,24 @@ namespace Shove.Database.Persistences
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="ServerName"></param>
-        /// <param name="DatabaseName"></param>
-        /// <param name="UserID"></param>
-        /// <param name="Password"></param>
-        /// <param name="NamespaceName"></param>
+        /// <param name="server"></param>
+        /// <param name="database"></param>
+        /// <param name="user"></param>
+        /// <param name="password"></param>
+        /// <param name="namespaceName"></param>
         /// <param name="isUseConnectionStringConfig"></param>
         /// <param name="isUseConnectionString"></param>
         /// <param name="isWithTables"></param>
         /// <param name="isWithViews"></param>
         /// <param name="isWithProcedures"></param>
         /// <param name="isWithFunction"></param>
-        public MSSQL(string ServerName, string DatabaseName, string UserID, string Password, string NamespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews, bool isWithProcedures, bool isWithFunction)
+        public MSSQL(string server, string database, string user, string password, string namespaceName, bool isUseConnectionStringConfig, bool isUseConnectionString, bool isWithTables, bool isWithViews, bool isWithProcedures, bool isWithFunction)
         {
-            m_ServerName = ServerName;
-            m_DatabaseName = DatabaseName;
-            m_UserID = UserID;
-            m_Password = Password;
-            m_NamespaceName = NamespaceName.Trim();
+            m_Server = server;
+            m_Database = database;
+            m_User = user;
+            m_Password = password;
+            m_NamespaceName = namespaceName.Trim();
             m_isUseConnectionStringConfig = isUseConnectionStringConfig;
             m_isUseConnectionString = isUseConnectionString;
             m_isWithTables = isWithTables;
@@ -65,9 +65,9 @@ namespace Shove.Database.Persistences
                 return "Request a Compent from table, view, procedure or function.";
             }
 
-            ConnStr = Shove.Database.MSSQL.BuildConnectString(m_ServerName, m_DatabaseName, m_UserID, m_Password);
+            ConnStr = Database.MSSQL.BuildConnectString(m_Server, m_Database, m_User, m_Password);
 
-            SqlConnection conn = Shove.Database.MSSQL.CreateDataConnection<SqlConnection>(ConnStr);
+            SqlConnection conn = DatabaseAccess.CreateDataConnection<SqlConnection>(ConnStr);
 
             if (conn == null)
             {
@@ -164,7 +164,7 @@ namespace Shove.Database.Persistences
 
         private void Tables(ref StringBuilder sb, bool m_isCLR)
         {
-            DataTable dt = Shove.Database.MSSQL.Select(ConnStr, "Select [name], [id] from sysobjects where OBJECTPROPERTY(id, N'IsUserTable') = 1 and OBJECTPROPERTY(id,N'IsMSShipped')=0 order by [name]");
+            DataTable dt = Database.MSSQL.Select(ConnStr, "Select [name], [id] from sysobjects where OBJECTPROPERTY(id, N'IsUserTable') = 1 and OBJECTPROPERTY(id,N'IsMSShipped')=0 order by [name]");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -174,17 +174,17 @@ namespace Shove.Database.Persistences
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string TableName = dr["Name"].ToString();
+                string tableName = dr["Name"].ToString();
 
-                if (TableName == "sysdiagrams")
+                if (tableName == "sysdiagrams")
                 {
                     continue;
                 }
 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(TableName) + " : " + (m_isCLR ? "Utility.TableBase" : "MSSQL.TableBase"));
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(tableName) + " : " + (m_isCLR ? "Utility.TableBase" : "MSSQL.TableBase"));
                 sb.AppendLine("\t\t{");
 
-                DataTable dt_col = Shove.Database.MSSQL.Select(ConnStr, "SELECT a.name, a.length, COLUMNPROPERTY(a.id, a.name, 'IsIdentity') IsIdentity, b.name AS xtypename, a.isoutparam FROM syscolumns a LEFT OUTER JOIN systypes b ON a.xtype = b.xtype WHERE (a.id = " + dr["id"].ToString() + ") and (lower(b.name) <> 'sysname') ORDER BY a.colorder");
+                DataTable dt_col = Database.MSSQL.Select(ConnStr, "SELECT a.name, a.length, COLUMNPROPERTY(a.id, a.name, 'IsIdentity') IsIdentity, b.name AS xtypename, a.isoutparam FROM syscolumns a LEFT OUTER JOIN systypes b ON a.xtype = b.xtype WHERE (a.id = " + dr["id"].ToString() + ") and (lower(b.name) <> 'sysname') ORDER BY a.colorder");
 
                 if ((dt_col == null) || (dt_col.Rows.Count < 1))
                 {
@@ -201,24 +201,24 @@ namespace Shove.Database.Persistences
                 {
                     DataRow dr_col = dt_col.Rows[j];
 
-                    string ColName = dr_col["name"].ToString();
+                    string colName = dr_col["name"].ToString();
 
-                    sb.AppendLine("\t\t\tpublic " + (m_isCLR ? "Utility.Field" : "MSSQL.Field") + " " + GetCanonicalIdentifier(ColName) + ";");
+                    sb.AppendLine("\t\t\tpublic " + (m_isCLR ? "Utility.Field" : "MSSQL.Field") + " " + GetCanonicalIdentifier(colName) + ";");
                 }
                 sb.AppendLine("");
 
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(TableName) + "()");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(tableName) + "()");
                 sb.AppendLine("\t\t\t{");
-                sb.AppendLine("\t\t\t\tTableName = \"" + TableName + "\";");
+                sb.AppendLine("\t\t\t\tTableName = \"" + tableName + "\";");
                 sb.AppendLine("");
 
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
                     DataRow dr_col = dt_col.Rows[j];
 
-                    string ColName = dr_col["name"].ToString();
+                    string colName = dr_col["name"].ToString();
 
-                    sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(ColName) + " = new " + (m_isCLR ? "Utility.Field" : "MSSQL.Field") + "(this, \"" + ColName + "\", \"" + GetCanonicalIdentifier(ColName) + "\", SqlDbType." + GetSQLDataType(dr_col["xtypename"].ToString()) + ", " + ((dr_col["IsIdentity"].ToString() == "1") ? "true" : "false") + ");");
+                    sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(colName) + " = new " + (m_isCLR ? "Utility.Field" : "MSSQL.Field") + "(this, \"" + colName + "\", \"" + GetCanonicalIdentifier(colName) + "\", SqlDbType." + GetSQLDataType(dr_col["xtypename"].ToString()) + ", " + ((dr_col["IsIdentity"].ToString() == "1") ? "true" : "false") + ");");
                 }
 
                 sb.AppendLine("\t\t\t}");
@@ -233,7 +233,7 @@ namespace Shove.Database.Persistences
 
         private void Views(ref StringBuilder sb, bool m_isCLR)
         {
-            DataTable dt = Shove.Database.MSSQL.Select(ConnStr, "Select [name], [id] from sysobjects where OBJECTPROPERTY(id, N'IsView') = 1 and OBJECTPROPERTY(id,N'IsMSShipped')=0 order by [name]");
+            DataTable dt = Database.MSSQL.Select(ConnStr, "Select [name], [id] from sysobjects where OBJECTPROPERTY(id, N'IsView') = 1 and OBJECTPROPERTY(id,N'IsMSShipped')=0 order by [name]");
 
             if ((dt == null) || (dt.Rows.Count < 1))
             {
@@ -243,13 +243,13 @@ namespace Shove.Database.Persistences
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string ViewName = dr["Name"].ToString();
+                string viewName = dr["Name"].ToString();
 
-                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(ViewName) + " : " + (m_isCLR ? "Utility.ViewBase" : "MSSQL.ViewBase"));
+                sb.AppendLine("\t\tpublic class " + GetCanonicalIdentifier(viewName) + " : " + (m_isCLR ? "Utility.ViewBase" : "MSSQL.ViewBase"));
                 sb.AppendLine("\t\t{");
-                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(ViewName) + "()");
+                sb.AppendLine("\t\t\tpublic " + GetCanonicalIdentifier(viewName) + "()");
                 sb.AppendLine("\t\t\t{");
-                sb.AppendLine("\t\t\t\tViewName = \"" + ViewName + "\";");
+                sb.AppendLine("\t\t\t\tViewName = \"" + viewName + "\";");
                 sb.AppendLine("\t\t\t}");
                 sb.AppendLine("\t\t}");
 
@@ -262,7 +262,7 @@ namespace Shove.Database.Persistences
 
         private void Functions(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.MSSQL.Select(ConnStr, "Select [name], [id] from sysobjects where xtype in (N'FN', N'IF', N'TF', N'FS') and OBJECTPROPERTY(id,N'IsMSShipped')=0 order by [name]");
+            DataTable dt = Database.MSSQL.Select(ConnStr, "Select [name], [id] from sysobjects where xtype in (N'FN', N'IF', N'TF', N'FS') and OBJECTPROPERTY(id,N'IsMSShipped')=0 order by [name]");
             if (dt == null)
                 return;
             if (dt.Rows.Count < 1)
@@ -271,15 +271,15 @@ namespace Shove.Database.Persistences
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string FunctionName = dr["Name"].ToString();
+                string functionName = dr["Name"].ToString();
 
-                if (FunctionName == "fn_diagramobjects")
+                if (functionName == "fn_diagramobjects")
                 {
                     continue;
                 }
 
                 //Function Builder...
-                DataTable dt_col = Shove.Database.MSSQL.Select(ConnStr, "SELECT a.name, a.length, COLUMNPROPERTY(a.id, a.name, 'IsIdentity') IsIdentity, b.name AS xtypename, a.isoutparam FROM syscolumns a LEFT OUTER JOIN systypes b ON a.xtype = b.xtype WHERE (a.id = " + dr["id"].ToString() + ") and (lower(b.name) <> 'sysname') ORDER BY a.colorder");
+                DataTable dt_col = Database.MSSQL.Select(ConnStr, "SELECT a.name, a.length, COLUMNPROPERTY(a.id, a.name, 'IsIdentity') IsIdentity, b.name AS xtypename, a.isoutparam FROM syscolumns a LEFT OUTER JOIN systypes b ON a.xtype = b.xtype WHERE (a.id = " + dr["id"].ToString() + ") and (lower(b.name) <> 'sysname') ORDER BY a.colorder");
                 if (dt_col == null)
                     continue;
                 if (dt_col.Rows.Count < 1)
@@ -289,29 +289,29 @@ namespace Shove.Database.Persistences
                 {
                     // call 普通函数，返回除 table 以外的数据类型
                     string ReturnType = GetDataType(dt_col.Rows[0]["xtypename"].ToString());
-                    sb.Append("\t\tpublic static " + ReturnType + " " + GetCanonicalIdentifier(FunctionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "SqlConnection conn")));
+                    sb.Append("\t\tpublic static " + ReturnType + " " + GetCanonicalIdentifier(functionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "SqlConnection conn")));
                     for (int j = 1; j < dt_col.Rows.Count; j++)
                     {
                         DataRow dr_col = dt_col.Rows[j];
-                        string ColName = dr_col["name"].ToString();
-                        ColName = ColName.Substring(1, ColName.Length - 1);
+                        string colName = dr_col["name"].ToString();
+                        colName = colName.Substring(1, colName.Length - 1);
                         string Type = GetDataType(dr_col["xtypename"].ToString());
                         if ((j > 1) || !m_isUseConnectionStringConfig)
                             sb.Append(", ");
-                        sb.Append(Type + " " + GetCanonicalIdentifier(ColName));
+                        sb.Append(Type + " " + GetCanonicalIdentifier(colName));
                     }
                     sb.AppendLine(")");
                     sb.AppendLine("\t\t{");
-                    sb.Append("\t\t\tobject Result = MSSQL.ExecuteFunction(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + FunctionName + "\"");
+                    sb.Append("\t\t\tobject Result = MSSQL.ExecuteFunction(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + functionName + "\"");
                     for (int j = 1; j < dt_col.Rows.Count; j++)
                     {
                         DataRow dr_col = dt_col.Rows[j];
-                        string ColName = dr_col["name"].ToString();
-                        ColName = ColName.Substring(1, ColName.Length - 1);
+                        string colName = dr_col["name"].ToString();
+                        colName = colName.Substring(1, colName.Length - 1);
                         string Type = GetDataType(dr_col["xtypename"].ToString());
                         string SQLType = GetSQLDataType(dr_col["xtypename"].ToString()).ToString();
                         sb.AppendLine(",");
-                        sb.Append("\t\t\t\tnew MSSQL.Parameter(\"" + ColName + "\", SqlDbType." + SQLType + ", 0, ParameterDirection.Input, " + GetCanonicalIdentifier(ColName) + ((Type == "bool") ? " ? 1 : 0" : "") + ")");
+                        sb.Append("\t\t\t\tnew MSSQL.Parameter(\"" + colName + "\", SqlDbType." + SQLType + ", 0, ParameterDirection.Input, " + GetCanonicalIdentifier(colName) + ((Type == "bool") ? " ? 1 : 0" : "") + ")");
                     }
                     if (dt_col.Rows.Count == 1)
                     {
@@ -330,19 +330,19 @@ namespace Shove.Database.Persistences
                 else
                 {
                     // Open 返回表数据类型的特殊函数
-                    sb.Append("\t\tpublic static DataTable " + GetCanonicalIdentifier(FunctionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "SqlConnection conn")));
+                    sb.Append("\t\tpublic static DataTable " + GetCanonicalIdentifier(functionName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "SqlConnection conn")));
 
                     for (int j = 0; j < dt_col.Rows.Count; j++)
                     {
                         DataRow dr_col = dt_col.Rows[j];
-                        string ColName = dr_col["name"].ToString();
+                        string colName = dr_col["name"].ToString();
 
-                        if (!ColName.StartsWith("@"))
+                        if (!colName.StartsWith("@", StringComparison.Ordinal))
                         {
                             continue;
                         }
 
-                        ColName = ColName.Substring(1, ColName.Length - 1);
+                        colName = colName.Substring(1, colName.Length - 1);
 
                         string Type = GetDataType(dr_col["xtypename"].ToString());
 
@@ -351,22 +351,22 @@ namespace Shove.Database.Persistences
                             sb.Append(", ");
                         }
 
-                        sb.Append(Type + " " + GetCanonicalIdentifier(ColName));
+                        sb.Append(Type + " " + GetCanonicalIdentifier(colName));
                     }
 
                     sb.AppendLine(")");
                     sb.AppendLine("\t\t{");
 
-                    sb.Append("\t\t\treturn MSSQL.Select(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"select * from \" + MSSQL.GetObjectFullName(\"" + FunctionName + "\") + \"(");
+                    sb.Append("\t\t\treturn MSSQL.Select(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"select * from \" + MSSQL.GetObjectFullName(\"" + functionName + "\") + \"(");
 
                     bool hasParamter = false;
 
                     for (int j = 0; j < dt_col.Rows.Count; j++)
                     {
                         DataRow dr_col = dt_col.Rows[j];
-                        string ColName = dr_col["name"].ToString();
+                        string colName = dr_col["name"].ToString();
 
-                        if (!ColName.StartsWith("@"))
+                        if (!colName.StartsWith("@", StringComparison.Ordinal))
                         {
                             continue;
                         }
@@ -376,7 +376,7 @@ namespace Shove.Database.Persistences
                             sb.Append(", ");
                         }
 
-                        sb.Append(ColName);
+                        sb.Append(colName);
 
                         hasParamter = true;
                     }
@@ -386,20 +386,20 @@ namespace Shove.Database.Persistences
                     for (int j = 0; j < dt_col.Rows.Count; j++)
                     {
                         DataRow dr_col = dt_col.Rows[j];
-                        string ColName = dr_col["name"].ToString();
+                        string colName = dr_col["name"].ToString();
 
-                        if (!ColName.StartsWith("@"))
+                        if (!colName.StartsWith("@", StringComparison.Ordinal))
                         {
                             continue;
                         }
 
-                        ColName = ColName.Substring(1, ColName.Length - 1);
+                        colName = colName.Substring(1, colName.Length - 1);
 
                         string Type = GetDataType(dr_col["xtypename"].ToString());
                         string SQLType = GetSQLDataType(dr_col["xtypename"].ToString()).ToString();
 
                         sb.AppendLine(",");
-                        sb.Append("\t\t\t\tnew MSSQL.Parameter(\"" + ColName + "\", SqlDbType." + SQLType + ", 0, ParameterDirection.Input, " + GetCanonicalIdentifier(ColName) + ((Type == "bool") ? " ? 1 : 0" : "") + ")");
+                        sb.Append("\t\t\t\tnew MSSQL.Parameter(\"" + colName + "\", SqlDbType." + SQLType + ", 0, ParameterDirection.Input, " + GetCanonicalIdentifier(colName) + ((Type == "bool") ? " ? 1 : 0" : "") + ")");
                     }
                     if (dt_col.Rows.Count == 1)
                         sb.AppendLine(");");
@@ -420,7 +420,7 @@ namespace Shove.Database.Persistences
 
         private void Procedures(ref StringBuilder sb)
         {
-            DataTable dt = Shove.Database.MSSQL.Select(ConnStr, "Select [name], [id] from sysobjects where OBJECTPROPERTY(id, N'IsProcedure') = 1 and OBJECTPROPERTY(id,N'IsMSShipped')=0 order by [name]");
+            DataTable dt = Database.MSSQL.Select(ConnStr, "Select [name], [id] from sysobjects where OBJECTPROPERTY(id, N'IsProcedure') = 1 and OBJECTPROPERTY(id,N'IsMSShipped')=0 order by [name]");
             if (dt == null)
                 return;
             if (dt.Rows.Count < 1)
@@ -429,43 +429,43 @@ namespace Shove.Database.Persistences
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 DataRow dr = dt.Rows[i];
-                string ProcedureName = dr["Name"].ToString();
+                string procedureName = dr["Name"].ToString();
 
-                if ((ProcedureName == "sp_upgraddiagrams") || (ProcedureName == "sp_helpdiagrams") || (ProcedureName == "sp_helpdiagramdefinition") || (ProcedureName == "sp_creatediagram") || (ProcedureName == "sp_renamediagram") || (ProcedureName == "sp_alterdiagram") || (ProcedureName == "sp_dropdiagram"))
+                if ((procedureName == "sp_upgraddiagrams") || (procedureName == "sp_helpdiagrams") || (procedureName == "sp_helpdiagramdefinition") || (procedureName == "sp_creatediagram") || (procedureName == "sp_renamediagram") || (procedureName == "sp_alterdiagram") || (procedureName == "sp_dropdiagram"))
                 {
                     continue;
                 }
 
                 //Procedure Class Builder...
-                DataTable dt_col = Shove.Database.MSSQL.Select(ConnStr, "SELECT a.name, a.length, COLUMNPROPERTY(a.id, a.name, 'IsIdentity') IsIdentity, b.name AS xtypename, a.isoutparam FROM syscolumns a LEFT OUTER JOIN systypes b ON a.xtype = b.xtype WHERE (a.id = " + dr["id"].ToString() + ") and (lower(b.name) <> 'sysname') ORDER BY a.colorder");
+                DataTable dt_col = Database.MSSQL.Select(ConnStr, "SELECT a.name, a.length, COLUMNPROPERTY(a.id, a.name, 'IsIdentity') IsIdentity, b.name AS xtypename, a.isoutparam FROM syscolumns a LEFT OUTER JOIN systypes b ON a.xtype = b.xtype WHERE (a.id = " + dr["id"].ToString() + ") and (lower(b.name) <> 'sysname') ORDER BY a.colorder");
                 if (dt_col == null)
                     continue;
 
                 // NoQuery
-                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(ProcedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "SqlConnection conn")));
+                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(procedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "SqlConnection conn")));
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
                     DataRow dr_col = dt_col.Rows[j];
-                    string ColName = dr_col["name"].ToString();
-                    ColName = ColName.Substring(1, ColName.Length - 1);
+                    string colName = dr_col["name"].ToString();
+                    colName = colName.Substring(1, colName.Length - 1);
                     string Type = GetDataType(dr_col["xtypename"].ToString());
                     bool isOutput = int.Parse(dr_col["isoutparam"].ToString()) == 0 ? false : true;
                     if ((j > 0) || !m_isUseConnectionStringConfig)
                     {
                         sb.Append(", ");
                     }
-                    sb.Append((isOutput ? "ref " : "") + Type + " " + GetCanonicalIdentifier(ColName));
+                    sb.Append((isOutput ? "ref " : "") + Type + " " + GetCanonicalIdentifier(colName));
                 }
                 sb.AppendLine(")");
                 sb.AppendLine("\t\t{");
                 sb.AppendLine("\t\t\tMSSQL.OutputParameter Outputs = new MSSQL.OutputParameter();");
                 sb.AppendLine("");
-                sb.Append("\t\t\tint CallResult = MSSQL.ExecuteStoredProcedureNonQuery(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + ProcedureName + "\", ref Outputs");
+                sb.Append("\t\t\tint CallResult = MSSQL.ExecuteStoredProcedureNonQuery(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + procedureName + "\", ref Outputs");
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
                     DataRow dr_col = dt_col.Rows[j];
-                    string ColName = dr_col["name"].ToString();
-                    ColName = ColName.Substring(1, ColName.Length - 1);
+                    string colName = dr_col["name"].ToString();
+                    colName = colName.Substring(1, colName.Length - 1);
                     string Type = GetDataType(dr_col["xtypename"].ToString());
                     string SQLType = GetSQLDataType(dr_col["xtypename"].ToString()).ToString();
                     long Len = long.Parse(dr_col["length"].ToString());
@@ -482,7 +482,7 @@ namespace Shove.Database.Persistences
                     bool isOutput = int.Parse(dr_col["isoutparam"].ToString()) == 0 ? false : true;
                     sb.AppendLine(",");
 
-                    sb.Append("\t\t\t\tnew MSSQL.Parameter(\"" + ColName + "\", SqlDbType." + SQLType + ", " + (isOutput ? Len.ToString() : "0") + ", " + (isOutput ? "ParameterDirection.Output" : "ParameterDirection.Input") + ", " + GetCanonicalIdentifier(ColName) + ")");
+                    sb.Append("\t\t\t\tnew MSSQL.Parameter(\"" + colName + "\", SqlDbType." + SQLType + ", " + (isOutput ? Len.ToString() : "0") + ", " + (isOutput ? "ParameterDirection.Output" : "ParameterDirection.Input") + ", " + GetCanonicalIdentifier(colName) + ")");
                 }
                 if (dt_col.Rows.Count == 0)
                 {
@@ -497,8 +497,8 @@ namespace Shove.Database.Persistences
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
                     DataRow dr_col = dt_col.Rows[j];
-                    string ColName = dr_col["name"].ToString();
-                    ColName = ColName.Substring(1, ColName.Length - 1);
+                    string colName = dr_col["name"].ToString();
+                    colName = colName.Substring(1, colName.Length - 1);
                     string Type = GetDataType(dr_col["xtypename"].ToString());
                     bool isOutput = int.Parse(dr_col["isoutparam"].ToString()) == 0 ? false : true;
                     if (!isOutput)
@@ -509,11 +509,11 @@ namespace Shove.Database.Persistences
 
                     if (Type.ToLower() == "byte[]")
                     {
-                        sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(ColName) + " = (byte[])Outputs[\"" + ColName + "\"];");
+                        sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(colName) + " = (byte[])Outputs[\"" + colName + "\"];");
                     }
                     else
                     {
-                        sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(ColName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + ColName + "\"]);");
+                        sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(colName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + colName + "\"]);");
                     }
 
                     sb.AppendLine("\t\t\t}");
@@ -525,7 +525,7 @@ namespace Shove.Database.Persistences
                 sb.AppendLine("");
 
                 // WithQuery
-                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(ProcedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "SqlConnection conn")));
+                sb.Append("\t\tpublic static int " + GetCanonicalIdentifier(procedureName) + "(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "string ConnectionString" : "SqlConnection conn")));
                 if (!m_isUseConnectionStringConfig)
                 {
                     sb.Append(", ");
@@ -534,23 +534,23 @@ namespace Shove.Database.Persistences
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
                     DataRow dr_col = dt_col.Rows[j];
-                    string ColName = dr_col["name"].ToString();
-                    ColName = ColName.Substring(1, ColName.Length - 1);
+                    string colName = dr_col["name"].ToString();
+                    colName = colName.Substring(1, colName.Length - 1);
                     string Type = GetDataType(dr_col["xtypename"].ToString());
                     bool isOutput = int.Parse(dr_col["isoutparam"].ToString()) == 0 ? false : true;
                     sb.Append(", ");
-                    sb.Append((isOutput ? "ref " : "") + Type + " " + GetCanonicalIdentifier(ColName));
+                    sb.Append((isOutput ? "ref " : "") + Type + " " + GetCanonicalIdentifier(colName));
                 }
                 sb.AppendLine(")");
                 sb.AppendLine("\t\t{");
                 sb.AppendLine("\t\t\tMSSQL.OutputParameter Outputs = new MSSQL.OutputParameter();");
                 sb.AppendLine("");
-                sb.Append("\t\t\tint CallResult = MSSQL.ExecuteStoredProcedureWithQuery(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + ProcedureName + "\", ref ds, ref Outputs");
+                sb.Append("\t\t\tint CallResult = MSSQL.ExecuteStoredProcedureWithQuery(" + (m_isUseConnectionStringConfig ? "" : (m_isUseConnectionString ? "ConnectionString, " : "conn, ")) + "\"" + procedureName + "\", ref ds, ref Outputs");
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
                     DataRow dr_col = dt_col.Rows[j];
-                    string ColName = dr_col["name"].ToString();
-                    ColName = ColName.Substring(1, ColName.Length - 1);
+                    string colName = dr_col["name"].ToString();
+                    colName = colName.Substring(1, colName.Length - 1);
                     string Type = GetDataType(dr_col["xtypename"].ToString());
                     string SQLType = GetSQLDataType(dr_col["xtypename"].ToString()).ToString();
                     long Len = long.Parse(dr_col["length"].ToString());
@@ -567,7 +567,7 @@ namespace Shove.Database.Persistences
                     bool isOutput = int.Parse(dr_col["isoutparam"].ToString()) == 0 ? false : true;
                     sb.AppendLine(",");
 
-                    sb.Append("\t\t\t\tnew MSSQL.Parameter(\"" + ColName + "\", SqlDbType." + SQLType + ", " + (isOutput ? Len.ToString() : "0") + ", " + (isOutput ? "ParameterDirection.Output" : "ParameterDirection.Input") + ", " + GetCanonicalIdentifier(ColName) + ")");
+                    sb.Append("\t\t\t\tnew MSSQL.Parameter(\"" + colName + "\", SqlDbType." + SQLType + ", " + (isOutput ? Len.ToString() : "0") + ", " + (isOutput ? "ParameterDirection.Output" : "ParameterDirection.Input") + ", " + GetCanonicalIdentifier(colName) + ")");
                 }
                 if (dt_col.Rows.Count == 0)
                 {
@@ -582,8 +582,8 @@ namespace Shove.Database.Persistences
                 for (int j = 0; j < dt_col.Rows.Count; j++)
                 {
                     DataRow dr_col = dt_col.Rows[j];
-                    string ColName = dr_col["name"].ToString();
-                    ColName = ColName.Substring(1, ColName.Length - 1);
+                    string colName = dr_col["name"].ToString();
+                    colName = colName.Substring(1, colName.Length - 1);
                     string Type = GetDataType(dr_col["xtypename"].ToString());
                     bool isOutput = int.Parse(dr_col["isoutparam"].ToString()) == 0 ? false : true;
                     if (!isOutput)
@@ -594,11 +594,11 @@ namespace Shove.Database.Persistences
 
                     if (Type.ToLower() == "byte[]")
                     {
-                        sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(ColName) + " = (byte[])Outputs[\"" + ColName + "\"];");
+                        sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(colName) + " = (byte[])Outputs[\"" + colName + "\"];");
                     }
                     else
                     {
-                        sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(ColName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + ColName + "\"]);");
+                        sb.AppendLine("\t\t\t\t" + GetCanonicalIdentifier(colName) + " = " + GetDataTypeForConvert(Type) + "(Outputs[\"" + colName + "\"]);");
                     }
 
                     sb.AppendLine("\t\t\t}");
@@ -617,235 +617,235 @@ namespace Shove.Database.Persistences
         private string GetDataType(string SQLType)
         {
             SQLType = SQLType.Trim().ToLower();
-            string Result = "string";
+            string result = "string";
 
             switch (SQLType)
             {
                 case "bigint":
-                    Result = "long";
+                    result = "long";
                     break;
                 case "binary":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "bit":
-                    Result = "bool";
+                    result = "bool";
                     break;
                 case "char":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "datetime":
-                    Result = "DateTime";
+                    result = "DateTime";
                     break;
                 case "decimal":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "float":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "image":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "int":
-                    Result = "int";
+                    result = "int";
                     break;
                 case "money":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "nchar":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "ntext":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "numeric":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "nvarchar":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "real":
-                    Result = "float";
+                    result = "float";
                     break;
                 case "smalldatetime":
-                    Result = "DateTime";
+                    result = "DateTime";
                     break;
                 case "smallint":
-                    Result = "short";
+                    result = "short";
                     break;
                 case "smallmoney":
-                    Result = "double";
+                    result = "double";
                     break;
                 case "sql_variant":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "text":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "timestamp":
-                    Result = "DateTime";
+                    result = "DateTime";
                     break;
                 case "tinyint":
-                    Result = "short";
+                    result = "short";
                     break;
                 case "uniqueidentifier":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "varbinary":
-                    Result = "byte[]";
+                    result = "byte[]";
                     break;
                 case "varchar":
-                    Result = "string";
+                    result = "string";
                     break;
                 case "xml":
-                    Result = "string";
+                    result = "string";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
         private SqlDbType GetSQLDataType(string SQLType)
         {
             SQLType = SQLType.Trim().ToLower();
-            SqlDbType Result = SqlDbType.Variant;
+            SqlDbType result = SqlDbType.Variant;
 
             switch (SQLType)
             {
                 case "bigint":
-                    Result = SqlDbType.BigInt;
+                    result = SqlDbType.BigInt;
                     break;
                 case "binary":
-                    Result = SqlDbType.Binary;
+                    result = SqlDbType.Binary;
                     break;
                 case "bit":
-                    Result = SqlDbType.Bit;
+                    result = SqlDbType.Bit;
                     break;
                 case "char":
-                    Result = SqlDbType.Char;
+                    result = SqlDbType.Char;
                     break;
                 case "datetime":
-                    Result = SqlDbType.DateTime;
+                    result = SqlDbType.DateTime;
                     break;
                 case "decimal":
-                    Result = SqlDbType.Decimal;
+                    result = SqlDbType.Decimal;
                     break;
                 case "float":
-                    Result = SqlDbType.Float;
+                    result = SqlDbType.Float;
                     break;
                 case "image":
-                    Result = SqlDbType.Image;
+                    result = SqlDbType.Image;
                     break;
                 case "int":
-                    Result = SqlDbType.Int;
+                    result = SqlDbType.Int;
                     break;
                 case "money":
-                    Result = SqlDbType.Money;
+                    result = SqlDbType.Money;
                     break;
                 case "nchar":
-                    Result = SqlDbType.NChar;
+                    result = SqlDbType.NChar;
                     break;
                 case "ntext":
-                    Result = SqlDbType.NText;
+                    result = SqlDbType.NText;
                     break;
                 case "numeric":
-                    Result = SqlDbType.Float;
+                    result = SqlDbType.Float;
                     break;
                 case "nvarchar":
-                    Result = SqlDbType.NVarChar;
+                    result = SqlDbType.NVarChar;
                     break;
                 case "real":
-                    Result = SqlDbType.Real;
+                    result = SqlDbType.Real;
                     break;
                 case "smalldatetime":
-                    Result = SqlDbType.SmallDateTime;
+                    result = SqlDbType.SmallDateTime;
                     break;
                 case "smallint":
-                    Result = SqlDbType.SmallInt;
+                    result = SqlDbType.SmallInt;
                     break;
                 case "smallmoney":
-                    Result = SqlDbType.SmallMoney;
+                    result = SqlDbType.SmallMoney;
                     break;
                 case "sql_variant":
-                    Result = SqlDbType.Variant;
+                    result = SqlDbType.Variant;
                     break;
                 case "text":
-                    Result = SqlDbType.Text;
+                    result = SqlDbType.Text;
                     break;
                 case "timestamp":
-                    Result = SqlDbType.Timestamp;
+                    result = SqlDbType.Timestamp;
                     break;
                 case "tinyint":
-                    Result = SqlDbType.TinyInt;
+                    result = SqlDbType.TinyInt;
                     break;
                 case "uniqueidentifier":
-                    Result = SqlDbType.UniqueIdentifier;
+                    result = SqlDbType.UniqueIdentifier;
                     break;
                 case "varbinary":
-                    Result = SqlDbType.VarBinary;
+                    result = SqlDbType.VarBinary;
                     break;
                 case "varchar":
-                    Result = SqlDbType.VarChar;
+                    result = SqlDbType.VarChar;
                     break;
                 case "xml":
-                    Result = SqlDbType.Xml;
+                    result = SqlDbType.Xml;
                     break;
             }
 
-            return Result;
+            return result;
         }
 
-        private string GetDataTypeForConvert(string Type)
+        private string GetDataTypeForConvert(string type)
         {
-            Type = Type.Trim().ToLower();
-            string Result = "System.Convert.ToString";
+            type = type.Trim().ToLower();
+            string result = "System.Convert.ToString";
 
-            switch (Type)
+            switch (type)
             {
                 case "long":
-                    Result = "System.Convert.ToInt64";
+                    result = "System.Convert.ToInt64";
                     break;
                 case "bool":
-                    Result = "System.Convert.ToBoolean";
+                    result = "System.Convert.ToBoolean";
                     break;
                 case "string":
-                    Result = "System.Convert.ToString";
+                    result = "System.Convert.ToString";
                     break;
                 case "datetime":
-                    Result = "System.Convert.ToDateTime";
+                    result = "System.Convert.ToDateTime";
                     break;
                 case "double":
-                    Result = "System.Convert.ToDouble";
+                    result = "System.Convert.ToDouble";
                     break;
                 case "int":
-                    Result = "System.Convert.ToInt32";
+                    result = "System.Convert.ToInt32";
                     break;
                 case "short":
-                    Result = "System.Convert.ToInt16";
+                    result = "System.Convert.ToInt16";
                     break;
                 case "byte[]":
-                    Result = "(byte[])";
+                    result = "(byte[])";
                     break;
                 case "float":
-                    Result = "System.Convert.ToSingle";
+                    result = "System.Convert.ToSingle";
                     break;
             }
 
-            return Result;
+            return result;
         }
 
-        private string GetCanonicalIdentifier(string IdentifierName)
+        private string GetCanonicalIdentifier(string identifierName)
         {
-            IdentifierName = IdentifierName.Replace(" ", "_");
+            identifierName = identifierName.Replace(" ", "_");
 
-            if (IdentifierName.Length > 0)
+            if (identifierName.Length > 0)
             {
-                if ("0123456789".IndexOf(IdentifierName[0]) >= 0)
+                if ("0123456789".IndexOf(identifierName[0]) >= 0)
                 {
-                    IdentifierName = "_" + IdentifierName;
+                    identifierName = "_" + identifierName;
                 }
             }
 
-            return IdentifierName;
+            return identifierName;
         }
     }
 }

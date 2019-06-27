@@ -203,7 +203,7 @@ namespace Shove.IO
 
         [DllImport("winspool.drv", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool EnumPrinters(PrinterEnumFlags Flags, string Name, uint Level,
+        private static extern bool EnumPrinters(PrinterEnumFlags flags, string name, uint level,
                                         IntPtr pPrinterEnum, uint cbBuf, ref uint pcbNeeded,
                                         ref uint pcReturned);
 
@@ -232,16 +232,16 @@ namespace Shove.IO
         /// <summary>
         /// 遍历打印机
         /// </summary>
-        /// <param name="Flags"></param>
+        /// <param name="flags"></param>
         /// <returns></returns>
-        public static PRINTER_INFO_2[] EnumPrinters(PrinterEnumFlags Flags)
+        public static PRINTER_INFO_2[] EnumPrinters(PrinterEnumFlags flags)
         {
             PRINTER_INFO_2[] Info2 = null;
             uint cbNeeded = 0;
             uint cReturned = 0;
-            bool ret = EnumPrinters(Flags, null, 2, IntPtr.Zero, 0, ref cbNeeded, ref cReturned);
+            bool ret = EnumPrinters(flags, null, 2, IntPtr.Zero, 0, ref cbNeeded, ref cReturned);
             IntPtr pAddr = Marshal.AllocHGlobal((int)cbNeeded);
-            ret = EnumPrinters(Flags, null, 2, pAddr, cbNeeded, ref cbNeeded, ref cReturned);
+            ret = EnumPrinters(flags, null, 2, pAddr, cbNeeded, ref cbNeeded, ref cReturned);
             if (ret)
             {
                 Info2 = new PRINTER_INFO_2[cReturned];

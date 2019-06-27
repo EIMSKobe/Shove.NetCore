@@ -16,9 +16,9 @@ namespace Shove.Security
         /// 构造
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="EncodingName"></param>
-        public Ses(string key, string EncodingName)
-            : this(key, Encoding.GetEncoding(EncodingName))
+        /// <param name="encodingName"></param>
+        public Ses(string key, string encodingName)
+            : this(key, Encoding.GetEncoding(encodingName))
         {
         }
 
@@ -62,8 +62,8 @@ namespace Shove.Security
         /// <param name="input">密文</param>
         /// <param name="len">源串的长度</param>
         /// <param name="output">源文</param>
-        /// <param name="DecryptResultLength">密文的实际长度，之前无法预知</param>
-        public void Decrypt(byte[] input, int len, byte[] output, ref int DecryptResultLength)
+        /// <param name="decryptResultLength">密文的实际长度，之前无法预知</param>
+        public void Decrypt(byte[] input, int len, byte[] output, ref int decryptResultLength)
         {
             if (len < 8)
             {
@@ -73,7 +73,7 @@ namespace Shove.Security
             Array.Copy(input, output, len);
             Xor(output, len);
             DecryptMatrixTransform(output, len);
-            DecryptResultLength = GetDecryptResultLength(output, len);
+            decryptResultLength = GetDecryptResultLength(output, len);
         }
 
         /// <summary>

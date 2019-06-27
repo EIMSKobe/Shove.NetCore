@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
@@ -20,8 +18,8 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 构造
         /// </summary>
-        /// <param name="InitConnectionString"></param>
-        public MSSQL(string InitConnectionString) : base(InitConnectionString) { }
+        /// <param name="initConnectionString"></param>
+        public MSSQL(string initConnectionString) : base(initConnectionString) { }
 
         /// <summary>
         /// CreateDatabaseConnection
@@ -38,45 +36,45 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// Open
         /// </summary>
-        /// <param name="TableOrViewName"></param>
+        /// <param name="tableOrViewName"></param>
         /// <param name="fieldCollent"></param>
-        /// <param name="Condition"></param>
-        /// <param name="OrderBy"></param>
-        /// <param name="LimitStart"></param>
-        /// <param name="LimitCount"></param>
+        /// <param name="condition"></param>
+        /// <param name="orderBy"></param>
+        /// <param name="limitStart"></param>
+        /// <param name="limitCount"></param>
         /// <returns></returns>
-        protected override DataTable __Open(string TableOrViewName, FieldCollect fieldCollent, string Condition, string OrderBy, int LimitStart, int LimitCount)
+        protected override DataTable __Open(string tableOrViewName, FieldCollect fieldCollent, string condition, string orderBy, int limitStart, int limitCount)
         {
-            TableOrViewName = ReplaceDefinitionForObjectName(TableOrViewName);
+            tableOrViewName = ReplaceDefinitionForObjectName(tableOrViewName);
 
-            Condition = Condition.Trim();
-            OrderBy = OrderBy.Trim();
-            Condition = string.IsNullOrEmpty(Condition) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(Condition));
-            OrderBy = string.IsNullOrEmpty(OrderBy) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(OrderBy));
+            condition = condition.Trim();
+            orderBy = orderBy.Trim();
+            condition = string.IsNullOrEmpty(condition) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(condition));
+            orderBy = string.IsNullOrEmpty(orderBy) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(orderBy));
 
-            if (string.IsNullOrEmpty(OrderBy))
+            if (string.IsNullOrEmpty(orderBy))
             {
-                LimitStart = 0;
-                LimitCount = 0;
+                limitStart = 0;
+                limitCount = 0;
             }
 
-            if ((LimitStart >= 0) && (LimitCount > 0))
+            if ((limitStart >= 0) && (limitCount > 0))
             {
-                return __OpenWithLimit(TableOrViewName, fieldCollent, Condition, OrderBy, LimitStart, LimitCount);
+                return __OpenWithLimit(tableOrViewName, fieldCollent, condition, orderBy, limitStart, limitCount);
             }
 
-            return __OpenWithoutLimit(TableOrViewName, fieldCollent, Condition, OrderBy);
+            return __OpenWithoutLimit(tableOrViewName, fieldCollent, condition, orderBy);
         }
 
         #region __Open 明细方法
 
-        private DataTable __OpenWithLimit(string TableOrViewName, FieldCollect fieldCollent, string Condition, string OrderBy, int LimitStart, int LimitCount)
+        private DataTable __OpenWithLimit(string tableOrViewName, FieldCollect fieldCollent, string condition, string orderBy, int limitStart, int limitCount)
         {
-            string CommandString = "select * from (select top " + (LimitStart + LimitCount).ToString() + " ";
+            string commandString = "select * from (select top " + (limitStart + limitCount).ToString() + " ";
 
             if ((fieldCollent == null) || (fieldCollent.Count < 1))
             {
-                CommandString += "*, ";
+                commandString += "*, ";
             }
             else
             {
@@ -89,22 +87,22 @@ namespace Shove.DatabaseFactory
                         FieldName = ReplaceDefinitionForObjectName(FieldName);
                     }
 
-                    CommandString += (FieldName + ", ");
+                    commandString += (FieldName + ", ");
                 }
             }
 
-            CommandString += "Row_Number() over (order by " + OrderBy + ") as __SE_ROW ";
-            CommandString += "from " + TableOrViewName + " ";
+            commandString += "Row_Number() over (order by " + orderBy + ") as __SE_ROW ";
+            commandString += "from " + tableOrViewName + " ";
 
-            if (!string.IsNullOrEmpty(Condition))
+            if (!string.IsNullOrEmpty(condition))
             {
-                CommandString += "where " + Condition + " ";
+                commandString += "where " + condition + " ";
             }
 
-            CommandString += "order by " + OrderBy + ") as a where __SE_ROW > " + LimitStart.ToString() + " order by __SE_ROW";
+            commandString += "order by " + orderBy + ") as a where __SE_ROW > " + limitStart.ToString() + " order by __SE_ROW";
 
             DataTable dt = new DataTable();
-            SqlDataAdapter da = new SqlDataAdapter(CommandString, (SqlConnection)connection);
+            SqlDataAdapter da = new SqlDataAdapter(commandString, (SqlConnection)connection);
 
             if (transcation != null)
             {
@@ -116,13 +114,13 @@ namespace Shove.DatabaseFactory
             return dt;
         }
 
-        private DataTable __OpenWithoutLimit(string TableOrViewName, FieldCollect fieldCollent, string Condition, string OrderBy)
+        private DataTable __OpenWithoutLimit(string tableOrViewName, FieldCollect fieldCollent, string condition, string orderBy)
         {
-            string CommandString = "select ";
+            string commandString = "select ";
 
             if ((fieldCollent == null) || (fieldCollent.Count < 1))
             {
-                CommandString += "* ";
+                commandString += "* ";
             }
             else
             {
@@ -135,24 +133,24 @@ namespace Shove.DatabaseFactory
                         FieldName = ReplaceDefinitionForObjectName(FieldName);
                     }
 
-                    CommandString += (FieldName + ((i == (fieldCollent.Count - 1)) ? " " : ", "));
+                    commandString += (FieldName + ((i == (fieldCollent.Count - 1)) ? " " : ", "));
                 }
             }
 
-            CommandString += "from " + TableOrViewName + " ";
+            commandString += "from " + tableOrViewName + " ";
 
-            if (!string.IsNullOrEmpty(Condition))
+            if (!string.IsNullOrEmpty(condition))
             {
-                CommandString += "where " + Condition + " ";
+                commandString += "where " + condition + " ";
             }
 
-            if (!string.IsNullOrEmpty(OrderBy))
+            if (!string.IsNullOrEmpty(orderBy))
             {
-                CommandString += "order by " + OrderBy;
+                commandString += "order by " + orderBy;
             }
 
             DataTable dt = new DataTable();
-            SqlDataAdapter da = new SqlDataAdapter(CommandString, (SqlConnection)connection);
+            SqlDataAdapter da = new SqlDataAdapter(commandString, (SqlConnection)connection);
 
             if (transcation != null)
             {
@@ -169,43 +167,43 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// GetRowCount
         /// </summary>
-        /// <param name="TableOrViewName"></param>
-        /// <param name="Condition"></param>
+        /// <param name="tableOrViewName"></param>
+        /// <param name="condition"></param>
         /// <returns></returns>
-        protected override long __GetRowCount(string TableOrViewName, string Condition)
+        protected override long __GetRowCount(string tableOrViewName, string condition)
         {
-            TableOrViewName = ReplaceDefinitionForObjectName(TableOrViewName);
+            tableOrViewName = ReplaceDefinitionForObjectName(tableOrViewName);
 
-            string CommandString = "select count(*) from " + TableOrViewName + " ";
+            string commandString = "select count(*) from " + tableOrViewName + " ";
 
-            Condition = Condition.Trim();
-            Condition = string.IsNullOrEmpty(Condition) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(Condition));
+            condition = condition.Trim();
+            condition = string.IsNullOrEmpty(condition) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(condition));
 
-            if (!string.IsNullOrEmpty(Condition))
+            if (!string.IsNullOrEmpty(condition))
             {
-                CommandString += "where " + Condition;
+                commandString += "where " + condition;
             }
 
-            SqlCommand Cmd = new SqlCommand(CommandString, (SqlConnection)connection);
+            SqlCommand cmd = new SqlCommand(commandString, (SqlConnection)connection);
 
             if (transcation != null)
             {
-                Cmd.Transaction = (SqlTransaction)transcation;
+                cmd.Transaction = (SqlTransaction)transcation;
             }
 
-            object Result = Cmd.ExecuteScalar();
+            object result = cmd.ExecuteScalar();
 
-            return System.Convert.ToInt64(Result);
+            return System.Convert.ToInt64(result);
         }
 
         /// <summary>
         /// Insert
         /// </summary>
-        /// <param name="TableName"></param>
+        /// <param name="tableName"></param>
         /// <param name="fieldCollent"></param>
         /// <param name="fieldValueCollect"></param>
         /// <returns></returns>
-        protected override long __Insert(string TableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect)
+        protected override long __Insert(string tableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect)
         {
             if ((fieldCollent == null) || (fieldCollent.Count < 1))
             {
@@ -222,22 +220,22 @@ namespace Shove.DatabaseFactory
                 throw new Exception("fieldCollent and fieldValueCollect's Number of inconsistencies.");
             }
 
-            TableName = ReplaceDefinitionForObjectName(TableName);
+            tableName = ReplaceDefinitionForObjectName(tableName);
 
-            string CommandString = "insert into " + TableName + " (";
+            string commandString = "insert into " + tableName + " (";
 
             for (int i = 0; i < fieldCollent.Count; i++)
             {
                 string FieldName = ReplaceDefinitionForObjectName(fieldCollent[i]);
 
-                CommandString += (FieldName + ((i == (fieldCollent.Count - 1)) ? ") values (" : ", "));
+                commandString += (FieldName + ((i == (fieldCollent.Count - 1)) ? ") values (" : ", "));
             }
 
-            int ParameterCount = 0;
+            int parameterCount = 0;
 
             for (int i = 0; i < fieldValueCollect.Count; i++)
             {
-                CommandString += (i > 0) ? ", " : "";
+                commandString += (i > 0) ? ", " : "";
                 object FieldValue = fieldValueCollect[i];
 
                 if (FieldValue is FieldValueCalculate)
@@ -247,20 +245,20 @@ namespace Shove.DatabaseFactory
 
                 if (FieldValue is FieldValueCalculate)
                 {
-                    CommandString += ((FieldValueCalculate)FieldValue).ToString();
+                    commandString += ((FieldValueCalculate)FieldValue).ToString();
                 }
                 else
                 {
-                    CommandString += "@p" + ParameterCount.ToString();
-                    ParameterCount++;
+                    commandString += "@p" + parameterCount.ToString();
+                    parameterCount++;
                 }
             }
 
-            CommandString += "); select isnull(cast(scope_identity() as bigint), -99999999);";
+            commandString += "); select isnull(cast(scope_identity() as bigint), -99999999);";
 
-            SqlCommand Cmd = new SqlCommand(CommandString, (SqlConnection)connection);
+            SqlCommand cmd = new SqlCommand(commandString, (SqlConnection)connection);
 
-            ParameterCount = 0;
+            parameterCount = 0;
 
             for (int i = 0; i < fieldValueCollect.Count; i++)
             {
@@ -271,37 +269,37 @@ namespace Shove.DatabaseFactory
                     continue;
                 }
 
-                SqlParameter p = new SqlParameter("@p" + ParameterCount.ToString(), (FieldValue == null ? System.DBNull.Value : (string.IsNullOrEmpty(FieldValue.ToString()) ? System.DBNull.Value : FieldValue)));
-                Cmd.Parameters.Add(p);
+                SqlParameter p = new SqlParameter("@p" + parameterCount.ToString(), (FieldValue == null ? System.DBNull.Value : (string.IsNullOrEmpty(FieldValue.ToString()) ? System.DBNull.Value : FieldValue)));
+                cmd.Parameters.Add(p);
 
-                ParameterCount++;
+                parameterCount++;
             } 
             
             if (transcation != null)
             {
-                Cmd.Transaction = (SqlTransaction)transcation;
+                cmd.Transaction = (SqlTransaction)transcation;
             }
 
-            object objResult = Cmd.ExecuteScalar();
-            long Result = System.Convert.ToInt64(objResult);
+            object objResult = cmd.ExecuteScalar();
+            long result = System.Convert.ToInt64(objResult);
 
-            if (Result == -99999999)
+            if (result == -99999999)
             {
                 return 0;
             }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// Update
         /// </summary>
-        /// <param name="TableName"></param>
+        /// <param name="tableName"></param>
         /// <param name="fieldCollent"></param>
         /// <param name="fieldValueCollect"></param>
-        /// <param name="Condition"></param>
+        /// <param name="condition"></param>
         /// <returns></returns>
-        protected override long __Update(string TableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect, string Condition)
+        protected override long __Update(string tableName, FieldCollect fieldCollent, FieldValueCollect fieldValueCollect, string condition)
         {
             if ((fieldCollent == null) || (fieldCollent.Count < 1))
             {
@@ -318,43 +316,43 @@ namespace Shove.DatabaseFactory
                 throw new Exception("fieldCollent and fieldValueCollect's Number of inconsistencies.");
             }
 
-            TableName = ReplaceDefinitionForObjectName(TableName);
+            tableName = ReplaceDefinitionForObjectName(tableName);
 
-            string CommandString = "update " + TableName + " set ";
+            string commandString = "update " + tableName + " set ";
 
-            int ParameterCount = 0;
+            int parameterCount = 0;
 
             for (int i = 0; i < fieldCollent.Count; i++)
             {
                 string FieldName = ReplaceDefinitionForObjectName(fieldCollent[i]);
                 object FieldValue = fieldValueCollect[i];
 
-                CommandString += ((i > 0) ? ", " : "") + FieldName + " = ";
+                commandString += ((i > 0) ? ", " : "") + FieldName + " = ";
 
                 if (FieldValue is FieldValueCalculate)
                 {
-                    CommandString += ((FieldValueCalculate)FieldValue).ToString();
+                    commandString += ((FieldValueCalculate)FieldValue).ToString();
                 }
                 else
                 {
-                    CommandString += "@p" + ParameterCount.ToString();
-                    ParameterCount++;
+                    commandString += "@p" + parameterCount.ToString();
+                    parameterCount++;
                 }
             }
 
-            Condition = Condition.Trim();
-            Condition = string.IsNullOrEmpty(Condition) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(Condition));
+            condition = condition.Trim();
+            condition = string.IsNullOrEmpty(condition) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(condition));
 
-            if (!string.IsNullOrEmpty(Condition))
+            if (!string.IsNullOrEmpty(condition))
             {
-                CommandString += " where " + Condition;
+                commandString += " where " + condition;
             }
 
-            CommandString += "; select isnull(cast(rowcount_big() as bigint), -99999999)";
+            commandString += "; select isnull(cast(rowcount_big() as bigint), -99999999)";
 
-            SqlCommand Cmd = new SqlCommand(CommandString, (SqlConnection)connection);
+            SqlCommand cmd = new SqlCommand(commandString, (SqlConnection)connection);
 
-            ParameterCount = 0;
+            parameterCount = 0;
 
             for (int i = 0; i < fieldValueCollect.Count; i++)
             {
@@ -365,116 +363,116 @@ namespace Shove.DatabaseFactory
                     continue;
                 }
 
-                SqlParameter p = new SqlParameter("@p" + ParameterCount.ToString(), (FieldValue == null ? System.DBNull.Value : (string.IsNullOrEmpty(FieldValue.ToString()) ? System.DBNull.Value : FieldValue)));
-                Cmd.Parameters.Add(p);
+                SqlParameter p = new SqlParameter("@p" + parameterCount.ToString(), (FieldValue == null ? System.DBNull.Value : (string.IsNullOrEmpty(FieldValue.ToString()) ? System.DBNull.Value : FieldValue)));
+                cmd.Parameters.Add(p);
 
-                ParameterCount++;
+                parameterCount++;
             } 
             
             if (transcation != null)
             {
-                Cmd.Transaction = (SqlTransaction)transcation;
+                cmd.Transaction = (SqlTransaction)transcation;
             }
 
-            object objResult = Cmd.ExecuteScalar();
-            long Result = System.Convert.ToInt64(objResult);
+            object objResult = cmd.ExecuteScalar();
+            long result = System.Convert.ToInt64(objResult);
 
-            if (Result == -99999999)
+            if (result == -99999999)
             {
                 return 0;
             }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// Delete
         /// </summary>
-        /// <param name="TableName"></param>
-        /// <param name="Condition"></param>
+        /// <param name="tableName"></param>
+        /// <param name="condition"></param>
         /// <returns></returns>
-        protected override long __Delete(string TableName, string Condition)
+        protected override long __Delete(string tableName, string condition)
         {
-            TableName = ReplaceDefinitionForObjectName(TableName);
+            tableName = ReplaceDefinitionForObjectName(tableName);
 
-            string CommandString = "delete from " + TableName + " ";
+            string commandString = "delete from " + tableName + " ";
 
-            Condition = Condition.Trim();
-            Condition = string.IsNullOrEmpty(Condition) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(Condition));
+            condition = condition.Trim();
+            condition = string.IsNullOrEmpty(condition) ? "" : FilteSqlInfusionForCondition(ReplaceDefinitionForStatement(condition));
 
-            if (!string.IsNullOrEmpty(Condition))
+            if (!string.IsNullOrEmpty(condition))
             {
-                CommandString += "where " + Condition;
+                commandString += "where " + condition;
             }
 
-            CommandString += "; select isnull(cast(rowcount_big() as bigint), -99999999)";
+            commandString += "; select isnull(cast(rowcount_big() as bigint), -99999999)";
 
-            SqlCommand Cmd = new SqlCommand(CommandString, (SqlConnection)connection);
+            SqlCommand cmd = new SqlCommand(commandString, (SqlConnection)connection);
 
             if (transcation != null)
             {
-                Cmd.Transaction = (SqlTransaction)transcation;
+                cmd.Transaction = (SqlTransaction)transcation;
             }
 
-            object objResult = Cmd.ExecuteScalar();
-            long Result = System.Convert.ToInt64(objResult);
+            object objResult = cmd.ExecuteScalar();
+            long result = System.Convert.ToInt64(objResult);
 
-            if (Result == -99999999)
+            if (result == -99999999)
             {
                 return 0;
             }
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// Create Index
         /// </summary>
-        /// <param name="TableName"></param>
-        /// <param name="IndexName"></param>
+        /// <param name="tableName"></param>
+        /// <param name="indexName"></param>
         /// <param name="isUnique"></param>
-        /// <param name="Body"></param>
+        /// <param name="body"></param>
         /// <returns></returns>
-        protected override int __CreateIndex(string TableName, string IndexName, bool isUnique, string Body)
+        protected override int __CreateIndex(string tableName, string indexName, bool isUnique, string body)
         {
-            __DropIndex(TableName, IndexName);
+            __DropIndex(tableName, indexName);
 
-            TableName = ReplaceDefinitionForObjectName(TableName);
-            IndexName = ReplaceDefinitionForObjectName(IndexName);
+            tableName = ReplaceDefinitionForObjectName(tableName);
+            indexName = ReplaceDefinitionForObjectName(indexName);
 
-            SqlCommand Cmd = new SqlCommand("create " + (isUnique ? "Unique " : "") + "index " + IndexName + " on " + TableName + " (" + ReplaceDefinitionForStatement(Body) + ")", (SqlConnection)connection);
+            SqlCommand cmd = new SqlCommand("create " + (isUnique ? "Unique " : "") + "index " + indexName + " on " + tableName + " (" + ReplaceDefinitionForStatement(body) + ")", (SqlConnection)connection);
 
             if (transcation != null)
             {
-                Cmd.Transaction = (SqlTransaction)transcation;
+                cmd.Transaction = (SqlTransaction)transcation;
             }
 
-            int Result = Cmd.ExecuteNonQuery();
+            int result = cmd.ExecuteNonQuery();
 
-            return Result;
+            return result;
         }
 
         /// <summary>
         /// Drop Index
         /// </summary>
-        /// <param name="TableName"></param>
-        /// <param name="IndexName"></param>
+        /// <param name="tableName"></param>
+        /// <param name="indexName"></param>
         /// <returns></returns>
-        protected override int __DropIndex(string TableName, string IndexName)
+        protected override int __DropIndex(string tableName, string indexName)
         {
-            TableName = ReplaceDefinitionForObjectName(TableName);
-            IndexName = ReplaceDefinitionForObjectName(IndexName);
+            tableName = ReplaceDefinitionForObjectName(tableName);
+            indexName = ReplaceDefinitionForObjectName(indexName);
 
-            SqlCommand Cmd = new SqlCommand("if exists (select 1 from sysindexes where id = (select OBJECT_ID('" + TableName + "')) and name = '" + RemoveDefinitionForObjectName(IndexName) + "') drop index " + TableName + "." + IndexName, (SqlConnection)connection);
+            SqlCommand cmd = new SqlCommand("if exists (select 1 from sysindexes where id = (select OBJECT_ID('" + tableName + "')) and name = '" + RemoveDefinitionForObjectName(indexName) + "') drop index " + tableName + "." + indexName, (SqlConnection)connection);
 
             if (transcation != null)
             {
-                Cmd.Transaction = (SqlTransaction)transcation;
+                cmd.Transaction = (SqlTransaction)transcation;
             }
 
-            int Result = Cmd.ExecuteNonQuery();
+            int result = cmd.ExecuteNonQuery();
 
-            return Result;
+            return result;
         }
         
 
@@ -484,7 +482,7 @@ namespace Shove.DatabaseFactory
         {
             input = input.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' });
 
-            if (input.StartsWith("[") && input.EndsWith("]"))
+            if (input.StartsWith("[", StringComparison.Ordinal) && input.EndsWith("]", StringComparison.Ordinal))
             {
                 return input;
             }
@@ -493,7 +491,7 @@ namespace Shove.DatabaseFactory
 
             if (str.Contains("`") || str.Contains(",") || (str.Contains("(") && str.Contains(")")) || str.Contains("+") || str.Contains("-") || str.Contains("*") || str.Contains("/") || str.Contains(" as ") || str.Contains("."))
             {
-                int count = Shove.String.StringAt(str, '`');
+                int count = String.StringAt(str, '`');
                 if ((count % 2) != 0)
                 {
                     throw new Exception("The number is not an even number of characters “`”.");
@@ -505,7 +503,7 @@ namespace Shove.DatabaseFactory
                     {
                         if (input[i] == '`')
                         {
-                            input = Shove.String.ReplaceAt(input, (((i % 2) == 0) ? '[' : ']'), i);
+                            input = String.ReplaceAt(input, (((i % 2) == 0) ? '[' : ']'), i);
                         }
                     }
                 }
@@ -525,7 +523,7 @@ namespace Shove.DatabaseFactory
         {
             input = input.Trim(new char[] { ' ', '　', '\t', '\r', '\n', '\v', '\f' });
 
-            if (input.StartsWith("[") && input.EndsWith("]"))
+            if (input.StartsWith("[", StringComparison.Ordinal) && input.EndsWith("]", StringComparison.Ordinal))
             {
                 return input.Substring(1, input.Length - 2);
             }
@@ -538,59 +536,59 @@ namespace Shove.DatabaseFactory
         /// <summary>
         /// 执行命令
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        protected override int __ExecuteNonQuery(string CommandString)
+        protected override int __ExecuteNonQuery(string commandString)
         {
-            SqlCommand Cmd = new SqlCommand(CommandString, (SqlConnection)connection);
+            SqlCommand cmd = new SqlCommand(commandString, (SqlConnection)connection);
             if (transcation != null)
             {
-                Cmd.Transaction = (SqlTransaction)transcation;
+                cmd.Transaction = (SqlTransaction)transcation;
             }
 
-            return Cmd.ExecuteNonQuery();
+            return cmd.ExecuteNonQuery();
         }
 
         /// <summary>
         /// 执行读取一行一列
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        protected override object __ExecuteScalar(string CommandString)
+        protected override object __ExecuteScalar(string commandString)
         {
-            SqlCommand Cmd = new SqlCommand(CommandString, (SqlConnection)connection);
+            SqlCommand cmd = new SqlCommand(commandString, (SqlConnection)connection);
             if (transcation != null)
             {
-                Cmd.Transaction = (SqlTransaction)transcation;
+                cmd.Transaction = (SqlTransaction)transcation;
             }
 
-            return Cmd.ExecuteScalar();
+            return cmd.ExecuteScalar();
         }
 
         /// <summary>
         /// Reader
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        protected override DbDataReader __ExecuteReader(string CommandString)
+        protected override DbDataReader __ExecuteReader(string commandString)
         {
-            SqlCommand Cmd = new SqlCommand(CommandString, (SqlConnection)connection);
+            SqlCommand cmd = new SqlCommand(commandString, (SqlConnection)connection);
             if (transcation != null)
             {
-                Cmd.Transaction = (SqlTransaction)transcation;
+                cmd.Transaction = (SqlTransaction)transcation;
             }
 
-            return Cmd.ExecuteReader();
+            return cmd.ExecuteReader();
         }
 
         /// <summary>
         /// 执行命令返回结果集
         /// </summary>
-        /// <param name="CommandString"></param>
+        /// <param name="commandString"></param>
         /// <returns></returns>
-        protected override DataTable __ExecuteQuery(string CommandString)
+        protected override DataTable __ExecuteQuery(string commandString)
         {
-            SqlDataAdapter da = new SqlDataAdapter(CommandString, (SqlConnection)connection);
+            SqlDataAdapter da = new SqlDataAdapter(commandString, (SqlConnection)connection);
             if (transcation != null)
             {
                 da.SelectCommand.Transaction = (SqlTransaction)transcation;

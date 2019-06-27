@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Web;
 using System.IO;
 
 namespace Shove.IO
@@ -60,8 +58,8 @@ namespace Shove.IO
         /// <summary>
         /// Write
         /// </summary>
-        /// <param name="Message"></param>
-        public void Write(string Message)
+        /// <param name="message"></param>
+        public void Write(string message)
         {
             if (string.IsNullOrEmpty(FileName))
             {
@@ -74,7 +72,7 @@ namespace Shove.IO
 
                 try
                 {
-                    writer.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ":" + System.DateTime.Now.Millisecond.ToString() + "\t\t" + Message + "\r\n");
+                    writer.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ":" + System.DateTime.Now.Millisecond.ToString() + "\t\t" + message + "\r\n");
                 }
                 catch { }
 

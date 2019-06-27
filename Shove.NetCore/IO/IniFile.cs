@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -46,27 +45,27 @@ namespace Shove.IO
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="FileName"></param>
-        public IniFile(string FileName)
+        /// <param name="fileName"></param>
+        public IniFile(string fileName)
         {
-            Initialize(FileName, false);
+            Initialize(fileName, false);
         }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="FileName"></param>
-        /// <param name="Lazy"></param>
-        public IniFile(string FileName, bool Lazy)
+        /// <param name="fileName"></param>
+        /// <param name="lazy"></param>
+        public IniFile(string fileName, bool lazy)
         {
-            Initialize(FileName, Lazy);
+            Initialize(fileName, lazy);
         }
 
         // *** Initialization ***
-        private void Initialize(string FileName, bool Lazy)
+        private void Initialize(string fileName, bool lazy)
         {
-            m_FileName = FileName;
-            m_Lazy = Lazy;
+            m_FileName = fileName;
+            m_Lazy = lazy;
             if (!m_Lazy) Refresh();
         }
 
@@ -99,7 +98,7 @@ namespace Shove.IO
                         s = s.Trim();
 
                         // *** Check for section names ***
-                        if (s.StartsWith("[") && s.EndsWith("]"))
+                        if (s.StartsWith("[", StringComparison.Ordinal) && s.EndsWith("]", StringComparison.Ordinal))
                         {
                             if (s.Length > 2)
                             {
@@ -196,10 +195,10 @@ namespace Shove.IO
         /// <summary>
         /// Read a value from local cache
         /// </summary>
-        /// <param name="SectionName"></param>
-        /// <param name="Key"></param>
+        /// <param name="sectionName"></param>
+        /// <param name="key"></param>
         /// <returns></returns>
-        public string Read(string SectionName, string Key)
+        public string Read(string sectionName, string key)
         {
             // *** Lazy loading ***
             if (m_Lazy)
@@ -212,11 +211,11 @@ namespace Shove.IO
             {
                 // *** Check if the section exists ***
                 Dictionary<string, string> Section;
-                if (!m_Sections.TryGetValue(SectionName, out Section)) return "";
+                if (!m_Sections.TryGetValue(sectionName, out Section)) return "";
 
                 // *** Check if the key exists ***
                 string Value;
-                if (!Section.TryGetValue(Key, out Value)) return "";
+                if (!Section.TryGetValue(key, out Value)) return "";
 
                 // *** Return the found value ***
                 return Value;
@@ -226,11 +225,11 @@ namespace Shove.IO
         /// <summary>
         /// Insert or modify a value in local cache, And Flush.
         /// </summary>
-        /// <param name="SectionName"></param>
-        /// <param name="Key"></param>
-        /// <param name="Value"></param>
+        /// <param name="sectionName"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        public bool Write(string SectionName, string Key, object Value)
+        public bool Write(string sectionName, string key, object value)
         {
             // *** Lazy loading ***
             if (m_Lazy)
@@ -246,16 +245,16 @@ namespace Shove.IO
 
                 // *** Check if the section exists ***
                 Dictionary<string, string> Section;
-                if (!m_Sections.TryGetValue(SectionName, out Section))
+                if (!m_Sections.TryGetValue(sectionName, out Section))
                 {
                     // *** If it doesn't, add it ***
                     Section = new Dictionary<string, string>();
-                    m_Sections.Add(SectionName, Section);
+                    m_Sections.Add(sectionName, Section);
                 }
 
                 // *** Modify the value ***
-                if (Section.ContainsKey(Key)) Section.Remove(Key);
-                Section.Add(Key, System.Convert.ToString(Value));
+                if (Section.ContainsKey(key)) Section.Remove(key);
+                Section.Add(key, System.Convert.ToString(value));
             }
 
             Flush();
@@ -263,12 +262,12 @@ namespace Shove.IO
         }
 
         // *** Encode byte array ***
-        private string EncodeByteArray(byte[] Value)
+        private string EncodeByteArray(byte[] value)
         {
-            if (Value == null) return null;
+            if (value == null) return null;
 
             StringBuilder sb = new StringBuilder();
-            foreach (byte b in Value)
+            foreach (byte b in value)
             {
                 string hex = System.Convert.ToString(b, 16);
                 int l = hex.Length;
@@ -286,16 +285,16 @@ namespace Shove.IO
         }
 
         // *** Decode byte array ***
-        private byte[] DecodeByteArray(string Value)
+        private byte[] DecodeByteArray(string value)
         {
-            if (Value == null) return null;
+            if (value == null) return null;
 
-            int l = Value.Length;
+            int l = value.Length;
             if (l < 2) return new byte[] { };
 
             l /= 2;
             byte[] Result = new byte[l];
-            for (int i = 0; i < l; i++) Result[i] = System.Convert.ToByte(Value.Substring(i * 2, 2), 16);
+            for (int i = 0; i < l; i++) Result[i] = System.Convert.ToByte(value.Substring(i * 2, 2), 16);
             return Result;
         }
 

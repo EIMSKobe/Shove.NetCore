@@ -23,13 +23,13 @@ namespace Shove.Net
         /// <summary>
         /// IP地址转为整数
         /// </summary>
-        /// <param name="IPAddress"></param>
+        /// <param name="ip"></param>
         /// <returns></returns>
-        public static Int64 IPAddressToInt64(string IPAddress)
+        public static Int64 IPAddressToInt64(string ip)
         {
             Int64 Result = 0;
-            IPAddress = IPAddress.Replace('.', '#');
-            string[] strs = Regex.Split(IPAddress, "#", RegexOptions.IgnoreCase);
+            ip = ip.Replace('.', '#');
+            string[] strs = Regex.Split(ip, "#", RegexOptions.IgnoreCase);
 
             try
             {
@@ -52,23 +52,23 @@ namespace Shove.Net
         /// <summary>
         /// 获取IP地址的地理位置
         /// </summary>
-        /// <param name="IPAddress"></param>
-        /// <param name="DataFileName"></param>
+        /// <param name="ip"></param>
+        /// <param name="dataFileName"></param>
         /// <returns></returns>
-        public static string GetPlaceFromIPAddress(Int64 IPAddress, string DataFileName)
+        public static string GetPlaceFromIPAddress(Int64 ip, string dataFileName)
         {
             DataSet ds = new DataSet();
 
             try
             {
-                ds.ReadXml(DataFileName);
+                ds.ReadXml(dataFileName);
             }
             catch
             {
                 return "读IP地址库错误";
             }
 
-            DataRow[] dr = ds.Tables[0].Select("IPStart <= " + IPAddress.ToString() + " and IPEnd >= " + IPAddress.ToString());
+            DataRow[] dr = ds.Tables[0].Select("IPStart <= " + ip.ToString() + " and IPEnd >= " + ip.ToString());
             if (dr.Length < 1)
                 return "未知地址";
 
@@ -81,29 +81,29 @@ namespace Shove.Net
         /// <summary>
         /// 获取IP地址的地理位置
         /// </summary>
-        /// <param name="sIPAddress"></param>
-        /// <param name="DataFileName"></param>
+        /// <param name="ip"></param>
+        /// <param name="dataFileName"></param>
         /// <returns></returns>
-        public static string GetPlaceFromIPAddress(string sIPAddress, string DataFileName)
+        public static string GetPlaceFromIPAddress(string ip, string dataFileName)
         {
-            if (sIPAddress == "127.0.0.1")
+            if (ip == "127.0.0.1")
                 return "本机地址";
-            Int64 IPAddress = IPAddressToInt64(sIPAddress);
-            return GetPlaceFromIPAddress(IPAddress, DataFileName);
+            Int64 address = IPAddressToInt64(ip);
+            return GetPlaceFromIPAddress(address, dataFileName);
         }
 
         /// <summary>
         /// 获取IP地址的地理位置
         /// </summary>
-        /// <param name="IPAddress"></param>
+        /// <param name="ip"></param>
         /// <param name="ds"></param>
         /// <returns></returns>
-        public static string GetPlaceFromIPAddress(Int64 IPAddress, DataSet ds)
+        public static string GetPlaceFromIPAddress(Int64 ip, DataSet ds)
         {
             if (ds == null)
                 return "读IP地址库错误";
 
-            DataRow[] dr = ds.Tables[0].Select("IPStart <= " + IPAddress.ToString() + " and IPEnd >= " + IPAddress.ToString());
+            DataRow[] dr = ds.Tables[0].Select("IPStart <= " + ip.ToString() + " and IPEnd >= " + ip.ToString());
             if (dr.Length < 1)
                 return "未知地址";
 
@@ -113,33 +113,33 @@ namespace Shove.Net
         /// <summary>
         /// 获取IP地址的地理位置
         /// </summary>
-        /// <param name="sIPAddress"></param>
+        /// <param name="ip"></param>
         /// <param name="ds"></param>
         /// <returns></returns>
-        public static string GetPlaceFromIPAddress(string sIPAddress, DataSet ds)
+        public static string GetPlaceFromIPAddress(string ip, DataSet ds)
         {
-            if (sIPAddress == "127.0.0.1")
+            if (ip == "127.0.0.1")
                 return "本机地址";
             if (ds == null)
                 return "读IP地址库错误";
 
-            Int64 IPAddress = IPAddressToInt64(sIPAddress);
-            return GetPlaceFromIPAddress(IPAddress, ds);
+            Int64 address = IPAddressToInt64(ip);
+            return GetPlaceFromIPAddress(address, ds);
         }
 
         /// <summary>
         /// 获取IP地址的地理位置
         /// </summary>
-        /// <param name="IPAddress"></param>
+        /// <param name="ip"></param>
         /// <param name="conn"></param>
         /// <param name="IPTable"></param>
         /// <returns></returns>
-        public static string GetPlaceFromIPAddress(Int64 IPAddress, SqlConnection conn, string IPTable)
+        public static string GetPlaceFromIPAddress(Int64 ip, SqlConnection conn, string IPTable)
         {
             if (conn.State != ConnectionState.Open)
                 return "读IP数据库错误";
 
-            SqlCommand Cmd = new SqlCommand("select top 1 ltrim(rtrim(isnull(Country, ''))) + ltrim(rtrim(isnull(City, ''))) from " + IPTable + " where IPStart <= " + IPAddress.ToString() + " and IPEnd >= " + IPAddress.ToString(), conn);
+            SqlCommand Cmd = new SqlCommand("select top 1 ltrim(rtrim(isnull(Country, ''))) + ltrim(rtrim(isnull(City, ''))) from " + IPTable + " where IPStart <= " + ip.ToString() + " and IPEnd >= " + ip.ToString(), conn);
             SqlDataReader dr = null;
             try
             {
@@ -164,20 +164,20 @@ namespace Shove.Net
         /// <summary>
         /// 获取IP地址的地理位置
         /// </summary>
-        /// <param name="sIPAddress"></param>
+        /// <param name="ip"></param>
         /// <param name="conn"></param>
         /// <param name="IPTable"></param>
         /// <returns></returns>
-        public static string GetPlaceFromIPAddress(string sIPAddress, SqlConnection conn, string IPTable)
+        public static string GetPlaceFromIPAddress(string ip, SqlConnection conn, string IPTable)
         {
-            if (sIPAddress == "127.0.0.1")
+            if (ip == "127.0.0.1")
                 return "本机地址";
 
             if (conn.State != ConnectionState.Open)
                 return "读IP数据库错误";
 
-            Int64 IPAddress = IPAddressToInt64(sIPAddress);
-            return GetPlaceFromIPAddress(IPAddress, conn, IPTable);
+            Int64 address = IPAddressToInt64(ip);
+            return GetPlaceFromIPAddress(address, conn, IPTable);
         }
     }
 }

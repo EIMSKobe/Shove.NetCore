@@ -20,11 +20,11 @@ namespace Shove.IO
         /// <summary>
         /// 取服务器上 Path 目录下的文件列表
         /// </summary>
-        /// <param name="Path">服务器上的绝对路径，调用前用 Server.MapPath 取到完整路径再传入</param>
+        /// <param name="path">服务器上的绝对路径，调用前用 Server.MapPath 取到完整路径再传入</param>
         /// <returns></returns>
-        public static string[] GetFileList(string Path)
+        public static string[] GetFileList(string path)
         {
-            DirectoryInfo di = new DirectoryInfo(Path);
+            DirectoryInfo di = new DirectoryInfo(path);
             if (!di.Exists)
                 return null;
             FileInfo[] files = di.GetFiles();
@@ -39,12 +39,12 @@ namespace Shove.IO
         /// <summary>
         /// 取服务器上 StartDirName 目录下的文件列表，包括所有子目录下的文件
         /// </summary>
-        /// <param name="StartDirName">服务器上的绝对路径，调用前用 Server.MapPath 取到完整路径再传入</param>
+        /// <param name="startDirName">服务器上的绝对路径，调用前用 Server.MapPath 取到完整路径再传入</param>
         /// <returns></returns>
-        public static string[] GetFileListWithSubDir(string StartDirName)
+        public static string[] GetFileListWithSubDir(string startDirName)
         {
             ArrayList al = new ArrayList();
-            GetFile(StartDirName, al);
+            GetFile(startDirName, al);
 
             if (al.Count < 1)
                 return null;
@@ -59,12 +59,12 @@ namespace Shove.IO
         /// <summary>
         /// GetFileListWithSubDir 方法的递归子方法
         /// </summary>
-        /// <param name="Dir">目录</param>
+        /// <param name="dir">目录</param>
         /// <param name="al">存放文件的集合</param>
-        private static void GetFile(string Dir, ArrayList al)
+        private static void GetFile(string dir, ArrayList al)
         {
-            string[] Files = Directory.GetFiles(Dir);
-            string[] Dirs = Directory.GetDirectories(Dir);
+            string[] Files = Directory.GetFiles(dir);
+            string[] Dirs = Directory.GetDirectories(dir);
 
             for (int i = 0; i < Files.Length; i++)
                 al.Add(Files[i]);
@@ -79,38 +79,38 @@ namespace Shove.IO
         /// <summary>
         /// 读文件
         /// </summary>
-        /// <param name="FileName">文件名</param>
+        /// <param name="fileName">文件名</param>
         /// <returns>文件内容字符串</returns>
-        public static string ReadFile(string FileName)
+        public static string ReadFile(string fileName)
         {
-            return System.IO.File.ReadAllText(FileName, System.Text.Encoding.Default);
+            return System.IO.File.ReadAllText(fileName, System.Text.Encoding.Default);
         }
 
         /// <summary>
         /// 写文件，如果文件不存在，创建该文件，否则改写该文件
         /// </summary>
-        /// <param name="FileName">文件名</param>
-        /// <param name="Content">写入的内容</param>
+        /// <param name="fileName">文件名</param>
+        /// <param name="content">写入的内容</param>
         /// <returns>true 为成功</returns>
-        public static bool WriteFile(string FileName, string Content)
+        public static bool WriteFile(string fileName, string content)
         {
-            return WriteFile(FileName, Content, System.Text.Encoding.Default);
+            return WriteFile(fileName, content, System.Text.Encoding.Default);
         }
 
         /// <summary>
         /// 写文件，如果文件不存在，创建该文件，否则改写该文件(根据制定的字符编码)
         /// </summary>
-        /// <param name="FileName">文件名</param>
-        /// <param name="Content">写入的内容</param>
+        /// <param name="fileName">文件名</param>
+        /// <param name="content">写入的内容</param>
         /// <param name="encoding">字符编码</param>
         /// <returns>true 为成功</returns>
-        public static bool WriteFile(string FileName, string Content, System.Text.Encoding encoding)
+        public static bool WriteFile(string fileName, string content, System.Text.Encoding encoding)
         {
             bool OK = true;
 
             try
             {
-                System.IO.File.WriteAllText(FileName, Content, encoding);
+                System.IO.File.WriteAllText(fileName, content, encoding);
             }
             catch
             {
@@ -185,11 +185,11 @@ namespace Shove.IO
         /// <summary>
         /// 获取指定文件夹占用的空间大小
         /// </summary>
-        /// <param name="DirectoryName"></param>
-        public static long GetDirectorySize(string DirectoryName)
+        /// <param name="directoryName"></param>
+        public static long GetDirectorySize(string directoryName)
         {
             long Size = 0;
-            DirectoryInfo di = new DirectoryInfo(DirectoryName);
+            DirectoryInfo di = new DirectoryInfo(directoryName);
 
             FileInfo[] fis = di.GetFiles();
             foreach (FileInfo fi in fis)
@@ -213,24 +213,24 @@ namespace Shove.IO
         /// <summary>
         /// 压缩一个文件，目标文件名自动在源文件后面加上 .zip
         /// </summary>
-        /// <param name="FileName">源文件名</param>
+        /// <param name="fileName">源文件名</param>
         /// <returns>true 为成功</returns>
-        public static bool Compress(string FileName)
+        public static bool Compress(string fileName)
         {
-            return Compress(FileName, "");
+            return Compress(fileName, "");
         }
 
         /// <summary>
         /// 压缩一个文件
         /// </summary>
-        /// <param name="FileName">源文件名</param>
-        /// <param name="ZipFileName">目标文件名(.zip)</param>
+        /// <param name="fileName">源文件名</param>
+        /// <param name="zipFileName">目标文件名(.zip)</param>
         /// <returns>true 为成功</returns>
-        public static bool Compress(string FileName, string ZipFileName)
+        public static bool Compress(string fileName, string zipFileName)
         {
-            if (ZipFileName == "")
+            if (zipFileName == "")
             {
-                ZipFileName = FileName + ".zip";
+                zipFileName = fileName + ".zip";
             }
 
             Crc32 crc = new Crc32();
@@ -238,7 +238,7 @@ namespace Shove.IO
 
             try
             {
-                s = new ZipOutputStream(System.IO.File.Create(ZipFileName));
+                s = new ZipOutputStream(System.IO.File.Create(zipFileName));
             }
             catch
             {
@@ -251,19 +251,19 @@ namespace Shove.IO
             FileStream fs;
             try
             {
-                fs = System.IO.File.OpenRead(FileName);
+                fs = System.IO.File.OpenRead(fileName);
             }
             catch
             {
                 s.Finish();
                 s.Close();
-                System.IO.File.Delete(ZipFileName);
+                System.IO.File.Delete(zipFileName);
                 return false;
             }
 
             byte[] buffer = new byte[fs.Length];
             fs.Read(buffer, 0, buffer.Length);
-            ZipEntry entry = new ZipEntry(FileName.Split('\\')[FileName.Split('\\').Length - 1]); //FileName);
+            ZipEntry entry = new ZipEntry(fileName.Split('\\')[fileName.Split('\\').Length - 1]); //FileName);
             entry.DateTime = DateTime.Now;
             entry.Size = fs.Length;
 
@@ -285,28 +285,28 @@ namespace Shove.IO
         /// <summary>
         /// 解压缩一个文件，目标文件名自动在源文件基础上去掉后面的 .zip
         /// </summary>
-        /// <param name="ZipFileName">源文件名</param>
+        /// <param name="zipFileName">源文件名</param>
         /// <returns>true 为成功</returns>
-        public static bool Decompress(string ZipFileName)
+        public static bool Decompress(string zipFileName)
         {
-            return Decompress(ZipFileName, "");
+            return Decompress(zipFileName, "");
         }
 
         /// <summary>
         /// 解压缩一个文件
         /// </summary>
-        /// <param name="ZipFileName">源文件名(.zip)</param>
-        /// <param name="FileName">目标文件名</param>
+        /// <param name="zipFileName">源文件名(.zip)</param>
+        /// <param name="fileName">目标文件名</param>
         /// <returns>true 为成功</returns>
-        public static bool Decompress(string ZipFileName, string FileName)
+        public static bool Decompress(string zipFileName, string fileName)
         {
-            FileName = FileName.Trim();
+            fileName = fileName.Trim();
 
             ZipInputStream s;
 
             try
             {
-                s = new ZipInputStream(System.IO.File.OpenRead(ZipFileName));
+                s = new ZipInputStream(System.IO.File.OpenRead(zipFileName));
             }
             catch
             {
@@ -320,10 +320,10 @@ namespace Shove.IO
                 return false;
             }
 
-            string DirectoryName = Path.GetDirectoryName((FileName == "") ? ZipFileName : FileName);
-            if (FileName == "")
+            string DirectoryName = Path.GetDirectoryName((fileName == "") ? zipFileName : fileName);
+            if (fileName == "")
             {
-                FileName = Path.Combine(DirectoryName, Path.GetFileName(theEntry.Name));
+                fileName = Path.Combine(DirectoryName, Path.GetFileName(theEntry.Name));
             }
 
             if (!Directory.Exists(DirectoryName))
@@ -332,7 +332,7 @@ namespace Shove.IO
             }
 
             //解压文件到指定的目录
-            FileStream streamWriter = System.IO.File.Create(FileName);
+            FileStream streamWriter = System.IO.File.Create(fileName);
             int size = 2048;
             byte[] data = new byte[size];
 
@@ -359,11 +359,11 @@ namespace Shove.IO
         /// <summary>
         /// 压缩多个文件
         /// </summary>
-        /// <param name="CompressLevel">压缩级别，0-9，9是最高压缩率</param>
+        /// <param name="level">压缩级别，0-9，9是最高压缩率</param>
         /// <param name="isWithoutFilePathInfo">文件是否不需要包含进入详细的路径信息，true 则仅仅包含文件名本身信息</param>
-        /// <param name="FileNames">多个文件名</param>
+        /// <param name="fileNames">多个文件名</param>
         /// <returns>返回二进制流 byte[] 类型，是一个完整的 zip 文件流，可以直接写入文件</returns>
-        public static byte[] ZipMultiFiles(int CompressLevel, bool isWithoutFilePathInfo, params string[] FileNames)
+        public static byte[] ZipMultiFiles(int level, bool isWithoutFilePathInfo, params string[] fileNames)
         {
             ZipOutputStream zipStream = null;
             FileStream streamWriter = null;
@@ -376,17 +376,17 @@ namespace Shove.IO
                 Crc32 crc32 = new Crc32();
 
                 zipStream = new ZipOutputStream(ms);
-                zipStream.SetLevel(CompressLevel);
+                zipStream.SetLevel(level);
 
-                foreach (string FileName in FileNames)
+                foreach (string fileName in fileNames)
                 {
-                    if (!System.IO.File.Exists(FileName))
+                    if (!System.IO.File.Exists(fileName))
                     {
                         continue;
                     }
 
                     //Read the file to stream
-                    streamWriter = System.IO.File.OpenRead(FileName);
+                    streamWriter = System.IO.File.OpenRead(fileName);
                     byte[] buffer = new byte[streamWriter.Length];
                     streamWriter.Read(buffer, 0, buffer.Length);
                     streamWriter.Close();
@@ -394,7 +394,7 @@ namespace Shove.IO
                     //Specify ZipEntry
                     crc32.Reset();
                     crc32.Update(buffer);
-                    ZipEntry zipEntry = new ZipEntry(isWithoutFilePathInfo ? Path.GetFileName(FileName) : FileName);
+                    ZipEntry zipEntry = new ZipEntry(isWithoutFilePathInfo ? Path.GetFileName(fileName) : fileName);
                     zipEntry.DateTime = DateTime.Now;
                     zipEntry.Size = buffer.Length;
                     zipEntry.Crc = crc32.Value;
@@ -447,18 +447,18 @@ namespace Shove.IO
             /// <summary>  
             /// 压缩文件  
             /// </summary>  
-            /// <param name="FileNames">要打包的文件列表</param>  
-            /// <param name="GzipFileName">目标文件名</param>  
-            /// <param name="CompressionLevel">压缩品质级别（0~9）</param>  
-            private static void CompressFile(List<FileInfo> FileNames, string GzipFileName, int CompressionLevel)
+            /// <param name="fileNames">要打包的文件列表</param>  
+            /// <param name="gzipFileName">目标文件名</param>  
+            /// <param name="level">压缩品质级别（0~9）</param>  
+            private static void CompressFile(List<FileInfo> fileNames, string gzipFileName, int level)
             {
-                ZipOutputStream s = new ZipOutputStream(System.IO.File.Create(GzipFileName));
+                ZipOutputStream s = new ZipOutputStream(System.IO.File.Create(gzipFileName));
 
                 try
                 {
-                    s.SetLevel(CompressionLevel);
+                    s.SetLevel(level);
 
-                    foreach (FileInfo file in FileNames)
+                    foreach (FileInfo file in fileNames)
                     {
                         FileStream fs = null;
 
@@ -503,17 +503,17 @@ namespace Shove.IO
             /// <summary>  
             /// 压缩文件夹
             /// </summary>
-            /// <param name="DirectoryName">要打包的文件夹</param>
-            /// <param name="GzipFileName">目标文件名</param>
-            /// <param name="CompressionLevel">压缩品质级别（0~9）</param>
-            /// <param name="IsWithDirectory">是否将 DirectoryName 作为相对根目录压缩进入压缩包</param>
-            public static void Compress(string DirectoryName, string GzipFileName, int CompressionLevel = 6, bool IsWithDirectory = true)
+            /// <param name="directoryName">要打包的文件夹</param>
+            /// <param name="gzipFileName">目标文件名</param>
+            /// <param name="level">压缩品质级别（0~9）</param>
+            /// <param name="isWithDirectory">是否将 DirectoryName 作为相对根目录压缩进入压缩包</param>
+            public static void Compress(string directoryName, string gzipFileName, int level = 6, bool isWithDirectory = true)
             {
-                DirectoryInfo di = new DirectoryInfo(DirectoryName);
+                DirectoryInfo di = new DirectoryInfo(directoryName);
 
                 if (!di.Exists)
                 {
-                    throw new Exception(DirectoryName + "路径不存在。");
+                    throw new Exception(directoryName + "路径不存在。");
                 }
 
                 string entryRoot = "";
@@ -524,20 +524,20 @@ namespace Shove.IO
                 }
                 else
                 {
-                    IsWithDirectory = false;
+                    isWithDirectory = false;
                 }
 
-                if (GzipFileName == string.Empty)
+                if (gzipFileName == string.Empty)
                 {
                     if (di.Parent == null)
                     {
                         throw new Exception("压缩整个驱动器根目录，需要指定一个目标 zip 文件名，并保存到其他的磁盘驱动器上。");
                     }
 
-                    GzipFileName = Path.Combine(di.Parent.FullName, di.Name + ".zip");
+                    gzipFileName = Path.Combine(di.Parent.FullName, di.Name + ".zip");
                 }
 
-                FileInfo fi = new FileInfo(GzipFileName);
+                FileInfo fi = new FileInfo(gzipFileName);
 
                 if (di.Parent == null)
                 {
@@ -552,23 +552,23 @@ namespace Shove.IO
                     throw new Exception("目标文件不能保存在要被压缩的文件夹之内。");
                 }
 
-                if ((CompressionLevel < 0) || (CompressionLevel > 9))
+                if ((level < 0) || (level > 9))
                 {
-                    CompressionLevel = 6;
+                    level = 6;
                 }
 
-                using (ZipOutputStream zipoutputstream = new ZipOutputStream(System.IO.File.Create(GzipFileName)))
+                using (ZipOutputStream zipoutputstream = new ZipOutputStream(System.IO.File.Create(gzipFileName)))
                 {
-                    zipoutputstream.SetLevel(CompressionLevel);
+                    zipoutputstream.SetLevel(level);
                     Crc32 crc = new Crc32();
-                    Dictionary<string, DateTime> fileList = GetAllFies(DirectoryName);
+                    Dictionary<string, DateTime> fileList = GetAllFies(directoryName);
 
                     foreach (KeyValuePair<string, DateTime> item in fileList)
                     {
                         FileStream fs = System.IO.File.OpenRead(item.Key.ToString());
                         byte[] buffer = new byte[fs.Length];
                         fs.Read(buffer, 0, buffer.Length);
-                        ZipEntry entry = new ZipEntry((IsWithDirectory ? entryRoot : "") + item.Key.Substring(DirectoryName.Length + 1));
+                        ZipEntry entry = new ZipEntry((isWithDirectory ? entryRoot : "") + item.Key.Substring(directoryName.Length + 1));
                         entry.DateTime = item.Value;
                         entry.Size = fs.Length;
                         fs.Close();
@@ -646,16 +646,16 @@ namespace Shove.IO
             /// <summary>
             /// 解压缩文件
             /// </summary>
-            /// <param name="GzipFile">压缩包文件名</param>
+            /// <param name="gzipFile">压缩包文件名</param>
             /// <param name="targetPath">解压缩目标路径</param>
-            /// <param name="IsOutputDirectory">是否解压到以zip文件名为的相对根目录之内</param>
-            public static void Decompress(string GzipFile, string targetPath, bool IsOutputDirectory = false)
+            /// <param name="isOutputDirectory">是否解压到以zip文件名为的相对根目录之内</param>
+            public static void Decompress(string gzipFile, string targetPath, bool isOutputDirectory = false)
             {
-                FileInfo fi = new FileInfo(GzipFile);
+                FileInfo fi = new FileInfo(gzipFile);
 
                 if (!fi.Exists)
                 {
-                    throw new Exception("文件 " + GzipFile + " 不存在。");
+                    throw new Exception("文件 " + gzipFile + " 不存在。");
                 }
 
                 if (string.IsNullOrEmpty(targetPath))
@@ -668,7 +668,7 @@ namespace Shove.IO
                     Directory.CreateDirectory(targetPath);
                 }
 
-                if (IsOutputDirectory)
+                if (isOutputDirectory)
                 {
                     targetPath = System.IO.Path.Combine(targetPath, System.IO.Path.GetFileNameWithoutExtension(fi.Name));
                 }
@@ -677,7 +677,7 @@ namespace Shove.IO
                 int size = 2048;
                 ZipEntry theEntry = null;
 
-                using (ZipInputStream s = new ZipInputStream(System.IO.File.OpenRead(GzipFile)))
+                using (ZipInputStream s = new ZipInputStream(System.IO.File.OpenRead(gzipFile)))
                 {
                     while ((theEntry = s.GetNextEntry()) != null)
                     {
