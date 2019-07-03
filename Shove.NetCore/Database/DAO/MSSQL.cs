@@ -132,8 +132,8 @@ namespace Shove.Database
         /// </summary>
         public class OutputParameter
         {
-            private IList<string> ParametersName;
-            private IList<object> ParametersValue;
+            private readonly IList<string> ParametersName;
+            private readonly IList<object> ParametersValue;
 
             /// <summary>
             /// 
@@ -249,9 +249,11 @@ namespace Shove.Database
                     continue;
                 }
 
-                SqlParameter param = new SqlParameter();
-                param.ParameterName = _params[i].Name.StartsWith("@", StringComparison.Ordinal) ? _params[i].Name : ("@" + _params[i].Name);
-                param.SqlDbType = _params[i].Type;
+                SqlParameter param = new SqlParameter
+                {
+                    ParameterName = _params[i].Name.StartsWith("@", StringComparison.Ordinal) ? _params[i].Name : ("@" + _params[i].Name),
+                    SqlDbType = _params[i].Type
+                };
 
                 if (_params[i].Size > 0)
                 {
@@ -360,6 +362,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -404,6 +410,7 @@ namespace Shove.Database
             }
             catch
             {
+                cmd.Dispose();
                 return -1001;
             }
 
@@ -426,6 +433,10 @@ namespace Shove.Database
                 catch { }
 
                 result = false;
+            }
+            finally
+            {
+                cmd.Dispose();
             }
 
             if (!initOpenState)
@@ -485,6 +496,10 @@ namespace Shove.Database
             {
                 result = false;
             }
+            finally
+            {
+                cmd.Dispose();
+            }
 
             if (!initOpenState)
             {
@@ -536,6 +551,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return dt;
         }
@@ -589,6 +608,11 @@ namespace Shove.Database
             {
                 result = false;
             }
+            finally
+            {
+                cmd.Dispose();
+                da.Dispose();
+            }
 
             if (!initOpenState)
             {
@@ -640,6 +664,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return obj;
         }
@@ -686,6 +714,10 @@ namespace Shove.Database
             catch
             {
                 result = null;
+            }
+            finally
+            {
+                cmd.Dispose();
             }
 
             if (!initOpenState)
@@ -738,6 +770,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return obj;
         }
@@ -789,10 +825,7 @@ namespace Shove.Database
                             isChar = true;
                         }
 
-                        if ((_params[i].Type == SqlDbType.NChar) || (_params[i].Type == SqlDbType.NText) || (_params[i].Type == SqlDbType.NVarChar))
-                        {
-                            isNChar = true;
-                        }
+                        isNChar |= ((_params[i].Type == SqlDbType.NChar) || (_params[i].Type == SqlDbType.NText) || (_params[i].Type == SqlDbType.NVarChar));
 
                         if (!commandText.EndsWith("(", StringComparison.Ordinal))
                         {
@@ -876,6 +909,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -917,9 +954,11 @@ namespace Shove.Database
             AddParameter(ref cmd, _params);
 
             // 增加返回值参数
-            SqlParameter ReturnValue = new SqlParameter("@Shove_Database_MSSQL_ExecuteStoredProcedureNonQuery_Rtn", SqlDbType.Int);
-            ReturnValue.Direction = ParameterDirection.ReturnValue;
-            cmd.Parameters.Add(ReturnValue);
+            SqlParameter returnValue = new SqlParameter("@Shove_Database_MSSQL_ExecuteStoredProcedureNonQuery_Rtn", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.ReturnValue
+            };
+            cmd.Parameters.Add(returnValue);
 
             SqlTransaction trans;
             try
@@ -928,6 +967,7 @@ namespace Shove.Database
             }
             catch
             {
+                cmd.Dispose();
                 return -1001;
             }
 
@@ -951,6 +991,10 @@ namespace Shove.Database
 
                 result = false;
             }
+            finally
+            {
+                cmd.Dispose();
+            }
 
             if (!initOpenState)
             {
@@ -970,11 +1014,11 @@ namespace Shove.Database
             AddOutputParameter(cmd, ref outputs);
 
             // 获取过程的返回值
-            ReturnValue = GetReturnParameter(cmd);
+            returnValue = GetReturnParameter(cmd);
 
-            if (ReturnValue != null)
+            if (returnValue != null)
             {
-                return (int)ReturnValue.Value;
+                return (int)returnValue.Value;
             }
 
             return 0;
@@ -1022,6 +1066,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -1059,16 +1107,19 @@ namespace Shove.Database
             }
 
             SqlDataAdapter da = new SqlDataAdapter("", conn);
-            SqlCommand cmd = new SqlCommand(GetObjectFullName(storedProcedureName), conn);
-
-            cmd.CommandType = CommandType.StoredProcedure;
+            SqlCommand cmd = new SqlCommand(GetObjectFullName(storedProcedureName), conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             cmd.Parameters.Clear();
             AddParameter(ref cmd, _params);
 
             // 增加返回值参数
-            SqlParameter ReturnValue = new SqlParameter("@Shove_Database_MSSQL_ExecuteStoredProcedureWithQuery_Rtn", SqlDbType.Int);
-            ReturnValue.Direction = ParameterDirection.ReturnValue;
-            cmd.Parameters.Add(ReturnValue);
+            SqlParameter returnValue = new SqlParameter("@Shove_Database_MSSQL_ExecuteStoredProcedureWithQuery_Rtn", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.ReturnValue
+            };
+            cmd.Parameters.Add(returnValue);
 
             if (ds == null)
             {
@@ -1082,6 +1133,8 @@ namespace Shove.Database
             }
             catch
             {
+                cmd.Dispose();
+                da.Dispose();
                 return -1001;
             }
 
@@ -1107,6 +1160,10 @@ namespace Shove.Database
 
                 result = false;
             }
+            finally
+            {
+                da.Dispose();
+            }
 
             if (!initOpenState)
             {
@@ -1124,13 +1181,14 @@ namespace Shove.Database
 
             //填写返回参数
             AddOutputParameter(cmd, ref outputs);
-
             // 获取过程的返回值
-            ReturnValue = GetReturnParameter(cmd);
+            returnValue = GetReturnParameter(cmd);
 
-            if (ReturnValue != null)
+            cmd.Dispose();
+
+            if (returnValue != null)
             {
-                return (int)ReturnValue.Value;
+                return (int)returnValue.Value;
             } 
             
             return 0;
@@ -1176,6 +1234,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -1341,6 +1403,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -1395,24 +1461,26 @@ namespace Shove.Database
             {
                 string TableName = dr["name"].ToString();
 
-                DataTable Table = Select(conn, "select * from [" + TableName + "]");
-
-                if (Table == null)
+                using (DataTable Table = Select(conn, "select * from [" + TableName + "]"))
                 {
-                    if (!initOpenState)
+                    if (Table == null)
                     {
-                        try
+                        if (!initOpenState)
                         {
-                            conn.Close();
+                            try
+                            {
+                                conn.Close();
+                            }
+                            catch { }
                         }
-                        catch { }
+
+                        dt.Dispose();
+                        return null;
                     }
 
-                    return null;
+                    Table.TableName = TableName;
+                    ds.Tables.Add(Table);
                 }
-
-                Table.TableName = TableName;
-                ds.Tables.Add(Table);
             }
 
             if (!initOpenState)
@@ -1427,6 +1495,8 @@ namespace Shove.Database
             StringBuilder sb = new StringBuilder();
             StringWriter sw = new StringWriter(sb);
             ds.WriteXml(sw, XmlWriteMode.WriteSchema);
+            ds.Dispose();
+            dt.Dispose();
 
             return String.Compress(sb.ToString());
         }
@@ -1463,6 +1533,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -1529,6 +1603,9 @@ namespace Shove.Database
                     catch { }
                 }
 
+                ds.Dispose();
+                sr.Dispose();
+
                 return -1003;
             }
 
@@ -1543,6 +1620,9 @@ namespace Shove.Database
                     catch { }
                 }
 
+                ds.Dispose();
+                sr.Dispose();
+
                 return -1004;
             }
 
@@ -1554,6 +1634,9 @@ namespace Shove.Database
             }
             catch
             {
+                ds.Dispose();
+                sr.Dispose();
+
                 return -1001;
             }
 
@@ -1568,11 +1651,15 @@ namespace Shove.Database
                     cmd.ExecuteNonQuery();
                     //cmd.CommandText = "SET IDENTITY_INSERT [" + dt.TableName + "] ON";
                     //cmd.ExecuteNonQuery();
+                    cmd.Dispose();
 
-                    SqlBulkCopy sqlbulkcopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, trans);
-                    sqlbulkcopy.DestinationTableName = dt.TableName;
-
-                    sqlbulkcopy.WriteToServer(dt);
+                    using (SqlBulkCopy sqlbulkcopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, trans)
+                    {
+                        DestinationTableName = dt.TableName
+                    })
+                    {
+                        sqlbulkcopy.WriteToServer(dt);
+                    }
                 }
 
                 trans.Commit();
@@ -1584,6 +1671,11 @@ namespace Shove.Database
                 result = false;
 
                 //System.Web.HttpContext.Current.Response.Write(ee.Message);
+            }
+            finally
+            {
+                ds.Dispose();
+                sr.Dispose();
             }
 
             if (!initOpenState)
@@ -1648,6 +1740,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -1711,9 +1807,10 @@ namespace Shove.Database
                 }
             }
 
-            SqlCommand cmd = new SqlCommand("", conn);
-
-            cmd.CommandType = CommandType.Text;
+            SqlCommand cmd = new SqlCommand("", conn)
+            {
+                CommandType = CommandType.Text
+            };
             cmd.Parameters.Clear();
 
             SqlTransaction trans;
@@ -1723,6 +1820,7 @@ namespace Shove.Database
             }
             catch
             {
+                cmd.Dispose();
                 return false;
             }
 
@@ -1760,6 +1858,7 @@ namespace Shove.Database
                         catch { }
                     }
 
+                    cmd.Dispose();
                     return false;
                 }
             }
@@ -1774,6 +1873,8 @@ namespace Shove.Database
                 }
                 catch { }
             }
+
+            cmd.Dispose();
 
             return true;
         }

@@ -50,8 +50,10 @@ namespace Shove.Database
                 connectionString = Security.Encrypt.Decrypt3DES(connectionString.Substring(6), desKey);
             }
 
-            T conn = new T(); //new T(connectionString);
-            conn.ConnectionString = connectionString;
+            T conn = new T
+            {
+                ConnectionString = connectionString
+            };
 
             try
             {

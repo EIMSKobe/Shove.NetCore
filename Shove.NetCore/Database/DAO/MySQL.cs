@@ -121,8 +121,8 @@ namespace Shove.Database
         /// </summary>
         public class OutputParameter
         {
-            private IList<string> ParametersName;
-            private IList<object> ParametersValue;
+            private readonly IList<string> ParametersName;
+            private readonly IList<object> ParametersValue;
 
             /// <summary>
             /// 
@@ -238,9 +238,11 @@ namespace Shove.Database
                     continue;
                 }
 
-                MySqlParameter param = new MySqlParameter();
-                param.ParameterName = _params[i].Name.StartsWith("?", StringComparison.Ordinal) ? _params[i].Name : ("?" + _params[i].Name);
-                param.MySqlDbType = _params[i].Type;
+                MySqlParameter param = new MySqlParameter
+                {
+                    ParameterName = _params[i].Name.StartsWith("?", StringComparison.Ordinal) ? _params[i].Name : ("?" + _params[i].Name),
+                    MySqlDbType = _params[i].Type
+                };
 
                 if (_params[i].Size > 0)
                 {
@@ -346,13 +348,13 @@ namespace Shove.Database
 
             try
             {
-                try
-                {
-                    conn.Close();
-                }
-                catch { }
+                conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -399,6 +401,7 @@ namespace Shove.Database
             }
             catch
             {
+                cmd.Dispose();
                 return -1001;
             }
 
@@ -410,6 +413,7 @@ namespace Shove.Database
                 cmd.CommandTimeout = 5000000;
                 cmd.ExecuteNonQuery();
                 trans.Commit();
+                cmd.Dispose();
 
                 result = true;
             }
@@ -422,6 +426,10 @@ namespace Shove.Database
                 catch { }
 
                 result = false;
+            }
+            finally
+            {
+                cmd.Dispose();
             }
 
             if (!initOpenState)
@@ -482,6 +490,8 @@ namespace Shove.Database
                 result = false;
             }
 
+            cmd.Dispose();
+
             if (!initOpenState)
             {
                 try
@@ -532,6 +542,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return dt;
         }
@@ -585,6 +599,11 @@ namespace Shove.Database
             {
                 result = false;
             }
+            finally
+            {
+                cmd.Dispose();
+                da.Dispose();
+            }
 
             if (!initOpenState)
             {
@@ -636,6 +655,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return dt;
         }
@@ -672,8 +695,10 @@ namespace Shove.Database
             }
 
             MySqlDataAdapter da = new MySqlDataAdapter("", conn);
-            MySqlCommand cmd = new MySqlCommand(commandText, conn);
-            cmd.CommandTimeout = commandTimeout;
+            MySqlCommand cmd = new MySqlCommand(commandText, conn)
+            {
+                CommandTimeout = commandTimeout
+            };
 
             AddParameter(ref cmd, _params);
             da.SelectCommand = cmd;
@@ -690,6 +715,11 @@ namespace Shove.Database
             catch
             {
                 result = false;
+            }
+            finally
+            {
+                cmd.Dispose();
+                da.Dispose();
             }
 
             if (!initOpenState)
@@ -744,6 +774,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return obj;
         }
@@ -790,6 +824,10 @@ namespace Shove.Database
             catch
             {
                 result = null;
+            }
+            finally
+            {
+                cmd.Dispose();
             }
 
             if (!initOpenState)
@@ -842,6 +880,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return obj;
         }
@@ -972,6 +1014,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -1013,9 +1059,9 @@ namespace Shove.Database
             AddParameter(ref cmd, _params);
 
             // 增加返回值参数
-            //MySqlParameter ReturnValue = new MySqlParameter("?Shove_Database_MySQL_ExecuteStoredProcedureNonQuery_Rtn", SqlDbType.Int);
-            //ReturnValue.Direction = ParameterDirection.ReturnValue;
-            //cmd.Parameters.Add(ReturnValue);
+            //MySqlParameter returnValue = new MySqlParameter("?Shove_Database_MySQL_ExecuteStoredProcedureNonQuery_Rtn", SqlDbType.Int);
+            //returnValue.Direction = ParameterDirection.ReturnValue;
+            //cmd.Parameters.Add(returnValue);
 
             MySqlTransaction trans;
             try
@@ -1024,6 +1070,7 @@ namespace Shove.Database
             }
             catch
             {
+                cmd.Dispose();
                 return -1001;
             }
 
@@ -1059,17 +1106,19 @@ namespace Shove.Database
 
             if (!result)
             {
+                cmd.Dispose();
                 return -1002;
             }
 
             // 填写返回参数
             AddOutputParameter(cmd, ref outputs);
+            cmd.Dispose();
 
             // 获取过程的返刂冗           //ReturnValue = GetReturnParameter(cmd);
 
-            //if (ReturnValue != null)
+            //if (returnValue != null)
             //{
-            //    return (int)ReturnValue.Value;
+            //    return (int)returnValue.Value;
             //}
 
             return 0;
@@ -1117,6 +1166,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return result;
         }
@@ -1161,9 +1214,9 @@ namespace Shove.Database
             AddParameter(ref cmd, _params);
 
             // 增加返回值参数
-            //MySqlParameter ReturnValue = new MySqlParameter("?Shove_Database_MSSQL_ExecuteStoredProcedureWithQuery_Rtn", SqlDbType.Int);
-            //ReturnValue.Direction = ParameterDirection.ReturnValue;
-            //cmd.Parameters.Add(ReturnValue);
+            //MySqlParameter returnValue = new MySqlParameter("?Shove_Database_MSSQL_ExecuteStoredProcedureWithQuery_Rtn", SqlDbType.Int);
+            //returnValue.Direction = ParameterDirection.ReturnValue;
+            //cmd.Parameters.Add(returnValue);
 
             if (ds == null)
             {
@@ -1177,6 +1230,7 @@ namespace Shove.Database
             }
             catch
             {
+                cmd.Dispose();
                 return -1001;
             }
 
@@ -1219,13 +1273,15 @@ namespace Shove.Database
 
             //填写返回参数
             AddOutputParameter(cmd, ref outputs);
+            cmd.Dispose();
+            ds.Dispose();
 
             // 获取过程的返回值
-            //ReturnValue = GetReturnParameter(cmd);
+            //returnValue = GetReturnParameter(cmd);
 
-            //if (ReturnValue != null)
+            //if (returnValue != null)
             //{
-            //    return (int)ReturnValue.Value;
+            //    return (int)returnValue.Value;
             //}
 
             return 0;
@@ -1265,6 +1321,10 @@ namespace Shove.Database
                 conn.Close();
             }
             catch { }
+            finally
+            {
+                conn.Dispose();
+            }
 
             return buffer;
         }
@@ -1286,6 +1346,8 @@ namespace Shove.Database
             StringBuilder sb = new StringBuilder();
             StringWriter sw = new StringWriter(sb);
             ds.WriteXml(sw, XmlWriteMode.WriteSchema);
+            ds.Dispose();
+            sw.Dispose();
 
             return String.Compress(sb.ToString());
         }
