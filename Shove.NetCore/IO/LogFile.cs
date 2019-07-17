@@ -19,6 +19,7 @@ namespace Shove.IO
     {
         private string pathName;
         private FileGranularity granularity;
+        private bool writeTimeInfo;
         private static ReaderWriterLockSlim logWriteLock = new ReaderWriterLockSlim();
 
         /// <summary>
@@ -26,15 +27,17 @@ namespace Shove.IO
         /// </summary>
         /// <param name="pathname">相对于网站、应用程序根目录 App_Log 目录的相对路径，如： System， 就相当于 ~/App_Log/System/、 应用程序根\App_Log\System\</param>
         /// <param name="granularity">日志文件分割的颗粒度，可选 year, month, day, hour</param>
-        public Log(string pathname, FileGranularity granularity = FileGranularity.day)
+        /// <param name="writeTimeInfo">日志内容是否附加时间刻度信息</param>
+        public Log(string pathname, FileGranularity granularity = FileGranularity.day, bool writeTimeInfo = true)
         {
             if (string.IsNullOrEmpty(pathname))
             {
                 throw new Exception("没有初始化 Log 类的 PathName 变量");
             }
 
-            this.granularity = granularity;
             this.pathName = System.AppDomain.CurrentDomain.BaseDirectory + "App_Log/" + pathname;
+            this.granularity = granularity;
+            this.writeTimeInfo = writeTimeInfo;
 
             if (!Directory.Exists(this.pathName))
             {
@@ -69,6 +72,12 @@ namespace Shove.IO
                     break;
             }
 
+            if (writeTimeInfo)
+            {
+                message = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ":" + System.DateTime.Now.Millisecond.ToString() + "\t\t" + message;
+            }
+            message += "\r\n";
+
             FileStream fs = null;
             StreamWriter writer = null;
 
@@ -78,7 +87,7 @@ namespace Shove.IO
 
                 fs = new FileStream(fileName, FileMode.Append, FileAccess.Write, FileShare.Write);
                 writer = new StreamWriter(fs, System.Text.Encoding.GetEncoding("GBK"));
-                writer.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ":" + System.DateTime.Now.Millisecond.ToString() + "\t\t" + message + "\r\n");
+                writer.WriteLine(message);
             }
             catch { }
             finally
